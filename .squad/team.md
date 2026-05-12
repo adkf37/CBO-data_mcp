@@ -29,3 +29,10 @@
 - **Project:** CBO-data_mcp
 - **Created:** 2026-05-12
 - **Updated:** 2026-05-12
+
+
+## External Collaborators
+
+| Name | Role | Scope |
+|------|------|-------|
+| Reviewer | Maestro reviewer agent | Independent Validate/Closeout gate outside squad roster |
