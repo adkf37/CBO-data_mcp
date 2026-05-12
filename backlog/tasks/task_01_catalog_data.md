@@ -1,7 +1,7 @@
 # Task 01 — Catalog CBO Data Repository
 
 **Phase:** Build 4a  
-**Owner:** Backend Dev  
+**Owner:** Data Engineer  
 **Priority:** High (blocker for all subsequent tasks)  
 **Depends on:** None
 
@@ -37,6 +37,8 @@ https://github.com/adkf37/Data_friendly_CBO_Baseline_Detail
 ## Implementation Notes
 
 - Group files by naming pattern (e.g., `medicaid_enrollment_*.csv`).
-- Parse the `docs/` schema markdown/CSV to extract column definitions.
-- Store vintage info from filenames or embedded metadata.
+- Parse the `docs/` schema markdown/CSV to extract column definitions. If the `docs/` folder uses mixed formats (markdown and CSV), detect the format per file and handle each accordingly.
+- Store vintage info from filenames or embedded metadata. Canonical vintage format: `YYYY-MM` (e.g., `2024-01`). Fall back to `YYYY` if no month is determinable.
 - Use `pandas` for CSV inspection and `pathlib` for file traversal.
+- If `data/raw/` already exists, perform a `git pull` update instead of a fresh clone.
+- If network access is unavailable, the script should log a warning and proceed with whatever data is already present in `data/raw/`.

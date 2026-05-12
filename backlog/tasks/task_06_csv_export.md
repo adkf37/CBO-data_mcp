@@ -27,5 +27,7 @@ Implement the full CSV export flow so that any query result set can be saved to 
 ## Implementation Notes
 
 - Use `pandas.DataFrame.to_csv(index=False)` for output.
-- Metadata headers can be written as comment lines (`# key: value`) before the data rows, or as a separate `_meta.json` sidecar file.
-- Sanitize filename components to remove special characters.
+- Metadata headers must be written as comment lines (`# key: value`) prepended to the CSV file so the file remains parseable by `pandas.read_csv(comment='#')`. A `_meta.json` sidecar is optional but not required.
+- Sanitize filename components to remove special characters (allow only `[a-zA-Z0-9_-]`).
+- Task 03 delivers a working stub for `export_csv`; this task replaces that stub with the full naming, metadata-header, and directory-creation logic. Update `src/mcp_tools.py` in place — do not create a separate file.
+- The `./exports/` directory must be created with `pathlib.Path.mkdir(parents=True, exist_ok=True)` so it works on all platforms.

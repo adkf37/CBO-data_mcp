@@ -31,6 +31,8 @@ Wire Google Gemini 2.5 Flash to the MCP tool registry so that natural-language u
 ## Implementation Notes
 
 - Use `google-generativeai` Python SDK (`pip install google-generativeai`).
-- Register all MCP tools from `tool_registry.py` as Gemini function declarations.
-- Handle `FUNCTION_CALL` and `FUNCTION_RESPONSE` content parts in the conversation loop.
+- Register all MCP tools from `tool_registry.py` as Gemini function declarations. The registry must expose a `get_gemini_tool_declarations()` helper that returns the list of `genai.protos.Tool` objects ready to pass to `GenerativeModel`.
+- Handle `FUNCTION_CALL` and `FUNCTION_RESPONSE` content parts in the conversation loop. Dispatch each function call by name through `tool_registry.py` so no hard-coded `if/elif` chains are needed.
 - Cap tool-call iterations at 10 to avoid infinite loops.
+- The system prompt must instruct the model to always cite the file type and vintage used when answering.
+- API key must come exclusively from the `GEMINI_API_KEY` environment variable; load it with `python-dotenv` if a `.env` file is present, but never hardcode or log it.
