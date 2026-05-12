@@ -1,7 +1,7 @@
 # Task 05 — Interactive CLI Interface
 
 **Phase:** Build 4e  
-**Owner:** Frontend Dev  
+**Owner:** Backend Dev  
 **Priority:** Medium  
 **Depends on:** Task 04 (Gemini integration)
 
@@ -28,6 +28,7 @@ Build a user-friendly interactive command-line interface so users can query the 
 
 ## Implementation Notes
 
-- Use the built-in `readline` module (or `prompt_toolkit` for richer UX) for input.
-- Color output with `colorama` or `rich` if available, but keep it optional.
-- Keep each CLI response under a configurable max character width for readability.
+- Use the built-in `readline` module for input history and editing. `prompt_toolkit` may be used as an optional enhancement but must not be a required dependency.
+- Color output with `colorama` or `rich` if available; fall back to plain text gracefully (both are already in `requirements.txt`).
+- Keep each CLI response under a configurable max character width (default: 120 characters) for readability in standard terminals.
+- CLI session state (last query result) must be held in a simple in-memory object so `/export` can retrieve it without re-running the query.

@@ -1,7 +1,7 @@
 # Task 02 — Cross-Vintage Data Consolidation
 
 **Phase:** Build 4b  
-**Owner:** Backend Dev  
+**Owner:** Data Engineer  
 **Priority:** High  
 **Depends on:** Task 01 (data catalog)
 
@@ -26,6 +26,8 @@ Build a data pipeline that reads the raw CSVs for each file type and concatenate
 ## Implementation Notes
 
 - Use `pandas.concat` with `ignore_index=True`.
-- Derive the `vintage` label from the filename or folder structure.
-- Handle schema differences between vintages gracefully (fill missing columns with NaN).
-- Use `parquet` for efficient caching (`pyarrow` or `fastparquet`).
+- Derive the `vintage` label from the filename using the canonical `YYYY-MM` format established in Task 01. Fall back to `YYYY` if no month is present.
+- Handle schema differences between vintages gracefully (fill missing columns with NaN). Log a warning per file type where column sets differ across vintages.
+- Use `parquet` for efficient caching (`pyarrow` or `fastparquet`). Write consolidated files to `data/consolidated/<file_type>.parquet`.
+- `DataLoader` must read `data/catalog.json` (produced by Task 01) to discover available file types and their `file_paths`. Do not hard-code file paths.
+- Memory guard: if a consolidated DataFrame exceeds 500 MB, log a warning and write to parquet without caching in memory.

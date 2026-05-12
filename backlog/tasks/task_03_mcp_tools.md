@@ -38,4 +38,7 @@ Implement the core Model Context Protocol (MCP) tools that the LLM will call to 
 
 - Use the `mcp` Python library (`pip install mcp`) for protocol compliance.
 - Tool inputs and outputs should be JSON-serializable.
-- `export_csv` should write to a user-configurable output directory (default: `./exports/`).
+- `export_csv` should write to a user-configurable output directory (default: `./exports/`). The full implementation of the CSV file-naming and metadata strategy is defined in Task 06; the Task 03 version may be a working stub that writes a basic file.
+- `search_programs` performs case-insensitive substring matching across the program/category name column(s). Fuzzy matching is out of scope for the initial implementation.
+- `tool_registry.py` must map each tool name string to the corresponding Python function so the Gemini integration (Task 04) can resolve calls dynamically without hard-coding function references.
+- All tools must return a Python `dict` (or `list[dict]`) so results are directly JSON-serialisable for the MCP response envelope.
