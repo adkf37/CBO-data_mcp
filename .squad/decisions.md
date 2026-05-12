@@ -48,5 +48,11 @@
 - **Test isolation:** Tests use `tmp_path` fixtures and `monkeypatch` to redirect `_PROJECT_ROOT` so no real `data/raw/` or `data/catalog.json` is required. All 21 tests pass without network access.
 - **Next task:** `task_03` — MCP Tools Implementation (`src/mcp_tools.py`, `src/tool_registry.py`).
 
+### 2026-05-12 — Decision D-007 (Task ID: task_02)
+- **Validation evidence recorded:** After installing the declared dependencies from `requirements.txt`, `python -m pytest tests/test_data_loader.py -v` passed all 21 tests and `python -m py_compile src/data_loader.py` completed successfully.
+- **Acceptance gate passed:** The validation evidence confirms `DataLoader` exposes the required public API, returns consolidated DataFrames with a non-null `vintage` column, handles schema drift, writes parquet cache files, and supports in-memory reuse plus missing-catalog error handling.
+- **Validation scope boundary:** No repository lint, type-check, or repo-wide pytest configuration exists yet, so validation remained scoped to the explicit `task_02` acceptance criteria and current targeted tests.
+- **Next loop recommendation:** Advance to Closeout for `task_02`; if closeout agrees, return to Build for `task_03`.
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.

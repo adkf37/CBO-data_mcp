@@ -2,7 +2,7 @@
 
 ## Scope
 
-- **Task ID:** `task_01`
+- **Task ID:** `task_02`
 - **Phase:** Validate
 - **Recommendation:** Pass → advance to Closeout
 
@@ -11,57 +11,35 @@
 1. **Install existing dependencies**
    - Command: `python -m pip install -r requirements.txt`
    - Result: Passed
-   - Evidence: Installed the project's declared runtime/test dependencies so the validation environment matched the repo configuration.
+   - Evidence: The declared runtime and test dependencies installed successfully in the validation environment.
 
-2. **Task acceptance command**
-   - Command: `python scripts/catalog_data.py`
+2. **Targeted unit tests**
+   - Command: `python -m pytest tests/test_data_loader.py -v`
    - Result: Passed
    - Evidence summary:
-     - Cloned `https://github.com/adkf37/Data_friendly_CBO_Baseline_Detail` into `data/raw/`
-     - Found 222 processed CSV files
-     - Wrote `data/catalog.json`
-     - Catalogued **51** distinct file types (acceptance threshold: ≥ 25)
+     - 21/21 tests passed in 1.07s.
+     - Covered `_extract_vintage()`, `list_file_types()`, `list_vintages()`, and `load_file_type()`.
+     - Confirmed consolidated DataFrames include a non-null `vintage` column, preserve multiple vintages, handle schema drift with `NaN`, write parquet cache files, reuse in-memory cache, and raise clear errors for unknown file types or a missing catalog.
 
 3. **Syntax validation**
-   - Command: `python -m py_compile scripts/catalog_data.py`
+   - Command: `python -m py_compile src/data_loader.py`
    - Result: Passed
-
-4. **Catalog structure validation**
-   - Command:
-     ```bash
-     python - <<'PY'
-     import json
-     from pathlib import Path
-     catalog = json.loads(Path('data/catalog.json').read_text())
-     required = {'file_type', 'description', 'columns', 'vintages', 'file_paths'}
-     assert len(catalog) >= 25
-     assert all(set(entry) == required for entry in catalog)
-     assert all(isinstance(entry['columns'], list) for entry in catalog)
-     assert all(isinstance(entry['vintages'], list) for entry in catalog)
-     assert all(isinstance(entry['file_paths'], list) and entry['file_paths'] for entry in catalog)
-     print(len(catalog))
-     PY
-     ```
-   - Result: Passed
-   - Evidence summary:
-     - 51 entries validated
-     - Required keys present on every catalog entry
-     - Sample file types: `aatf`, `aatf_0`, `child_nutrition`, `child_support_enforcement`, `childnutrition`
 
 ## Blocked / Not Applicable Checks
 
-- **Pytest / coverage:** Not applicable for this validation slice. The repo has not yet reached task_07 (`tests/`, `pytest.ini`, and coverage gate are not present), and task_01 acceptance criteria do not require automated tests beyond the catalog script running successfully.
-- **Lint / type-check:** No repository lint or type-check configuration is present yet, so there was no existing lint/type command to run.
+- **Repository-wide pytest / coverage gate:** Not yet applicable. `task_07` owns the broader suite, coverage threshold, and pytest configuration; this repo still has no `pytest.ini`, `pyproject.toml`, or equivalent test config.
+- **Lint / type-check:** Blocked by missing repository configuration. No existing lint or static type command is defined in the repo.
 
 ## Acceptance Criteria Review
 
-- [x] `scripts/catalog_data.py` clones/updates into `data/raw/`
-- [x] `data/catalog.json` contains the required fields (`file_type`, `description`, `columns`, `vintages`, `file_paths`)
-- [x] At least 25 file types are catalogued (validated: 51)
-- [x] `python scripts/catalog_data.py` runs without error
-- [x] `.gitignore` excludes `data/raw/` and `data/catalog.json`
+- [x] Module `src/data_loader.py` exists with a `DataLoader` class
+- [x] `DataLoader.load_file_type(file_type: str) -> pd.DataFrame` returns a consolidated DataFrame with a `vintage` column
+- [x] `DataLoader.list_file_types() -> list[str]` returns available file types
+- [x] `DataLoader.list_vintages(file_type: str) -> list[str]` returns the vintages for a file type
+- [x] Consolidated DataFrames are cached in memory and written to `data/consolidated/<file_type>.parquet`
+- [x] Unit tests in `tests/test_data_loader.py` cover the required `task_02` scenarios and pass
 
 ## Risks / Follow-up
 
-- Validation covered the current `task_01` slice only; later tasks still need their own build and validation loops.
-- The clone step depends on network access to the upstream data repository; the script's warning fallback path was reviewed in code but not exercised in this validation run.
+- Validation covered the current `task_02` slice only; sprint tasks `task_03` through `task_08` still require their own build/validate loops.
+- Full-suite coverage, integration markers, and repo-managed test defaults remain deferred to `task_07`.
