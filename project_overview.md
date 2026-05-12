@@ -1,7 +1,7 @@
 # CBO-data_mcp - Project Overview
 
 Date: 2026-05-12
-Status: Closeout complete for task_01; next up is Build for task_02
+Status: Closeout complete for task_02; next up is Build for task_03
 
 ## Purpose
 
@@ -31,6 +31,8 @@ https://github.com/adkf37/Gemini_Homicide_Bot
 
 ## Current Handoff Snapshot
 
-- **Completed in this loop:** `task_01` cataloging is implemented and revalidated; `python scripts/catalog_data.py` regenerates `data/catalog.json` with 51 file types.
-- **Current repo state:** closeout is complete for the cataloging slice, and the repo is ready to return to Build.
-- **Next explicit task:** `task_02` — create `src/data_loader.py` to consolidate multi-vintage CSVs and expose file type / vintage listing methods.
+- **Completed in this loop:** `task_02` data consolidation is implemented and revalidated; `src/data_loader.py` compiles cleanly and `python -m pytest tests/test_data_loader.py -v` passes all 21 tests.
+- **Current repo state:** closeout is complete for the data-loader slice, and the repo is ready to return to Build.
+- **What is now available:** `DataLoader` can list file types, list vintages, consolidate multi-vintage CSVs into DataFrames with a non-null `vintage` column, and write/read parquet caches in `data/consolidated/`.
+- **Known gaps before project completion:** `task_03` through `task_08` remain open, including MCP tools, Gemini integration, CLI work, broader test/coverage gates, and the final end-user docs (`README.md`, `QUICK_START.md`, `.env.example`).
+- **Next explicit task:** `task_03` — implement `src/mcp_tools.py` and `src/tool_registry.py` for the six planned MCP tools.

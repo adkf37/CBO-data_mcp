@@ -54,5 +54,11 @@
 - **Validation scope boundary:** No repository lint, type-check, or repo-wide pytest configuration exists yet, so validation remained scoped to the explicit `task_02` acceptance criteria and current targeted tests.
 - **Next loop recommendation:** Advance to Closeout for `task_02`; if closeout agrees, return to Build for `task_03`.
 
+### 2026-05-12 — Decision D-008 (Task ID: task_02)
+- **Closeout outcome:** Reviewer confirmed `task_02` satisfies the sprint Definition of Done after rerunning the existing validation commands and aligning `backlog/tasks/task_02_consolidate_vintages.md` with the verified implementation.
+- **Explicit non-complete rationale:** `.squad/sprint.md` still shows `task_03` through `task_08` as unfinished, so the project cannot emit `Complete` during this closeout.
+- **Handoff refresh:** `STATUS.md`, `.squad/review_report.md`, and `project_overview.md` now summarize the validated `DataLoader` slice and point the next loop at `task_03`.
+- **Return-to-build target:** The next automatable task is `task_03` (MCP Tools Implementation).
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
