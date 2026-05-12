@@ -1,4 +1,4 @@
-# Ralph — Ralph
+# Ralph — Memory Agent
 
 Persistent memory agent that maintains context across sessions.
 
