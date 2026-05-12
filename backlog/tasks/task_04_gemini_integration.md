@@ -13,14 +13,14 @@ Wire Google Gemini 2.5 Flash to the MCP tool registry so that natural-language u
 
 ## Acceptance Criteria
 
-- [ ] Module `src/llm_agent.py` implements a `CBOAgent` class with:
+- [x] Module `src/llm_agent.py` implements a `CBOAgent` class with:
   - `CBOAgent(api_key: str)` constructor
   - `ask(question: str) -> str` method that runs the full tool-call loop
-- [ ] The agent correctly handles multi-turn tool calling (Gemini calls a tool → result is fed back → Gemini produces final answer).
-- [ ] The Gemini API key is read from the `GEMINI_API_KEY` environment variable; never hardcoded.
-- [ ] The agent is tested end-to-end with at least 3 benchmark queries in `tests/test_llm_agent.py` (may be marked `@pytest.mark.integration` and skipped in CI if no key is present).
-- [ ] Robust JSON parsing handles edge cases in Gemini's tool-call response format.
-- [ ] Logging captures each tool call name and arguments at DEBUG level.
+- [x] The agent correctly handles multi-turn tool calling (Gemini calls a tool → result is fed back → Gemini produces final answer).
+- [x] The Gemini API key is read from the `GEMINI_API_KEY` environment variable; never hardcoded.
+- [x] The agent is tested end-to-end with at least 3 benchmark queries in `tests/test_llm_agent.py` (may be marked `@pytest.mark.integration` and skipped in CI if no key is present).
+- [x] Robust JSON parsing handles edge cases in Gemini's tool-call response format.
+- [x] Logging captures each tool call name and arguments at DEBUG level.
 
 ## Benchmark Queries
 

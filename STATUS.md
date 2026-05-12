@@ -2,19 +2,19 @@
 
 | Field | Value |
 |---|---|
-| Phase | validate |
+| Phase | closeout |
 | Last Updated | 2026-05-12 |
 | Squad Template | web_app |
 | Priority | low |
 | Blocking | None |
 | GitHub Repo | https://github.com/adkf37/CBO-data_mcp |
-| Next Action | Closeout |
+| Next Action | Build |
 
 ## Current Objective
 
-**Task ID:** `task_04`
+**Task ID:** `task_05`
 
-Validate for `task_04` is complete. Independent validation reran dependency installation, `python -m py_compile src/llm_agent.py`, `python -m pytest tests/test_llm_agent.py -v`, and `python -m pytest -q`. Results: syntax check passed, task-specific tests passed (10 passed, 3 integration skipped without `GEMINI_API_KEY`), and the full regression suite passed (38 passed, 3 skipped). Ready for Closeout.
+Closeout for `task_04` is complete. Independent review checked `.squad/sprint.md`, `backlog/tasks/task_04_gemini_integration.md`, `.squad/validation_report.md`, `project_overview.md`, and `FEEDBACK.md`, then reran `python -m pip install -r requirements.txt`, `python -m py_compile src/llm_agent.py`, `python -m pytest tests/test_llm_agent.py -v`, and `python -m pytest -q`. Results: dependency install succeeded, syntax check passed, task-specific tests passed (10 passed, 3 integration skipped without `GEMINI_API_KEY`), and the full regression suite passed (38 passed, 3 skipped). `task_04` meets the sprint Definition of Done, but `task_05` through `task_08` remain unfinished, so the repo should return to Build for `task_05`.
 
 ## Recent Activity
 
@@ -33,6 +33,7 @@ Validate for `task_04` is complete. Independent validation reran dependency inst
 - 2026-05-12: Validate completed for task_03 — dependency install, syntax validation, targeted MCP-tool tests, and full pytest regression checks all passed; Next Action set to Closeout
 - 2026-05-12: task_04 Build completed — `src/llm_agent.py` and `tests/test_llm_agent.py` created; 10 unit tests pass, 3 integration tests skip without API key; `pytest.ini` added to register the `integration` mark; full regression suite: 38 pass, 3 skipped
 - 2026-05-12: Validate completed for task_04 — dependency install, syntax validation, targeted LLM-agent tests, and full pytest regression checks all passed; Next Action set to Closeout
+- 2026-05-12: Closeout completed for task_04 — review report refreshed, task_04 checklist aligned to evidence, and repo returned to Build for `task_05`
 
 ## Artifacts
 
@@ -44,9 +45,10 @@ Validate for `task_04` is complete. Independent validation reran dependency inst
 | Backlog Tasks | `./backlog/tasks/` | reviewed & updated |
 | Squad Team | `./.squad/team.md` | existing |
 | Squad Routing | `./.squad/routing.md` | existing |
-| Squad Decisions | `./.squad/decisions.md` | updated (D-013 added) |
+| Squad Decisions | `./.squad/decisions.md` | updated (D-014 added) |
 | Validation Report | `./.squad/validation_report.md` | updated (task_04 validation) |
-| Review Report | `./.squad/review_report.md` | updated (task_03 closeout return-to-build decision) |
+| Review Report | `./.squad/review_report.md` | updated (task_04 closeout return-to-build decision) |
+| Project Overview | `./project_overview.md` | updated (task_04 handoff) |
 | Agent Charters | `./.squad/agents/*/charter.md` | existing |
 | Sprint Plan | `./.squad/sprint.md` | existing |
 | Catalog Script | `./scripts/catalog_data.py` | existing (task_01) |
@@ -61,4 +63,4 @@ Validate for `task_04` is complete. Independent validation reran dependency inst
 
 ## Needs Human Input
 
-- None. The next action is automated Closeout work for `task_04`.
+- None. The next action is automated Build work for `task_05`.
