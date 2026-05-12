@@ -24,15 +24,15 @@ Implement the core Model Context Protocol (MCP) tools that the LLM will call to 
 
 ## Acceptance Criteria
 
-- [ ] Module `src/mcp_tools.py` implements all 6 tools as callable Python functions.
-- [ ] Each tool has a docstring with parameter descriptions (used by the LLM as the tool schema).
-- [ ] Tool schemas are registered in `src/tool_registry.py` in MCP-compatible JSON format.
-- [ ] Unit tests in `tests/test_mcp_tools.py` cover:
+- [x] Module `src/mcp_tools.py` implements all 6 tools as callable Python functions.
+- [x] Each tool has a docstring with parameter descriptions (used by the LLM as the tool schema).
+- [x] Tool schemas are registered in `src/tool_registry.py` in MCP-compatible JSON format.
+- [x] Unit tests in `tests/test_mcp_tools.py` cover:
   - `list_file_types` returns a non-empty list.
   - `get_projection` returns correct rows for a known program + year.
   - `compare_vintages` returns both vintages' values in the result.
   - `export_csv` creates a file at the returned path.
-- [ ] All tools handle missing/invalid inputs gracefully and return informative error messages.
+- [x] All tools handle missing/invalid inputs gracefully and return informative error messages.
 
 ## Implementation Notes
 

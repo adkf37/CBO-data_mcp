@@ -60,5 +60,12 @@
 - **Handoff refresh:** `STATUS.md`, `.squad/review_report.md`, and `project_overview.md` now summarize the validated `DataLoader` slice and point the next loop at `task_03`.
 - **Return-to-build target:** The next automatable task is `task_03` (MCP Tools Implementation).
 
+### 2026-05-12 — Decision D-009 (Task ID: task_03)
+- **Routing applied:** Coordinator followed `.squad/routing.md` by assigning MCP implementation to Backend Dev, test coverage to Tester, and status/decision updates to Scribe within the same build slice.
+- **task_03 implementation completed:** Added `src/mcp_tools.py` with six callable MCP tools (`list_file_types`, `list_vintages`, `get_projection`, `compare_vintages`, `search_programs`, `export_csv`) that return JSON-serializable structures and graceful `{"error": ...}` messages for invalid inputs.
+- **Registry contract delivered:** Added `src/tool_registry.py` with a string→callable map, `get_tool`, `list_tool_names`, and `get_gemini_tool_declarations()` so Task 04 can resolve tool calls dynamically without hard-coded function references.
+- **Acceptance tests added:** Added `tests/test_mcp_tools.py` covering required behaviors (`list_file_types`, `get_projection`, `compare_vintages`, `export_csv`) plus registry/declaration checks and invalid year-range error handling.
+- **Build-loop validation evidence:** `python -m pytest tests/test_mcp_tools.py -q` passed (7/7) and `python -m pytest -q` passed (28/28). Recommended next step is Validate for `task_03`.
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
