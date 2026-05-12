@@ -2,7 +2,7 @@
 
 ## Scope
 
-- **Task ID:** `task_03`
+- **Task ID:** `task_04`
 - **Phase:** Validate
 - **Recommendation:** Pass → advance to Closeout
 
@@ -14,39 +14,41 @@
    - Evidence: The declared runtime and test dependencies installed successfully in the validation environment.
 
 2. **Syntax validation**
-   - Command: `python -m py_compile src/mcp_tools.py src/tool_registry.py`
+   - Command: `python -m py_compile src/llm_agent.py`
    - Result: Passed
-   - Evidence: Both task_03 Python modules compiled without syntax errors.
+   - Evidence: `src/llm_agent.py` compiled without syntax errors.
 
-3. **Targeted unit tests**
-   - Command: `python -m pytest tests/test_mcp_tools.py -q`
+3. **Task-specific pytest run**
+   - Command: `python -m pytest tests/test_llm_agent.py -v`
    - Result: Passed
    - Evidence summary:
-     - 7/7 tests passed in 1.04s.
-     - Confirmed `list_file_types`, `get_projection`, `compare_vintages`, and `export_csv` satisfy the explicit acceptance scenarios.
-     - Confirmed invalid year-range input returns an informative error and the registry exposes all six tool names plus Gemini declarations.
+     - 10/10 offline unit tests passed.
+     - 3/3 benchmark integration tests were discovered and skipped as designed because `GEMINI_API_KEY` is not set in the validation environment.
+     - Confirms constructor validation, tool-call dispatch, error wrapping, and iteration-cap behavior for `CBOAgent`.
 
-4. **Repository test regression check**
+4. **Repository regression check**
    - Command: `python -m pytest -q`
    - Result: Passed
    - Evidence summary:
-     - 28/28 tests passed in 0.53s.
-     - Confirms the task_03 slice does not regress the previously validated `task_02` `DataLoader` tests.
+     - 38 tests passed, 3 integration tests skipped.
+     - Confirms the task_04 slice does not regress the previously validated task_01–task_03 behavior.
 
 ## Blocked / Not Applicable Checks
 
+- **Live Gemini benchmark execution:** Blocked by missing `GEMINI_API_KEY` in the validation environment. This is acceptable for `task_04` because `tests/test_llm_agent.py` marks the 3 benchmark queries as integration tests and skips them automatically when no key is available.
 - **Lint / static type-check:** Blocked by missing repository configuration. No existing lint or static type command is defined in the repo.
-- **Coverage gate / repo-managed pytest defaults:** Deferred to `task_07`, which owns `pytest.ini`, broader suite structure, and the ≥70% coverage target.
+- **Coverage gate:** Deferred to `task_07`, which owns the broader suite structure and the `--cov=src` ≥70% requirement.
 
 ## Acceptance Criteria Review
 
-- [x] Module `src/mcp_tools.py` implements all 6 tools as callable Python functions
-- [x] Each tool has a docstring with parameter descriptions
-- [x] Tool schemas are registered in `src/tool_registry.py` in MCP-compatible JSON format
-- [x] Unit tests in `tests/test_mcp_tools.py` cover the required `task_03` behaviors and pass
-- [x] All tools handle missing/invalid inputs gracefully and return informative error messages
+- [x] Module `src/llm_agent.py` implements a `CBOAgent` class with constructor and `ask(question) -> str`
+- [x] The agent handles multi-turn tool calling by dispatching tool calls and feeding responses back to Gemini
+- [x] The Gemini API key is read from `GEMINI_API_KEY` and is never hardcoded
+- [x] `tests/test_llm_agent.py` contains the 3 benchmark integration queries with skip-on-missing-key behavior
+- [x] Response parsing is defensive enough to handle missing direct text output
+- [x] DEBUG logging captures each tool call name and arguments
 
 ## Risks / Follow-up
 
-- Validation covered the current `task_03` slice only; sprint tasks `task_04` through `task_08` still require their own build/validate loops.
-- `export_csv` is validated as the Task 03 stub that writes a basic file; Task `task_06` still owns the full export naming, metadata, and CLI integration work.
+- The upstream `google.generativeai` package emits a deprecation `FutureWarning`; task_04 explicitly defers migration, so this is a non-blocking risk for a future build slice rather than a validation failure.
+- End-to-end live Gemini verification still requires a human or CI environment with `GEMINI_API_KEY` and the cataloged data available.
