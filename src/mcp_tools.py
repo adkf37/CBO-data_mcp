@@ -7,7 +7,7 @@ All tool outputs are JSON-serializable dict/list structures.
 
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
 
@@ -31,7 +31,7 @@ def _resolve_loader(loader: Optional[DataLoader]) -> DataLoader:
     return loader if loader is not None else DataLoader()
 
 
-def list_file_types(*, loader: Optional[DataLoader] = None) -> list[dict[str, Any]] | dict[str, str]:
+def list_file_types(*, loader: Optional[DataLoader] = None) -> list[dict[str, Any]] | dict[str, Any]:
     """List all available CBO file types.
 
     Parameters
@@ -64,7 +64,7 @@ def list_file_types(*, loader: Optional[DataLoader] = None) -> list[dict[str, An
 
 def list_vintages(
     file_type: str, *, loader: Optional[DataLoader] = None
-) -> dict[str, Any] | dict[str, str]:
+) -> dict[str, Any]:
     """List available vintages for a file type.
 
     Parameters
@@ -97,7 +97,7 @@ def get_projection(
     year_end: Optional[int] = None,
     vintage: Optional[str] = None,
     loader: Optional[DataLoader] = None,
-) -> dict[str, Any] | dict[str, str]:
+) -> dict[str, Any]:
     """Get projection rows filtered by file type, program, year range, and vintage.
 
     Parameters
@@ -170,7 +170,7 @@ def compare_vintages(
     program: Optional[str] = None,
     year: Optional[int] = None,
     loader: Optional[DataLoader] = None,
-) -> dict[str, Any] | dict[str, str]:
+) -> dict[str, Any]:
     """Compare one metric side-by-side for two vintages.
 
     Parameters
@@ -267,7 +267,7 @@ def search_programs(
     query: str,
     limit: int = 20,
     loader: Optional[DataLoader] = None,
-) -> dict[str, Any] | dict[str, str]:
+) -> dict[str, Any]:
     """Search program/category names in a file type.
 
     Parameters
@@ -322,7 +322,7 @@ def export_csv(
     *,
     output_dir: str = "./exports",
     filename: Optional[str] = None,
-) -> dict[str, Any] | dict[str, str]:
+) -> dict[str, Any]:
     """Export query rows to CSV.
 
     Parameters
@@ -349,7 +349,7 @@ def export_csv(
         out_dir = Path(output_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        safe_filename = filename or f"cbo_export_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
+        safe_filename = filename or f"cbo_export_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.csv"
         out_path = out_dir / safe_filename
 
         pd.DataFrame(rows).to_csv(out_path, index=False)
