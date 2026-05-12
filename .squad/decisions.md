@@ -79,5 +79,18 @@
 - **Handoff refresh:** `STATUS.md`, `.squad/review_report.md`, and `project_overview.md` now summarize the validated MCP tools slice and point the next loop at `task_04`.
 - **Return-to-build target:** The next automatable task is `task_04` (Gemini 2.5 Flash Integration).
 
+### 2026-05-12 — Decision D-012 (Task ID: task_04)
+- **Routing applied:** Coordinator assigned `task_04` to Backend Dev (Gemini integration) and Tester (unit tests), per `.squad/routing.md`. Scribe logs this decision.
+- **task_04 implementation completed:** Added `src/llm_agent.py` with `CBOAgent` class:
+  - `CBOAgent(api_key: str | None)` constructor reads the API key from `GEMINI_API_KEY` env var (via python-dotenv); raises `ValueError` if absent; never hardcodes or logs the key.
+  - `ask(question: str) -> str` runs the Gemini tool-calling loop, dispatching function calls through `get_tool()` from `tool_registry.py`, capping iterations at `_MAX_TOOL_ITERATIONS = 10`, and logging each call at DEBUG level.
+  - `_build_genai_tools()` converts the `get_gemini_tool_declarations()` dict list to `genai.protos.Tool` / `FunctionDeclaration` objects for the Gemini SDK.
+  - Graceful error handling: unknown or failing tool calls return `{"error": ...}` fed back to the model rather than raising.
+- **Tests added:** `tests/test_llm_agent.py` — 10 offline unit tests (constructor validation, single-turn Q&A, tool dispatch with args, error wrapping, iteration cap) plus 3 benchmark integration tests (`@pytest.mark.integration`, auto-skipped without `GEMINI_API_KEY`).
+- **pytest.ini added:** Registers the `integration` mark to silence `PytestUnknownMarkWarning`; aligns with `task_07` acceptance gate (`pytest tests/ -m "not integration"`).
+- **SDK deprecation noted:** `google-generativeai` is deprecated upstream (replaced by `google-genai`). Per task spec requirement, `google-generativeai>=0.5.0` is retained; migration to `google-genai` is deferred to a future task.
+- **Build-loop validation evidence:** `python -m py_compile src/llm_agent.py` — syntax OK; `python -m pytest tests/test_llm_agent.py -v` — 10 passed, 3 skipped; `python -m pytest -q` — 38 passed, 3 skipped.
+- **Next task:** Validate for `task_04`.
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
