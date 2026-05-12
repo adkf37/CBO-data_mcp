@@ -106,5 +106,13 @@
 - **Known follow-up risk:** Live Gemini benchmark execution still requires `GEMINI_API_KEY`, and the upstream `google.generativeai` deprecation warning remains a non-blocking future migration item.
 - **Return-to-build target:** The next automatable task is `task_05` (Interactive CLI Interface).
 
+### 2026-05-12 — Decision D-015 (Task ID: task_05)
+- **Routing applied:** Coordinator assigned CLI implementation to Backend Dev, CLI smoke test coverage to Tester, and lifecycle/decision updates to Scribe per `.squad/routing.md`.
+- **task_05 implementation completed:** Added `main.py` with `CBOCLI` REPL entry point runnable via `python main.py`, startup banner, command handlers for `/help`, `/types`, `/vintages <file_type>`, `/export [filename]`, and `/quit`/`/exit`, plus natural-language routing to `CBOAgent.ask()`.
+- **Session-state/export behavior:** Added in-memory `CLIState` (`last_question`, `last_answer`, `last_rows`) so `/export` can call `export_csv` without re-running a query.
+- **Resilience and UX:** CLI catches input and tool errors, prints friendly messages, wraps output to configurable width (`CBO_CLI_WIDTH`, default 120), and gracefully degrades when `GEMINI_API_KEY` is missing.
+- **Acceptance tests added:** Added `tests/test_cli.py` smoke tests covering a mock question + `/export` + `/quit` loop and clean `/quit` exit behavior.
+- **Build-loop validation evidence:** `python -m pytest tests/test_cli.py -q` passed (2/2) and `python -m pytest -q` passed (40 passed, 3 skipped).
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
