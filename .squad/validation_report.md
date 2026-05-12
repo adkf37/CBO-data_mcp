@@ -3,7 +3,7 @@
 ## Scope
 
 - **Task ID:** `task_01`
-- **Reviewer phase:** Validate
+- **Phase:** Validate
 - **Recommendation:** Pass → advance to Closeout
 
 ## Checks Run
