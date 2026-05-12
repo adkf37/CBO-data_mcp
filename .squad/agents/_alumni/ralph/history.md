@@ -5,12 +5,12 @@
 
 ## Core Context
 
-Agent Ralph initialized and ready for work.
+Agent Ralph retired from the active roster and archived for historical context.
 
 ## Recent Updates
 
-📌 Team initialized on 2026-05-12
+📌 Agent moved to alumni on 2026-05-12
 
 ## Learnings
 
-Initial setup complete.
+Retirement archived; no new assignments will be routed to Ralph.

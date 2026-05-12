@@ -19,4 +19,4 @@ How to decide who handles what in CBO-data_mcp.
 1. Route each task to the single primary owner based on core domain.
 2. Keep implementation aligned to `.squad/sprint.md` and `backlog/tasks/`.
 3. Scribe updates logs after substantial work and does not block coding progress.
-4. External Reviewer (Maestro reviewer agent) remains independent for Validate/Closeout; coordinator prepares evidence for that role.
+4. External Reviewer (Maestro reviewer agent) remains independent for Validate/Closeout; Tester prepares evidence and Squad Coordinator handles handoff routing.
