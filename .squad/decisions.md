@@ -31,5 +31,11 @@
 - **Validation scope boundary:** No repo-managed lint, type-check, or pytest configuration exists yet, so validation for this slice focused on task_01's explicit acceptance criteria plus Python syntax compilation.
 - **Next loop recommendation:** Advance to Closeout for task_01, then return to Build for `task_02` if closeout agrees.
 
+### 2026-05-12 — Decision D-005 (Task ID: task_01)
+- **Closeout outcome:** Reviewer confirmed `task_01` satisfies the sprint Definition of Done for this loop after rerunning the existing validation commands and aligning the task checklist with the validated implementation.
+- **Explicit non-complete rationale:** `.squad/sprint.md` still shows `task_02` through `task_08` as unfinished, so the project cannot emit `Complete` during this closeout.
+- **Handoff refresh:** `STATUS.md`, `.squad/review_report.md`, and `project_overview.md` now point the next loop at `task_02` and summarize the validated state of the cataloging slice for humans picking up the repo.
+- **Return-to-build target:** The next automatable task is `task_02` (Cross-Vintage Data Consolidation).
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
