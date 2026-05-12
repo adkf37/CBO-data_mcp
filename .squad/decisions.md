@@ -73,5 +73,11 @@
 - **Validation scope boundary:** No repository-managed lint or static type-check command exists yet, and broader coverage thresholds remain owned by `task_07`, so validation stayed focused on the explicit `task_03` acceptance criteria plus regression coverage from the current repo test suite.
 - **Next loop recommendation:** Advance to Closeout for `task_03`; if closeout agrees, return to Build for `task_04`.
 
+### 2026-05-12 — Decision D-011 (Task ID: task_03)
+- **Closeout outcome:** Reviewer confirmed `task_03` satisfies the sprint Definition of Done after rerunning the existing validation commands, checking the task checklist in `backlog/tasks/task_03_mcp_tools.md`, and verifying the review/validation artifacts align with the implemented MCP tools slice.
+- **Explicit non-complete rationale:** `.squad/sprint.md` still shows `task_04` through `task_08` as unfinished, so the project cannot emit `Complete` during this closeout.
+- **Handoff refresh:** `STATUS.md`, `.squad/review_report.md`, and `project_overview.md` now summarize the validated MCP tools slice and point the next loop at `task_04`.
+- **Return-to-build target:** The next automatable task is `task_04` (Gemini 2.5 Flash Integration).
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.

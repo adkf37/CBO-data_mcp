@@ -2,19 +2,19 @@
 
 | Field | Value |
 |---|---|
-| Phase | validate |
+| Phase | closeout |
 | Last Updated | 2026-05-12 |
 | Squad Template | web_app |
 | Priority | low |
 | Blocking | None |
 | GitHub Repo | https://github.com/adkf37/CBO-data_mcp |
-| Next Action | Closeout |
+| Next Action | Build |
 
 ## Current Objective
 
-**Task ID:** `task_03`
+**Task ID:** `task_04`
 
-Validation for `task_03` is complete. Independent review confirmed `src/mcp_tools.py`, `src/tool_registry.py`, and `tests/test_mcp_tools.py` satisfy the sprint acceptance gate: `python -m py_compile src/mcp_tools.py src/tool_registry.py`, `python -m pytest tests/test_mcp_tools.py -q`, and `python -m pytest -q` all passed after installing the declared dependencies. The next explicit action is Closeout for `task_03`.
+Closeout for `task_03` is complete. Independent review confirmed the validated MCP tools slice satisfies the sprint Definition of Done: `src/mcp_tools.py` and `src/tool_registry.py` remain in place, `tests/test_mcp_tools.py` covers the required behaviors, `.squad/decisions.md` records the task_03 validation and closeout evidence, and `python -m py_compile src/mcp_tools.py src/tool_registry.py`, `python -m pytest tests/test_mcp_tools.py -q`, and `python -m pytest -q` all passed in the closeout environment. The next explicit action is Build for `task_04`.
 
 ## Recent Activity
 
@@ -31,6 +31,7 @@ Validation for `task_03` is complete. Independent review confirmed `src/mcp_tool
 - 2026-05-12: Closeout completed for task_02 — review report refreshed, task_02 checklist aligned to evidence, and repo returned to Build for `task_03`
 - 2026-05-12: task_03 Build completed — `src/mcp_tools.py` and `src/tool_registry.py` created; `tests/test_mcp_tools.py` added; targeted and full pytest runs pass (7 and 28 tests)
 - 2026-05-12: Validate completed for task_03 — dependency install, syntax validation, targeted MCP-tool tests, and full pytest regression checks all passed; Next Action set to Closeout
+- 2026-05-12: Closeout completed for task_03 — review artifacts refreshed, handoff summary updated, and repo returned to Build for `task_04`
 
 ## Artifacts
 
@@ -42,9 +43,9 @@ Validation for `task_03` is complete. Independent review confirmed `src/mcp_tool
 | Backlog Tasks | `./backlog/tasks/` | reviewed & updated |
 | Squad Team | `./.squad/team.md` | existing |
 | Squad Routing | `./.squad/routing.md` | existing |
-| Squad Decisions | `./.squad/decisions.md` | updated (D-010 added) |
+| Squad Decisions | `./.squad/decisions.md` | updated (D-011 added) |
 | Validation Report | `./.squad/validation_report.md` | updated (task_03 validation) |
-| Review Report | `./.squad/review_report.md` | updated (task_02 closeout return-to-build decision) |
+| Review Report | `./.squad/review_report.md` | updated (task_03 closeout return-to-build decision) |
 | Agent Charters | `./.squad/agents/*/charter.md` | existing |
 | Sprint Plan | `./.squad/sprint.md` | existing |
 | Catalog Script | `./scripts/catalog_data.py` | existing (task_01) |
@@ -57,4 +58,4 @@ Validation for `task_03` is complete. Independent review confirmed `src/mcp_tool
 
 ## Needs Human Input
 
-- None. The next action is automated Closeout work for `task_03`.
+- None. The next action is automated Build work for `task_04`.
