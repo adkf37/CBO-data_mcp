@@ -37,5 +37,16 @@
 - **Handoff refresh:** `STATUS.md`, `.squad/review_report.md`, and `project_overview.md` now point the next loop at `task_02` and summarize the validated state of the cataloging slice for humans picking up the repo.
 - **Return-to-build target:** The next automatable task is `task_02` (Cross-Vintage Data Consolidation).
 
+### 2026-05-12 — Decision D-006 (Task ID: task_02)
+- **task_02 completed:** `src/data_loader.py` (`DataLoader` class) and `tests/test_data_loader.py` (21 unit tests) implemented.
+- **Catalog dependency:** `DataLoader` reads `data/catalog.json` (Task 01 output) at construction time and indexes entries by `file_type` for O(1) lookup. Raises `FileNotFoundError` with a clear message if the catalog is absent.
+- **Vintage extraction:** Reuses the same `VINTAGE_RE` regex as `catalog_data.py` (`^(.+?)_(\d{4})(?:_(\d{2}))?$`). Vintage is derived from each CSV filename stem; falls back to `"unknown"` if no pattern matches.
+- **Schema drift handling:** `pd.concat(..., sort=False)` across vintage frames fills missing columns with NaN. A `log.warning` is emitted per file type where column sets differ.
+- **Memory guard:** If a consolidated DataFrame's deep memory usage exceeds 500 MB the DataFrame is written to parquet but **not** stored in `self._cache`. A warning is logged.
+- **Parquet caching:** Consolidated files written to `data/consolidated/<file_type>.parquet` (directory auto-created). A fresh `DataLoader` instance loads from parquet if the file exists, bypassing CSV re-reads.
+- **In-memory cache:** `self._cache[file_type]` stores the DataFrame after the first load (if within memory guard); subsequent calls return the same object.
+- **Test isolation:** Tests use `tmp_path` fixtures and `monkeypatch` to redirect `_PROJECT_ROOT` so no real `data/raw/` or `data/catalog.json` is required. All 21 tests pass without network access.
+- **Next task:** `task_03` — MCP Tools Implementation (`src/mcp_tools.py`, `src/tool_registry.py`).
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.

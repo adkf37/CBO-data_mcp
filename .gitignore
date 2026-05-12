@@ -15,3 +15,5 @@ node_modules/
 # Data: raw data clone and generated catalog (task_01)
 data/raw/
 data/catalog.json
+# Data: consolidated parquet cache (task_02)
+data/consolidated/
