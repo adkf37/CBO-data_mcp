@@ -23,16 +23,16 @@ https://github.com/adkf37/Data_friendly_CBO_Baseline_Detail
 
 ## Acceptance Criteria
 
-- [ ] A script `scripts/catalog_data.py` clones/updates the data repo into `data/raw/`.
-- [ ] The script produces `data/catalog.json` with entries for each unique file type, listing:
+- [x] A script `scripts/catalog_data.py` clones/updates the data repo into `data/raw/`.
+- [x] The script produces `data/catalog.json` with entries for each unique file type, listing:
   - `file_type` (string identifier)
   - `description` (from `docs/` schema)
   - `columns` (list of column names and types)
   - `vintages` (list of available release years/dates)
   - `file_paths` (list of matching CSV file paths)
-- [ ] At least 25 of the ~30 file types are catalogued.
-- [ ] Script runs without errors: `python scripts/catalog_data.py`
-- [ ] `data/raw/` and `data/catalog.json` are excluded from git (added to `.gitignore`).
+- [x] At least 25 of the ~30 file types are catalogued.
+- [x] Script runs without errors: `python scripts/catalog_data.py`
+- [x] `data/raw/` and `data/catalog.json` are excluded from git (added to `.gitignore`).
 
 ## Implementation Notes
 

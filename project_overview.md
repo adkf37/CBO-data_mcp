@@ -1,7 +1,7 @@
 # CBO-data_mcp - Project Overview
 
 Date: 2026-05-12
-Status: Initial concept and backlog
+Status: Closeout complete for task_01; next up is Build for task_02
 
 ## Purpose
 
@@ -28,3 +28,9 @@ https://github.com/adkf37/Gemini_Homicide_Bot
 - There are around 30 types of files with multiple vintages
 - The docs folder has schemas that explain the data.
 - We should string together multiple vintages worth of data to more easily allow for cross vintage comparison
+
+## Current Handoff Snapshot
+
+- **Completed in this loop:** `task_01` cataloging is implemented and revalidated; `python scripts/catalog_data.py` regenerates `data/catalog.json` with 51 file types.
+- **Current repo state:** closeout is complete for the cataloging slice, and the repo is ready to return to Build.
+- **Next explicit task:** `task_02` — create `src/data_loader.py` to consolidate multi-vintage CSVs and expose file type / vintage listing methods.
