@@ -25,7 +25,11 @@
 - **Output:** 51 distinct file types catalogued (acceptance criterion: ≥ 25). `data/raw/` and `data/catalog.json` added to `.gitignore`.
 - **Network failure handling:** If the clone fails, the script logs a warning and continues with whatever data is already present in `data/raw/`.
 
-
+### 2026-05-12 — Decision D-004 (Task ID: task_01)
+- **Validation evidence recorded:** After installing the existing dependencies from `requirements.txt`, `python scripts/catalog_data.py` ran successfully in a clean clone and regenerated `data/catalog.json`.
+- **Acceptance gate passed:** Manual structure validation confirmed 51 catalog entries, with every entry exposing `file_type`, `description`, `columns`, `vintages`, and `file_paths`.
+- **Validation scope boundary:** No repo-managed lint, type-check, or pytest configuration exists yet, so validation for this slice focused on task_01's explicit acceptance criteria plus Python syntax compilation.
+- **Next loop recommendation:** Advance to Closeout for task_01, then return to Build for `task_02` if closeout agrees.
 
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
