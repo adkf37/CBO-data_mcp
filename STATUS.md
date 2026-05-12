@@ -2,19 +2,19 @@
 
 | Field | Value |
 |---|---|
-| Phase | build |
+| Phase | validate |
 | Last Updated | 2026-05-12 |
 | Squad Template | web_app |
 | Priority | low |
 | Blocking | None |
 | GitHub Repo | https://github.com/adkf37/CBO-data_mcp |
-| Next Action | Validate |
+| Next Action | Closeout |
 
 ## Current Objective
 
 **Task ID:** `task_04`
 
-Build for `task_04` is complete. `src/llm_agent.py` implements `CBOAgent` with a `CBOAgent(api_key)` constructor and `ask(question) -> str` method that runs the full Gemini tool-calling loop. All MCP tools from `tool_registry.py` are registered as Gemini function declarations. The agent caps tool iterations at 10, logs each tool call at DEBUG level, and handles unknown tool names gracefully. `tests/test_llm_agent.py` adds 10 unit tests (all pass offline) and 3 benchmark integration tests (skip automatically when `GEMINI_API_KEY` is absent). Full regression: `python -m pytest -q` passes 38 tests (3 skipped). Ready for Validate phase.
+Validate for `task_04` is complete. Independent validation reran dependency installation, `python -m py_compile src/llm_agent.py`, `python -m pytest tests/test_llm_agent.py -v`, and `python -m pytest -q`. Results: syntax check passed, task-specific tests passed (10 passed, 3 integration skipped without `GEMINI_API_KEY`), and the full regression suite passed (38 passed, 3 skipped). Ready for Closeout.
 
 ## Recent Activity
 
@@ -32,6 +32,7 @@ Build for `task_04` is complete. `src/llm_agent.py` implements `CBOAgent` with a
 - 2026-05-12: task_03 Build completed — `src/mcp_tools.py` and `src/tool_registry.py` created; `tests/test_mcp_tools.py` added; targeted and full pytest runs pass (7 and 28 tests)
 - 2026-05-12: Validate completed for task_03 — dependency install, syntax validation, targeted MCP-tool tests, and full pytest regression checks all passed; Next Action set to Closeout
 - 2026-05-12: task_04 Build completed — `src/llm_agent.py` and `tests/test_llm_agent.py` created; 10 unit tests pass, 3 integration tests skip without API key; `pytest.ini` added to register the `integration` mark; full regression suite: 38 pass, 3 skipped
+- 2026-05-12: Validate completed for task_04 — dependency install, syntax validation, targeted LLM-agent tests, and full pytest regression checks all passed; Next Action set to Closeout
 
 ## Artifacts
 
@@ -43,8 +44,8 @@ Build for `task_04` is complete. `src/llm_agent.py` implements `CBOAgent` with a
 | Backlog Tasks | `./backlog/tasks/` | reviewed & updated |
 | Squad Team | `./.squad/team.md` | existing |
 | Squad Routing | `./.squad/routing.md` | existing |
-| Squad Decisions | `./.squad/decisions.md` | updated (D-011 added) |
-| Validation Report | `./.squad/validation_report.md` | updated (task_03 validation) |
+| Squad Decisions | `./.squad/decisions.md` | updated (D-013 added) |
+| Validation Report | `./.squad/validation_report.md` | updated (task_04 validation) |
 | Review Report | `./.squad/review_report.md` | updated (task_03 closeout return-to-build decision) |
 | Agent Charters | `./.squad/agents/*/charter.md` | existing |
 | Sprint Plan | `./.squad/sprint.md` | existing |
@@ -60,4 +61,4 @@ Build for `task_04` is complete. `src/llm_agent.py` implements `CBOAgent` with a
 
 ## Needs Human Input
 
-- None. The next action is automated Build work for `task_04`.
+- None. The next action is automated Closeout work for `task_04`.

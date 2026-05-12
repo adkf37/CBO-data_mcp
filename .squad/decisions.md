@@ -92,5 +92,12 @@
 - **Build-loop validation evidence:** `python -m py_compile src/llm_agent.py` — syntax OK; `python -m pytest tests/test_llm_agent.py -v` — 10 passed, 3 skipped; `python -m pytest -q` — 38 passed, 3 skipped.
 - **Next task:** Validate for `task_04`.
 
+### 2026-05-12 — Decision D-013 (Task ID: task_04)
+- **Validation evidence recorded:** `python -m pip install -r requirements.txt`, `python -m py_compile src/llm_agent.py`, `python -m pytest tests/test_llm_agent.py -v`, and `python -m pytest -q` all passed in the independent validation environment.
+- **Acceptance gate passed:** The evidence confirms `CBOAgent` reads `GEMINI_API_KEY`, registers Gemini tool declarations from the registry, runs the multi-turn tool loop with a 10-iteration cap, logs tool calls at DEBUG level, and keeps the benchmark Gemini queries covered in `tests/test_llm_agent.py`.
+- **Blocked but acceptable validation scope:** Live Gemini benchmark execution remained blocked because `GEMINI_API_KEY` is absent in the validation environment; the integration tests were discovered and skipped as designed, which matches the task contract.
+- **Non-blocking risk noted:** `google.generativeai` emits an upstream deprecation warning; task_04 explicitly defers migration, so validation records it as follow-up rather than a failure.
+- **Next loop recommendation:** Advance to Closeout for `task_04`; if closeout agrees, return to Build for `task_05`.
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
