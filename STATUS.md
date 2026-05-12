@@ -2,19 +2,19 @@
 
 | Field | Value |
 |---|---|
-| Phase | build |
+| Phase | validate |
 | Last Updated | 2026-05-12 |
 | Squad Template | web_app |
 | Priority | low |
 | Blocking | None |
 | GitHub Repo | https://github.com/adkf37/CBO-data_mcp |
-| Next Action | Validate |
+| Next Action | Closeout |
 
 ## Current Objective
 
 **Task ID:** `task_03`
 
-Build work for `task_03` is complete. Following routing guidance, Backend Dev implemented the MCP tool layer in `src/mcp_tools.py` and registry wiring in `src/tool_registry.py`; Tester added `tests/test_mcp_tools.py` coverage for the acceptance checks. Validation evidence in this build loop: `python -m pytest tests/test_mcp_tools.py -q` (7 passed) and `python -m pytest -q` (28 passed). The next explicit action is Validate for `task_03`.
+Validation for `task_03` is complete. Independent review confirmed `src/mcp_tools.py`, `src/tool_registry.py`, and `tests/test_mcp_tools.py` satisfy the sprint acceptance gate: `python -m py_compile src/mcp_tools.py src/tool_registry.py`, `python -m pytest tests/test_mcp_tools.py -q`, and `python -m pytest -q` all passed after installing the declared dependencies. The next explicit action is Closeout for `task_03`.
 
 ## Recent Activity
 
@@ -30,6 +30,7 @@ Build work for `task_03` is complete. Following routing guidance, Backend Dev im
 - 2026-05-12: Validate completed for task_02 — `src/data_loader.py` compiled cleanly and `python -m pytest tests/test_data_loader.py -v` passed all 21 tests; Next Action set to Closeout
 - 2026-05-12: Closeout completed for task_02 — review report refreshed, task_02 checklist aligned to evidence, and repo returned to Build for `task_03`
 - 2026-05-12: task_03 Build completed — `src/mcp_tools.py` and `src/tool_registry.py` created; `tests/test_mcp_tools.py` added; targeted and full pytest runs pass (7 and 28 tests)
+- 2026-05-12: Validate completed for task_03 — dependency install, syntax validation, targeted MCP-tool tests, and full pytest regression checks all passed; Next Action set to Closeout
 
 ## Artifacts
 
@@ -41,8 +42,8 @@ Build work for `task_03` is complete. Following routing guidance, Backend Dev im
 | Backlog Tasks | `./backlog/tasks/` | reviewed & updated |
 | Squad Team | `./.squad/team.md` | existing |
 | Squad Routing | `./.squad/routing.md` | existing |
-| Squad Decisions | `./.squad/decisions.md` | updated (D-009 added) |
-| Validation Report | `./.squad/validation_report.md` | updated (task_02 validation) |
+| Squad Decisions | `./.squad/decisions.md` | updated (D-010 added) |
+| Validation Report | `./.squad/validation_report.md` | updated (task_03 validation) |
 | Review Report | `./.squad/review_report.md` | updated (task_02 closeout return-to-build decision) |
 | Agent Charters | `./.squad/agents/*/charter.md` | existing |
 | Sprint Plan | `./.squad/sprint.md` | existing |
@@ -56,4 +57,4 @@ Build work for `task_03` is complete. Following routing guidance, Backend Dev im
 
 ## Needs Human Input
 
-- None. The next action is automated Validate work for `task_03`.
+- None. The next action is automated Closeout work for `task_03`.
