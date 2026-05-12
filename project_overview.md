@@ -1,7 +1,7 @@
 # CBO-data_mcp - Project Overview
 
 Date: 2026-05-12
-Status: Closeout complete for task_02; next up is Build for task_03
+Status: Closeout complete for task_03; next up is Build for task_04
 
 ## Purpose
 
@@ -31,8 +31,8 @@ https://github.com/adkf37/Gemini_Homicide_Bot
 
 ## Current Handoff Snapshot
 
-- **Completed in this loop:** `task_02` data consolidation is implemented and revalidated; `src/data_loader.py` compiles cleanly and `python -m pytest tests/test_data_loader.py -v` passes all 21 tests.
-- **Current repo state:** closeout is complete for the data-loader slice, and the repo is ready to return to Build.
-- **What is now available:** `DataLoader` can list file types, list vintages, consolidate multi-vintage CSVs into DataFrames with a non-null `vintage` column, and write/read parquet caches in `data/consolidated/`.
-- **Known gaps before project completion:** `task_03` through `task_08` remain open, including MCP tools, Gemini integration, CLI work, broader test/coverage gates, and the final end-user docs (`README.md`, `QUICK_START.md`, `.env.example`).
-- **Next explicit task:** `task_03` — implement `src/mcp_tools.py` and `src/tool_registry.py` for the six planned MCP tools.
+- **Completed in this loop:** `task_03` MCP tools are implemented and revalidated; `src/mcp_tools.py` and `src/tool_registry.py` compile cleanly, `python -m pytest tests/test_mcp_tools.py -q` passes 7/7 tests, and `python -m pytest -q` passes 28/28 regression tests.
+- **Current repo state:** closeout is complete for the MCP-tools slice, and the repo is ready to return to Build.
+- **What is now available:** Six callable MCP tools (`list_file_types`, `list_vintages`, `get_projection`, `compare_vintages`, `search_programs`, `export_csv`) plus registry helpers that expose tool lookup, tool names, and Gemini-ready function declarations for the next integration step.
+- **Known gaps before project completion:** `task_04` through `task_08` remain open, including Gemini integration, CLI work, export hardening, broader test/coverage gates, and the final end-user docs (`README.md`, `QUICK_START.md`, `.env.example`).
+- **Next explicit task:** `task_04` — implement `src/llm_agent.py` and wire Gemini 2.5 Flash to the MCP tool registry.
