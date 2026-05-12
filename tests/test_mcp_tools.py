@@ -91,8 +91,9 @@ def test_compare_vintages_returns_both_vintage_values():
 
 
 def test_export_csv_creates_file(tmp_path: Path):
+    rows = [{"program": "Medicaid", "value": 110.0}]
     result = export_csv(
-        [{"program": "Medicaid", "value": 110.0}],
+        rows,
         output_dir=str(tmp_path),
         filename="out.csv",
     )
@@ -100,6 +101,8 @@ def test_export_csv_creates_file(tmp_path: Path):
     output = Path(result["file_path"])
     assert output.exists()
     assert output.name == "out.csv"
+    written = pd.read_csv(output).to_dict(orient="records")
+    assert written == rows
 
 
 def test_get_projection_invalid_year_range_returns_error():
