@@ -11,3 +11,7 @@ node_modules/
 .squad/.scratch/
 # Squad: SubSquad activation file (local to this machine)
 .squad-workstream
+
+# Data: raw data clone and generated catalog (task_01)
+data/raw/
+data/catalog.json
