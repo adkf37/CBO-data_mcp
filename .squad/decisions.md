@@ -67,5 +67,11 @@
 - **Acceptance tests added:** Added `tests/test_mcp_tools.py` covering required behaviors (`list_file_types`, `get_projection`, `compare_vintages`, `export_csv`) plus registry/declaration checks and invalid year-range error handling.
 - **Build-loop validation evidence:** `python -m pytest tests/test_mcp_tools.py -q` passed (7/7) and `python -m pytest -q` passed (28/28). Recommended next step is Validate for `task_03`.
 
+### 2026-05-12 — Decision D-010 (Task ID: task_03)
+- **Validation evidence recorded:** `python -m pip install -r requirements.txt`, `python -m py_compile src/mcp_tools.py src/tool_registry.py`, `python -m pytest tests/test_mcp_tools.py -q`, and `python -m pytest -q` all passed in the independent validation environment.
+- **Acceptance gate passed:** The evidence confirms all six MCP tools remain callable, required tool schemas are registered in `src/tool_registry.py`, invalid-input handling is covered, and the Task 03 `export_csv` stub writes a real file.
+- **Validation scope boundary:** No repository-managed lint or static type-check command exists yet, and broader coverage thresholds remain owned by `task_07`, so validation stayed focused on the explicit `task_03` acceptance criteria plus regression coverage from the current repo test suite.
+- **Next loop recommendation:** Advance to Closeout for `task_03`; if closeout agrees, return to Build for `task_04`.
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
