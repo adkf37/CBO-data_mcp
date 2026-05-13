@@ -26,20 +26,8 @@ COPY web/       ./web/
 COPY scripts/   ./scripts/
 COPY main.py    .
 
-# Copy data catalogue if it already exists locally (preferred — avoids a
-# network download at image-build time).  If the data/ directory is absent
-# from the build context the COPY will be skipped gracefully; the catalog
-# script will run instead via the CMD entrypoint wrapper below.
-COPY data/ ./data/
-
-# Download CBO data if the catalog is not already present in the image.
-# This runs once during `docker build` (or `gcloud run deploy --source`).
-RUN if [ ! -f data/catalog.json ]; then \
-      echo "Catalog not found — downloading CBO data..." && \
-      python scripts/catalog_data.py; \
-    else \
-      echo "Catalog found — skipping download."; \
-    fi
+# Download CBO data at image-build time.
+RUN python scripts/catalog_data.py
 
 # Cloud Run injects PORT; gunicorn binds to it.
 ENV PORT=8080
