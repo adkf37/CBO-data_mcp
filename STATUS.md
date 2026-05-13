@@ -2,19 +2,19 @@
 
 | Field | Value |
 |---|---|
-| Phase | validate |
+| Phase | closeout |
 | Last Updated | 2026-05-13 |
 | Squad Template | web_app |
 | Priority | low |
 | Blocking | None |
 | GitHub Repo | https://github.com/adkf37/CBO-data_mcp |
-| Next Action | Closeout |
+| Next Action | Build |
 
 ## Current Objective
 
 **Task ID:** `task_06`
 
-Validate work for `task_06` (CSV Export Capability) is complete. Independent validation in this fresh clone confirmed the enhanced `src/mcp_tools.py` export flow and CLI wiring in `main.py`: `python -m py_compile main.py src/mcp_tools.py` passed, `python -m pytest tests/test_csv_export.py tests/test_cli.py tests/test_mcp_tools.py -q` passed (11/11), `python -m pytest -q` passed (42 passed, 3 skipped), and `python -m pytest tests/ -m "not integration" --cov=src --cov-report=term` reported 78% total `src/` coverage. The only blocked scope remains live Gemini-backed execution because `GEMINI_API_KEY` is absent in the validation environment; that is already handled by the existing integration-test skip contract. The repo should now hand off to Closeout for task_06, with `task_07` and `task_08` still pending afterward.
+Closeout review for `task_06` (CSV Export Capability) is complete. Independent review in this fresh clone confirmed `task_06` satisfies the sprint Definition of Done after aligning the task checklist to the validated implementation and rerunning the existing repository checks: `python -m pytest -q` passed (42 passed, 3 skipped) and `python -m pytest tests/ -m "not integration" --cov=src --cov-report=term` passed with 78% total `src/` coverage. The project is not eligible for `Complete` because `.squad/sprint.md` still has unfinished work: `task_07` must finish the testing contract (`tests/conftest.py` fixtures plus fuller `pytest.ini` defaults), and `task_08` must deliver the root-level handoff docs. The next explicit build slice is `task_07`.
 
 ## Recent Activity
 
@@ -39,6 +39,7 @@ Validate work for `task_06` (CSV Export Capability) is complete. Independent val
 - 2026-05-13: Closeout completed for task_05 — review artifacts refreshed, task_05 Definition of Done confirmed, and the repo returned to Build for `task_06`
 - 2026-05-13: task_06 Build completed — `src/mcp_tools.py` now performs full CSV export naming/metadata/directory handling, `tests/test_csv_export.py` added, export-related test expectations updated, and targeted/full pytest checks passed
 - 2026-05-13: Validate completed for task_06 — dependency install, syntax validation, targeted export/CLI/MCP tests, full pytest regression, and non-integration coverage checks all passed; Next Action set to Closeout
+- 2026-05-13: Closeout completed for task_06 — review artifacts refreshed, task_06 checklist aligned to evidence, and the repo returned to Build for `task_07`
 
 ## Artifacts
 
@@ -47,13 +48,13 @@ Validate work for `task_06` (CSV Export Capability) is complete. Independent val
 | STATUS.md | `./STATUS.md` | updated |
 | FEEDBACK.md | `./FEEDBACK.md` | existing |
 | Backlog README | `./backlog/README.md` | existing |
-| Backlog Tasks | `./backlog/tasks/` | reviewed & updated |
+| Backlog Tasks | `./backlog/tasks/` | reviewed & updated (`task_06` checklist aligned) |
 | Squad Team | `./.squad/team.md` | existing |
 | Squad Routing | `./.squad/routing.md` | existing |
-| Squad Decisions | `./.squad/decisions.md` | updated (D-019 added) |
+| Squad Decisions | `./.squad/decisions.md` | updated (D-020 added) |
 | Validation Report | `./.squad/validation_report.md` | updated (task_06 validation) |
-| Review Report | `./.squad/review_report.md` | updated (task_05 closeout return-to-build decision) |
-| Project Overview | `./project_overview.md` | updated (task_05 handoff) |
+| Review Report | `./.squad/review_report.md` | updated (task_06 closeout return-to-build decision) |
+| Project Overview | `./project_overview.md` | updated (task_06 handoff) |
 | Agent Charters | `./.squad/agents/*/charter.md` | existing |
 | Sprint Plan | `./.squad/sprint.md` | existing |
 | Catalog Script | `./scripts/catalog_data.py` | existing (task_01) |
@@ -71,4 +72,4 @@ Validate work for `task_06` (CSV Export Capability) is complete. Independent val
 
 ## Needs Human Input
 
-- None. The next action is automated Closeout work for `task_06`.
+- None. The next action is automated Build work for `task_07`.

@@ -1,7 +1,7 @@
 # CBO-data_mcp - Project Overview
 
 Date: 2026-05-13
-Status: Closeout complete for task_05; next up is Build for task_06
+Status: Closeout complete for task_06; next up is Build for task_07
 
 ## Purpose
 
@@ -31,9 +31,9 @@ https://github.com/adkf37/Gemini_Homicide_Bot
 
 ## Current Handoff Snapshot
 
-- **Completed in this loop:** `task_05` interactive CLI closeout is complete. Independent review reran `python -m py_compile main.py`, `printf '/quit\n' | python main.py`, `python -m pytest tests/test_cli.py -q`, and `python -m pytest -q`; the CLI started cleanly, exited cleanly on `/quit`, task-specific tests passed (2/2), and the full suite passed with 40 tests green and 3 expected integration skips.
-- **Current repo state:** the CLI slice is implemented, validated, and closed out, and the repo is ready to return to Build.
-- **What is now available:** `main.py` provides a REPL with `/help`, `/types`, `/vintages <file_type>`, `/export [filename]`, and `/quit`/`/exit`; natural-language questions route through `CBOAgent.ask()` when `GEMINI_API_KEY` is configured; the CLI also preserves session state so `/export` can use the last query result without rerunning it.
-- **Known gaps before project completion:** `task_06` through `task_08` remain open, including full CSV-export naming/metadata/directory handling, the broader test-and-coverage deliverables, and the final end-user docs (`README.md`, `QUICK_START.md`, `.env.example`).
+- **Completed in this loop:** `task_06` CSV export closeout is complete. Independent review reran `python -m pytest -q` and `python -m pytest tests/ -m "not integration" --cov=src --cov-report=term`; the repo passed with 42 tests green, 3 expected integration skips, and 78% total `src/` coverage.
+- **Current repo state:** the CSV export slice is implemented, validated, and closed out, and the repo is ready to return to Build.
+- **What is now available:** `src/mcp_tools.py` now writes metadata-commented CSV exports with sanitized auto-generated filenames and auto-created export directories; `main.py` `/export` remains wired to the enhanced export path; the repo already has targeted tests for data loading, MCP tools, Gemini orchestration, CLI behavior, and CSV export behavior.
+- **Known gaps before project completion:** `task_07` and `task_08` remain open. The repo still needs `tests/conftest.py` plus fuller `pytest.ini` defaults to satisfy the testing contract, and the root-level end-user docs (`README.md`, `QUICK_START.md`, `.env.example`) are still absent.
 - **Known environment limitations:** Live Gemini-backed querying still requires `GEMINI_API_KEY`, so the 3 integration tests in `tests/test_llm_agent.py` continue to skip in offline review environments. The upstream `google.generativeai` deprecation warning remains a non-blocking future migration item.
-- **Next explicit task:** `task_06` — replace the current `export_csv` stub with the full CSV export implementation and wire the CLI `/export` output to the finalized path/metadata behavior.
+- **Next explicit task:** `task_07` — finish the repository-wide testing contract by adding `tests/conftest.py` fixtures and completing the `pytest.ini` defaults while preserving the passing non-integration and coverage runs.
