@@ -144,5 +144,12 @@
 - **Known non-blocking risk:** `google.generativeai` still emits an upstream deprecation warning during test collection. This is already tracked as follow-up work rather than a validation failure.
 - **Next loop recommendation:** Advance to Closeout for `task_06`; if closeout agrees, return to Build for `task_07`.
 
+### 2026-05-13 — Decision D-020 (Task ID: task_06)
+- **Closeout outcome:** Reviewer confirmed `task_06` satisfies the sprint Definition of Done after rerunning the existing repository checks in a fresh clone, checking the task checklist in `backlog/tasks/task_06_csv_export.md`, and aligning the closeout artifacts with the validated CSV export implementation.
+- **Explicit non-complete rationale:** `.squad/sprint.md` still shows `task_07` and `task_08` as unfinished. `task_07` still lacks the required `tests/conftest.py` fixtures and fuller `pytest.ini` defaults, and `task_08` still lacks the required root-level handoff docs, so the project cannot emit `Complete`.
+- **Handoff refresh:** `STATUS.md`, `.squad/review_report.md`, `project_overview.md`, and the `task_06` checklist now summarize the validated CSV export slice and point the next loop at `task_07`.
+- **Known follow-up risks:** Live Gemini-backed validation still requires `GEMINI_API_KEY`, and the upstream `google.generativeai` deprecation warning remains a non-blocking future migration item.
+- **Return-to-build target:** The next automatable task is `task_07` (Tests and Validation).
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
