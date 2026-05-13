@@ -17,3 +17,5 @@ data/raw/
 data/catalog.json
 # Data: consolidated parquet cache (task_02)
 data/consolidated/
+# Exports: runtime CSV output (task_06)
+exports/

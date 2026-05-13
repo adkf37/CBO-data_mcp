@@ -2,19 +2,19 @@
 
 | Field | Value |
 |---|---|
-| Phase | closeout |
+| Phase | build |
 | Last Updated | 2026-05-13 |
 | Squad Template | web_app |
 | Priority | low |
 | Blocking | None |
 | GitHub Repo | https://github.com/adkf37/CBO-data_mcp |
-| Next Action | Build |
+| Next Action | Validate |
 
 ## Current Objective
 
 **Task ID:** `task_06`
 
-Closeout is complete for `task_05`. Independent review confirmed the task_05 acceptance checklist is fully checked, the sprint Definition of Done is satisfied, and the closeout validation reran cleanly after installing the declared dependencies (`python -m py_compile main.py`, `printf '/quit\n' | python main.py`, `python -m pytest tests/test_cli.py -q`, `python -m pytest -q`). The project is not eligible for `Complete` because `.squad/sprint.md` still shows `task_06`–`task_08` as unfinished, so the next handoff should return to Build for `task_06`.
+Build work for `task_06` (CSV Export Capability) is now implemented. `src/mcp_tools.py` replaces the task_03 export stub with full export behavior: sanitized filenames, auto-generated names containing file type/query/timestamp, metadata comment headers (`file_type`, `vintage`, `export_timestamp`), and guaranteed `./exports/` directory creation. CLI `/export` now passes task-context metadata to the tool, and new focused coverage was added in `tests/test_csv_export.py` (plus updates to existing export assertions in CLI/MCP tests). Validation-ready evidence from this build loop: `python -m pytest tests/test_csv_export.py tests/test_cli.py tests/test_mcp_tools.py -q` (11 passed) and `python -m pytest -q` (42 passed, 3 skipped). The sprint still has unfinished tasks (`task_07`, `task_08`), so the project remains in-progress and should hand off to Validate for independent verification of `task_06`.
 
 ## Recent Activity
 
@@ -37,6 +37,7 @@ Closeout is complete for `task_05`. Independent review confirmed the task_05 acc
 - 2026-05-12: task_05 Build completed — `main.py` and `tests/test_cli.py` added; CLI commands, export state handling, and REPL smoke tests validated (2 passed); full regression suite now 40 passed, 3 skipped
 - 2026-05-13: Validate completed for task_05 — dependency install, CLI startup check, targeted CLI smoke tests, and full pytest regression checks all passed; Next Action set to Closeout
 - 2026-05-13: Closeout completed for task_05 — review artifacts refreshed, task_05 Definition of Done confirmed, and the repo returned to Build for `task_06`
+- 2026-05-13: task_06 Build completed — `src/mcp_tools.py` now performs full CSV export naming/metadata/directory handling, `tests/test_csv_export.py` added, export-related test expectations updated, and targeted/full pytest checks passed
 
 ## Artifacts
 
@@ -48,7 +49,7 @@ Closeout is complete for `task_05`. Independent review confirmed the task_05 acc
 | Backlog Tasks | `./backlog/tasks/` | reviewed & updated |
 | Squad Team | `./.squad/team.md` | existing |
 | Squad Routing | `./.squad/routing.md` | existing |
-| Squad Decisions | `./.squad/decisions.md` | updated (D-017 added) |
+| Squad Decisions | `./.squad/decisions.md` | updated (D-018 added) |
 | Validation Report | `./.squad/validation_report.md` | updated (task_05 validation) |
 | Review Report | `./.squad/review_report.md` | updated (task_05 closeout return-to-build decision) |
 | Project Overview | `./project_overview.md` | updated (task_05 handoff) |
@@ -65,7 +66,8 @@ Closeout is complete for `task_05`. Independent review confirmed the task_05 acc
 | Pytest Config | `./pytest.ini` | created (task_04) |
 | CLI Entry Point | `./main.py` | created (task_05) |
 | CLI Tests | `./tests/test_cli.py` | created (task_05) |
+| CSV Export Tests | `./tests/test_csv_export.py` | created (task_06) |
 
 ## Needs Human Input
 
-- None. The next action is automated Build work for `task_06`.
+- None. The next action is automated Validate work for `task_06`.

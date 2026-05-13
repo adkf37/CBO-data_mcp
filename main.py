@@ -109,7 +109,12 @@ class CBOCLI:
             return
         parts = raw.split(maxsplit=1)
         filename = parts[1].strip() if len(parts) > 1 else None
-        result = export_csv(self.state.last_rows, filename=filename)
+        result = export_csv(
+            self.state.last_rows,
+            filename=filename,
+            file_type="cli_session",
+            query_params={"question": self.state.last_question or "latest_query"},
+        )
         if "error" in result:
             self._print_wrapped(f"Error: {result['error']}")
             return

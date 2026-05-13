@@ -28,7 +28,7 @@ def test_cli_smoke_processes_question_export_and_quit(monkeypatch, capsys, tmp_p
 
     exported = tmp_path / "exports" / "out.csv"
     assert exported.exists()
-    rows = pd.read_csv(exported).to_dict(orient="records")
+    rows = pd.read_csv(exported, comment="#").to_dict(orient="records")
     assert rows == [{"question": "What is Medicaid?", "answer": "answer: What is Medicaid?"}]
 
 

@@ -96,12 +96,17 @@ def test_export_csv_creates_file(tmp_path: Path):
         rows,
         output_dir=str(tmp_path),
         filename="out.csv",
+        file_type="medicaid",
+        vintage="2024-01",
     )
     assert "error" not in result
     output = Path(result["file_path"])
     assert output.exists()
     assert output.name == "out.csv"
-    written = pd.read_csv(output).to_dict(orient="records")
+    contents = output.read_text(encoding="utf-8")
+    assert "# file_type: medicaid" in contents
+    assert "# vintage: 2024-01" in contents
+    written = pd.read_csv(output, comment="#").to_dict(orient="records")
     assert written == rows
 
 
