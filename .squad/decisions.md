@@ -166,5 +166,11 @@
 - **`backlog/tasks/task_08_docs.md` checklist:** All five acceptance criteria boxes now checked.
 - **Sprint completion:** `task_08` is the final task in `.squad/sprint.md`. All 8 sprint tasks are now complete. `STATUS.md` sets `Next Action: Validate`.
 
+### 2026-05-13 — Decision D-023 (Task ID: task_08)
+- **Validation evidence recorded:** In a fresh validation clone, `python -m pip install -r requirements.txt`, `python -m pytest -q`, `python -m pytest tests/ -m "not integration" --cov=src --cov-report=term`, and `python -m pytest tests/test_llm_agent.py -v -o addopts=''` all passed.
+- **Acceptance gates rechecked:** The repo's default pytest contract and the explicit non-integration rerun both reported 42 passed / 3 deselected with 77.51% total `src/` coverage, and the LLM-agent module reported 10 passed / 3 skipped when `GEMINI_API_KEY` was absent.
+- **Artifact inspection completed:** Manual review confirmed `README.md`, `QUICK_START.md`, `.env.example`, `tests/conftest.py`, and `pytest.ini` satisfy the `task_07` and `task_08` contracts, while `.squad/validation_report.md` and `STATUS.md` now capture the validation outcome.
+- **Validation recommendation:** Pass to Closeout. The only remaining follow-up items are non-blocking: the upstream `google.generativeai` deprecation warning and the absence of a live API key for true end-to-end Gemini execution.
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
