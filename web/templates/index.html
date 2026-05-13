@@ -622,17 +622,29 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ question: q, session_id: getSessionId() }),
+        signal: AbortSignal.timeout(180_000),
       });
       hideTyping();
-      const data = await res.json();
+      let data;
+      try {
+        data = await res.json();
+      } catch (_) {
+        appendError(`Server error (HTTP ${res.status}). Check Cloud Run logs.`);
+        return;
+      }
       if (!res.ok) {
-        appendError(data.error || 'Something went wrong.');
+        appendError(data.error || `Server error (HTTP ${res.status}).`);
       } else {
         appendMessage('bot', data.answer || '(no answer)', data.tool_calls || []);
       }
     } catch (err) {
       hideTyping();
-      appendError('Could not reach the server. Please try again.');
+      if (err.name === 'TimeoutError') {
+        appendError('Request timed out — the question may be too complex. Try a simpler query.');
+      } else {
+        appendError('Could not reach the server. Please try again.');
+      }
+      console.error('fetch error:', err);
     } finally {
       setLoading(false);
       input.focus();

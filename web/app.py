@@ -18,6 +18,18 @@ logger = logging.getLogger(__name__)
 
 app = Flask(__name__, template_folder="templates")
 
+
+# Always return JSON for errors so res.json() never throws in the browser
+@app.errorhandler(Exception)
+def handle_exception(exc: Exception):
+    logger.exception("Unhandled exception")
+    return jsonify({"error": "An unexpected server error occurred.", "detail": str(exc)}), 500
+
+
+@app.errorhandler(404)
+def handle_404(exc):
+    return jsonify({"error": "Not found"}), 404
+
 MAX_QUESTION_LENGTH = 4000  # characters; reject oversized payloads early
 
 # ---------------------------------------------------------------------------
