@@ -2,6 +2,7 @@ __pycache__/
 .venv/
 node_modules/
 *.pyc
+.coverage
 .env
 # Squad: ignore runtime state (logs, inbox, sessions)
 .squad/orchestration-log/
