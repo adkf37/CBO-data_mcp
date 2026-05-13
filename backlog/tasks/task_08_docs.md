@@ -13,7 +13,7 @@ Write user-facing and developer-facing documentation so that the project can be 
 
 ## Acceptance Criteria
 
-- [ ] `README.md` at repo root includes:
+- [x] `README.md` at repo root includes:
   - Project description and purpose
   - Prerequisites (Python version, Gemini API key, data repo)
   - Installation steps (`pip install -r requirements.txt`)
@@ -21,13 +21,13 @@ Write user-facing and developer-facing documentation so that the project can be 
   - How to run the CLI (`python main.py`)
   - Example questions and expected outputs
   - How to run tests
-- [ ] `QUICK_START.md` provides a 5-step "zero to first answer" guide.
-- [ ] Inline docstrings are present on all public classes and functions in `src/`.
-- [ ] `.env.example` file shows required environment variables:
+- [x] `QUICK_START.md` provides a 5-step "zero to first answer" guide.
+- [x] Inline docstrings are present on all public classes and functions in `src/`.
+- [x] `.env.example` file shows required environment variables:
   ```
   GEMINI_API_KEY=your_key_here
   ```
-- [ ] `backlog/README.md` is up to date with final success criteria checked off.
+- [x] `backlog/README.md` is up to date with final success criteria checked off.
 
 ## Implementation Notes
 

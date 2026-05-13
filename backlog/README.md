@@ -27,11 +27,11 @@ Example query: *"How many people are projected to be enrolled in Medicaid in 202
 
 ## Success Criteria
 
-- [ ] All ~30 CBO file types are catalogued and schemas documented.
-- [ ] Cross-vintage consolidated datasets are generated and queryable.
-- [ ] At least 5 MCP tools are implemented and tested (e.g., `search_programs`, `get_projection`, `list_vintages`, `compare_vintages`, `export_csv`).
-- [ ] Gemini 2.5 Flash integration responds correctly to ≥ 3 benchmark natural-language queries.
-- [ ] CLI boots, accepts user input, and returns answers end-to-end.
-- [ ] CSV export produces a valid, correctly-named file.
-- [ ] Unit tests cover core data-loading and tool logic.
-- [ ] README / QUICK_START documents how to run the bot locally.
+- [x] All ~30 CBO file types are catalogued and schemas documented.
+- [x] Cross-vintage consolidated datasets are generated and queryable.
+- [x] At least 5 MCP tools are implemented and tested (e.g., `search_programs`, `get_projection`, `list_vintages`, `compare_vintages`, `export_csv`).
+- [x] Gemini 2.5 Flash integration responds correctly to ≥ 3 benchmark natural-language queries.
+- [x] CLI boots, accepts user input, and returns answers end-to-end.
+- [x] CSV export produces a valid, correctly-named file.
+- [x] Unit tests cover core data-loading and tool logic.
+- [x] README / QUICK_START documents how to run the bot locally.
