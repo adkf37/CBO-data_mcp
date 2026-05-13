@@ -1,5 +1,5 @@
 """
-llm_agent.py — Task 04: Gemini 2.5 Flash Integration.
+llm_agent.py — Gemini 2.5 Flash Integration (google-genai SDK).
 
 CBOAgent wires the Google Gemini 2.5 Flash model to the MCP tool registry so
 that natural-language user queries are automatically resolved by calling the
@@ -12,8 +12,9 @@ import logging
 import os
 from typing import Any
 
-import google.generativeai as genai
 from dotenv import load_dotenv
+from google import genai
+from google.genai import types
 
 from src.tool_registry import get_gemini_tool_declarations, get_tool
 
@@ -46,40 +47,6 @@ _SYSTEM_PROMPT = (
 )
 
 
-def _build_genai_tools() -> list[Any]:
-    """Convert MCP tool declarations to a Gemini SDK Tool object list."""
-    type_map = {
-        "string": genai.protos.Type.STRING,
-        "integer": genai.protos.Type.INTEGER,
-        "number": genai.protos.Type.NUMBER,
-        "boolean": genai.protos.Type.BOOLEAN,
-        "array": genai.protos.Type.ARRAY,
-        "object": genai.protos.Type.OBJECT,
-    }
-
-    function_declarations: list[Any] = []
-    for decl in get_gemini_tool_declarations():
-        params = decl.get("parameters", {})
-        props: dict[str, Any] = {}
-        for prop_name, prop_schema in params.get("properties", {}).items():
-            raw_type = prop_schema.get("type", "string")
-            proto_type = type_map.get(raw_type, genai.protos.Type.STRING)
-            props[prop_name] = genai.protos.Schema(type=proto_type)
-
-        fd = genai.protos.FunctionDeclaration(
-            name=decl["name"],
-            description=decl.get("description", ""),
-            parameters=genai.protos.Schema(
-                type=genai.protos.Type.OBJECT,
-                properties=props,
-                required=params.get("required", []),
-            ),
-        )
-        function_declarations.append(fd)
-
-    return [genai.protos.Tool(function_declarations=function_declarations)]
-
-
 class CBOAgent:
     """Gemini 2.5 Flash agent wired to the CBO MCP tool registry.
 
@@ -100,14 +67,8 @@ class CBOAgent:
                 "Provide it via the GEMINI_API_KEY environment variable or a .env file."
             )
 
-        genai.configure(api_key=resolved_key)
-
-        tools = _build_genai_tools()
-        self._model = genai.GenerativeModel(
-            model_name="gemini-2.5-flash",
-            tools=tools,
-            system_instruction=_SYSTEM_PROMPT,
-        )
+        self._client = genai.Client(api_key=resolved_key)
+        self._tool = types.Tool(function_declarations=get_gemini_tool_declarations())
         self._chat: Any = None
         self.last_trace: list[dict[str, Any]] = []
 
@@ -118,7 +79,13 @@ class CBOAgent:
 
     def _ensure_chat(self) -> Any:
         if self._chat is None:
-            self._chat = self._model.start_chat()
+            self._chat = self._client.chats.create(
+                model="gemini-2.5-flash",
+                config=types.GenerateContentConfig(
+                    system_instruction=_SYSTEM_PROMPT,
+                    tools=[self._tool],
+                ),
+            )
         return self._chat
 
     def ask(self, question: str) -> str:
@@ -128,16 +95,6 @@ class CBOAgent:
         through the tool registry and feeding the results back to the model
         until it produces a final text answer or the iteration cap is reached.
         Conversation state persists across calls; use :meth:`reset` to clear it.
-
-        Parameters
-        ----------
-        question:
-            Natural-language query to resolve using CBO projection data.
-
-        Returns
-        -------
-        str
-            The model's final text answer with tool-sourced data cited.
         """
         chat = self._ensure_chat()
         response = chat.send_message(question)
@@ -145,35 +102,34 @@ class CBOAgent:
 
         for _ in range(_MAX_TOOL_ITERATIONS):
             fn_calls = [
-                part.function_call
-                for part in response.parts
-                if part.function_call.name
+                p.function_call
+                for p in response.candidates[0].content.parts
+                if getattr(p, "function_call", None) and p.function_call.name
             ]
 
             if not fn_calls:
                 return self._extract_text(response)
 
-            fn_responses: list[Any] = []
-            for fn_call in fn_calls:
-                name = fn_call.name
-                args = dict(fn_call.args)
+            fn_response_parts: list[types.Part] = []
+            for fc in fn_calls:
+                name = fc.name
+                args = dict(fc.args) if fc.args else {}
                 log.debug("Tool call: %s(%s)", name, args)
                 try:
                     result = get_tool(name)(**args)
                 except Exception as exc:  # noqa: BLE001
                     result = {"error": str(exc)}
                 self.last_trace.append({"tool": name, "args": args, "result": result})
-
-                fn_responses.append(
-                    genai.protos.Part(
-                        function_response=genai.protos.FunctionResponse(
+                fn_response_parts.append(
+                    types.Part(
+                        function_response=types.FunctionResponse(
                             name=name,
                             response={"result": result},
                         )
                     )
                 )
 
-            response = chat.send_message(fn_responses)
+            response = chat.send_message(fn_response_parts)
 
         log.warning("Reached maximum tool-call iterations (%d).", _MAX_TOOL_ITERATIONS)
         return self._extract_text(response)
@@ -188,10 +144,11 @@ class CBOAgent:
         except Exception:  # noqa: BLE001
             pass
         parts: list[str] = []
-        for part in getattr(response, "parts", []):
-            try:
-                if part.text:
-                    parts.append(part.text)
-            except Exception:  # noqa: BLE001
-                pass
+        for candidate in getattr(response, "candidates", []):
+            for part in getattr(candidate.content, "parts", []):
+                try:
+                    if part.text:
+                        parts.append(part.text)
+                except Exception:  # noqa: BLE001
+                    pass
         return "\n".join(parts) if parts else "(no response)"
