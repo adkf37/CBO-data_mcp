@@ -101,9 +101,13 @@ class CBOAgent:
         self.last_trace = []
 
         for _ in range(_MAX_TOOL_ITERATIONS):
+            candidates = getattr(response, "candidates", [])
+            if not candidates:
+                return self._extract_text(response)
+
             fn_calls = [
                 p.function_call
-                for p in response.candidates[0].content.parts
+                for p in candidates[0].content.parts
                 if getattr(p, "function_call", None) and p.function_call.name
             ]
 

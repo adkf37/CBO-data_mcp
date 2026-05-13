@@ -19,27 +19,51 @@ from src.llm_agent import _MAX_TOOL_ITERATIONS, CBOAgent
 # ── helpers ───────────────────────────────────────────────────────────────────
 
 
-def _make_text_response(text: str = "Final answer.") -> MagicMock:
-    """Return a fake Gemini response containing only a text part (no tool call)."""
-    part = MagicMock()
-    part.function_call.name = ""  # empty → not a tool call
+def _make_response(text: str = "", fn_calls: list | None = None) -> MagicMock:
+    """Build a fake google-genai GenerateContentResponse.
+
+    * ``fn_calls`` – list of ``(name, args)`` tuples for function-call parts.
+    * When ``fn_calls`` is empty/None the response is a plain text response.
+    """
+    parts: list[MagicMock] = []
+
+    for name, args in (fn_calls or []):
+        fc = MagicMock()
+        fc.name = name
+        fc.args = args
+        part = MagicMock()
+        part.function_call = fc
+        parts.append(part)
+
+    if not parts:
+        # Text-only response — ensure function_call is falsy so the loop exits.
+        part = MagicMock()
+        part.function_call = None
+        parts.append(part)
+
+    content = MagicMock()
+    content.parts = parts
+
+    candidate = MagicMock()
+    candidate.content = content
+
     resp = MagicMock()
-    resp.parts = [part]
+    resp.candidates = [candidate]
     resp.text = text
     return resp
 
 
+def _make_text_response(text: str = "Final answer.") -> MagicMock:
+    return _make_response(text=text)
+
+
 def _make_fn_call_response(name: str, args: dict) -> MagicMock:
-    """Return a fake Gemini response that requests one function call."""
-    fc = MagicMock()
-    fc.name = name
-    fc.args = args
-    part = MagicMock()
-    part.function_call = fc
-    resp = MagicMock()
-    resp.parts = [part]
-    resp.text = ""
-    return resp
+    return _make_response(fn_calls=[(name, args)])
+
+
+def _chat_mock(patched_genai: MagicMock) -> MagicMock:
+    """Return the mock object that acts as the chat session."""
+    return patched_genai.Client.return_value.chats.create.return_value
 
 
 # ── shared fixtures ───────────────────────────────────────────────────────────
@@ -47,11 +71,11 @@ def _make_fn_call_response(name: str, args: dict) -> MagicMock:
 
 @pytest.fixture()
 def patched_genai(monkeypatch):
-    """Patch the genai module used inside llm_agent so no real API calls occur."""
+    """Patch the genai + types modules so no real API calls occur."""
     mock_genai = MagicMock()
+    mock_types = MagicMock()
     monkeypatch.setattr("src.llm_agent.genai", mock_genai)
-    # _build_genai_tools calls get_gemini_tool_declarations; return empty list to
-    # keep the test simple — tool schema correctness is verified in test_mcp_tools.py.
+    monkeypatch.setattr("src.llm_agent.types", mock_types)
     monkeypatch.setattr("src.llm_agent.get_gemini_tool_declarations", lambda: [])
     return mock_genai
 
@@ -78,22 +102,24 @@ class TestCBOAgentInit:
         monkeypatch.setattr("src.llm_agent.load_dotenv", lambda: None)
         monkeypatch.delenv("GEMINI_API_KEY", raising=False)
         agent = CBOAgent(api_key="explicit-key")
-        patched_genai.configure.assert_called_once_with(api_key="explicit-key")
+        patched_genai.Client.assert_called_once_with(api_key="explicit-key")
         assert isinstance(agent, CBOAgent)
 
     def test_reads_api_key_from_env(self, monkeypatch, patched_genai):
         monkeypatch.setattr("src.llm_agent.load_dotenv", lambda: None)
         monkeypatch.setenv("GEMINI_API_KEY", "env-key-xyz")
         CBOAgent()
-        patched_genai.configure.assert_called_once_with(api_key="env-key-xyz")
+        patched_genai.Client.assert_called_once_with(api_key="env-key-xyz")
 
-    def test_model_is_initialized(self, monkeypatch, patched_genai):
+    def test_chat_created_with_correct_model(self, monkeypatch, patched_genai):
         monkeypatch.setattr("src.llm_agent.load_dotenv", lambda: None)
         monkeypatch.setenv("GEMINI_API_KEY", "test-key")
-        CBOAgent()
-        patched_genai.GenerativeModel.assert_called_once()
-        call_kwargs = patched_genai.GenerativeModel.call_args.kwargs
-        assert call_kwargs.get("model_name") == "gemini-2.5-flash"
+        a = CBOAgent()
+        # Chat is lazily initialised — trigger it via ask()
+        _chat_mock(patched_genai).send_message.return_value = _make_text_response("hi")
+        a.ask("hello")
+        create_kwargs = patched_genai.Client.return_value.chats.create.call_args
+        assert create_kwargs.kwargs.get("model") == "gemini-2.5-flash"
 
 
 # ── unit tests — ask() single turn ───────────────────────────────────────────
@@ -101,20 +127,19 @@ class TestCBOAgentInit:
 
 class TestCBOAgentAskSingleTurn:
     def test_returns_text_when_no_tool_call(self, agent, patched_genai):
-        chat_mock = patched_genai.GenerativeModel.return_value.start_chat.return_value
-        chat_mock.send_message.return_value = _make_text_response("The answer is 42.")
+        chat = _chat_mock(patched_genai)
+        chat.send_message.return_value = _make_text_response("The answer is 42.")
 
         result = agent.ask("What is the meaning of life?")
 
         assert result == "The answer is 42."
-        chat_mock.send_message.assert_called_once_with("What is the meaning of life?")
+        chat.send_message.assert_called_once_with("What is the meaning of life?")
 
     def test_empty_response_returns_placeholder(self, agent, patched_genai):
         resp = MagicMock()
-        resp.parts = []
         resp.text = ""
-        chat_mock = patched_genai.GenerativeModel.return_value.start_chat.return_value
-        chat_mock.send_message.return_value = resp
+        resp.candidates = []
+        _chat_mock(patched_genai).send_message.return_value = resp
 
         result = agent.ask("Give me nothing.")
 
@@ -127,8 +152,8 @@ class TestCBOAgentAskSingleTurn:
 class TestCBOAgentAskToolCalling:
     def test_single_tool_call_dispatched(self, agent, patched_genai, monkeypatch):
         """Model requests list_file_types → tool runs → model returns final text."""
-        chat_mock = patched_genai.GenerativeModel.return_value.start_chat.return_value
-        chat_mock.send_message.side_effect = [
+        chat = _chat_mock(patched_genai)
+        chat.send_message.side_effect = [
             _make_fn_call_response("list_file_types", {}),
             _make_text_response("Available types: medicaid."),
         ]
@@ -143,8 +168,8 @@ class TestCBOAgentAskToolCalling:
 
     def test_tool_call_with_args(self, agent, patched_genai, monkeypatch):
         """Model requests get_projection with args → args forwarded to tool."""
-        chat_mock = patched_genai.GenerativeModel.return_value.start_chat.return_value
-        chat_mock.send_message.side_effect = [
+        chat = _chat_mock(patched_genai)
+        chat.send_message.side_effect = [
             _make_fn_call_response(
                 "get_projection",
                 {"file_type": "medicaid", "year_start": 2029, "year_end": 2029},
@@ -164,8 +189,8 @@ class TestCBOAgentAskToolCalling:
 
     def test_failed_tool_call_wrapped_as_error(self, agent, patched_genai, monkeypatch):
         """Unknown tool name → error dict sent back → model returns fallback text."""
-        chat_mock = patched_genai.GenerativeModel.return_value.start_chat.return_value
-        chat_mock.send_message.side_effect = [
+        chat = _chat_mock(patched_genai)
+        chat.send_message.side_effect = [
             _make_fn_call_response("unknown_tool", {}),
             _make_text_response("I could not retrieve that data."),
         ]
@@ -178,15 +203,13 @@ class TestCBOAgentAskToolCalling:
         result = agent.ask("Do something unknown.")
 
         assert result == "I could not retrieve that data."
-        # Two send_message calls: initial question + error response
-        assert chat_mock.send_message.call_count == 2
+        assert chat.send_message.call_count == 2
 
     def test_max_iterations_cap(self, agent, patched_genai, monkeypatch):
         """Tool calls capped at _MAX_TOOL_ITERATIONS; last response text returned."""
-        chat_mock = patched_genai.GenerativeModel.return_value.start_chat.return_value
-        # Always return another tool call — iteration must stop at the cap.
+        chat = _chat_mock(patched_genai)
         final_response = _make_text_response("Stopped after cap.")
-        chat_mock.send_message.side_effect = (
+        chat.send_message.side_effect = (
             [_make_fn_call_response("list_file_types", {})] * _MAX_TOOL_ITERATIONS
             + [final_response]
         )
@@ -196,15 +219,13 @@ class TestCBOAgentAskToolCalling:
 
         result = agent.ask("Keep calling tools forever.")
 
-        # The loop ran _MAX_TOOL_ITERATIONS times after the first send_message,
-        # so total send_message calls = 1 (question) + _MAX_TOOL_ITERATIONS.
-        assert chat_mock.send_message.call_count == 1 + _MAX_TOOL_ITERATIONS
+        assert chat.send_message.call_count == 1 + _MAX_TOOL_ITERATIONS
         assert result == "Stopped after cap."
 
     def test_chat_session_persists_across_asks(self, agent, patched_genai):
         """Two consecutive ask() calls reuse the same chat session."""
-        chat_mock = patched_genai.GenerativeModel.return_value.start_chat.return_value
-        chat_mock.send_message.side_effect = [
+        chat = _chat_mock(patched_genai)
+        chat.send_message.side_effect = [
             _make_text_response("first"),
             _make_text_response("second"),
         ]
@@ -212,13 +233,13 @@ class TestCBOAgentAskToolCalling:
         agent.ask("first question")
         agent.ask("second question")
 
-        # start_chat called once across both asks → conversation state persists
-        assert patched_genai.GenerativeModel.return_value.start_chat.call_count == 1
+        # chats.create called once across both asks → conversation state persists
+        assert patched_genai.Client.return_value.chats.create.call_count == 1
 
     def test_reset_clears_chat_and_trace(self, agent, patched_genai):
         """reset() drops the cached chat so the next ask starts a new session."""
-        chat_mock = patched_genai.GenerativeModel.return_value.start_chat.return_value
-        chat_mock.send_message.return_value = _make_text_response("hi")
+        chat = _chat_mock(patched_genai)
+        chat.send_message.return_value = _make_text_response("hi")
         agent.ask("hello")
         agent.last_trace = [{"tool": "x", "args": {}, "result": {}}]
 
@@ -226,11 +247,11 @@ class TestCBOAgentAskToolCalling:
 
         assert agent.last_trace == []
         agent.ask("again")
-        assert patched_genai.GenerativeModel.return_value.start_chat.call_count == 2
+        assert patched_genai.Client.return_value.chats.create.call_count == 2
 
     def test_trace_records_tool_calls(self, agent, patched_genai, monkeypatch):
-        chat_mock = patched_genai.GenerativeModel.return_value.start_chat.return_value
-        chat_mock.send_message.side_effect = [
+        chat = _chat_mock(patched_genai)
+        chat.send_message.side_effect = [
             _make_fn_call_response("list_file_types", {}),
             _make_text_response("done"),
         ]
