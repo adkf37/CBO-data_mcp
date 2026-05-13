@@ -121,5 +121,12 @@
 - **Known follow-up risk:** The current `/export` behavior is validated against the existing stub implementation from `task_03`; the fuller CSV naming and metadata requirements remain owned by `task_06`.
 - **Next loop recommendation:** Advance to Closeout for `task_05`; if closeout agrees, return to Build for `task_06`.
 
+### 2026-05-13 — Decision D-017 (Task ID: task_05)
+- **Closeout outcome:** Reviewer confirmed `task_05` satisfies the sprint Definition of Done after rerunning the existing closeout commands, checking the task checklist in `backlog/tasks/task_05_cli_interface.md`, and verifying the closeout artifacts align with the implemented CLI slice.
+- **Explicit non-complete rationale:** `.squad/sprint.md` still shows `task_06` through `task_08` as unfinished, so the project cannot emit `Complete` during this closeout.
+- **Handoff refresh:** `STATUS.md`, `.squad/review_report.md`, and `project_overview.md` now summarize the validated CLI slice and point the next loop at `task_06`.
+- **Known follow-up risks:** Live Gemini-backed querying still requires `GEMINI_API_KEY`, and the fuller CSV export naming/metadata/directory requirements remain owned by `task_06`.
+- **Return-to-build target:** The next automatable task is `task_06` (CSV Export Capability).
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
