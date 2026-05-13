@@ -2,19 +2,19 @@
 
 | Field | Value |
 |---|---|
-| Phase | build |
-| Last Updated | 2026-05-12 |
+| Phase | validate |
+| Last Updated | 2026-05-13 |
 | Squad Template | web_app |
 | Priority | low |
 | Blocking | None |
 | GitHub Repo | https://github.com/adkf37/CBO-data_mcp |
-| Next Action | Validate |
+| Next Action | Closeout |
 
 ## Current Objective
 
 **Task ID:** `task_05`
 
-Build work for `task_05` is complete. Added interactive CLI entry point `main.py` with REPL commands (`/help`, `/types`, `/vintages <file_type>`, `/export [filename]`, `/quit`/`/exit`), natural-language routing through `CBOAgent.ask()`, in-memory session state for export, width-constrained output, and friendly error handling. Added `tests/test_cli.py` smoke coverage for question handling, export flow, and quit behavior. Validation evidence in Build loop: `python -m pytest tests/test_cli.py -q` (2 passed) and `python -m pytest -q` (40 passed, 3 skipped). Next handoff should move to Validate for `task_05`.
+Validate work for `task_05` is complete. Independent validation reran the existing dependency install, compiled `main.py`, manually booted the CLI with `/quit`, and reran both `python -m pytest tests/test_cli.py -q` (2 passed) and `python -m pytest -q` (40 passed, 3 skipped). The CLI acceptance criteria are satisfied, graceful no-key behavior was confirmed, and the next handoff should move to Closeout for `task_05`.
 
 ## Recent Activity
 
@@ -35,6 +35,7 @@ Build work for `task_05` is complete. Added interactive CLI entry point `main.py
 - 2026-05-12: Validate completed for task_04 — dependency install, syntax validation, targeted LLM-agent tests, and full pytest regression checks all passed; Next Action set to Closeout
 - 2026-05-12: Closeout completed for task_04 — review report refreshed, task_04 checklist aligned to evidence, and repo returned to Build for `task_05`
 - 2026-05-12: task_05 Build completed — `main.py` and `tests/test_cli.py` added; CLI commands, export state handling, and REPL smoke tests validated (2 passed); full regression suite now 40 passed, 3 skipped
+- 2026-05-13: Validate completed for task_05 — dependency install, CLI startup check, targeted CLI smoke tests, and full pytest regression checks all passed; Next Action set to Closeout
 
 ## Artifacts
 
@@ -46,8 +47,8 @@ Build work for `task_05` is complete. Added interactive CLI entry point `main.py
 | Backlog Tasks | `./backlog/tasks/` | reviewed & updated |
 | Squad Team | `./.squad/team.md` | existing |
 | Squad Routing | `./.squad/routing.md` | existing |
-| Squad Decisions | `./.squad/decisions.md` | updated (D-015 added) |
-| Validation Report | `./.squad/validation_report.md` | updated (task_04 validation) |
+| Squad Decisions | `./.squad/decisions.md` | updated (D-016 added) |
+| Validation Report | `./.squad/validation_report.md` | updated (task_05 validation) |
 | Review Report | `./.squad/review_report.md` | updated (task_04 closeout return-to-build decision) |
 | Project Overview | `./project_overview.md` | updated (task_04 handoff) |
 | Agent Charters | `./.squad/agents/*/charter.md` | existing |
@@ -66,4 +67,4 @@ Build work for `task_05` is complete. Added interactive CLI entry point `main.py
 
 ## Needs Human Input
 
-- None. The next action is automated Validate work for `task_05`.
+- None. The next action is automated Closeout work for `task_05`.

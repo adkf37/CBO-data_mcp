@@ -114,5 +114,12 @@
 - **Acceptance tests added:** Added `tests/test_cli.py` smoke tests covering a mock question + `/export` + `/quit` loop and clean `/quit` exit behavior.
 - **Build-loop validation evidence:** `python -m pytest tests/test_cli.py -q` passed (2/2) and `python -m pytest -q` passed (40 passed, 3 skipped).
 
+### 2026-05-13 — Decision D-016 (Task ID: task_05)
+- **Validation evidence recorded:** `python -m pip install -r requirements.txt`, `python -m py_compile main.py`, `printf '/quit\n' | python main.py`, `python -m pytest tests/test_cli.py -q`, and `python -m pytest -q` all passed in the independent validation environment.
+- **Acceptance gate passed:** The evidence confirms `main.py` starts a REPL, shows the welcome banner, implements the documented built-in commands, routes natural-language questions through `CBOAgent.ask()` when available, preserves session state for `/export`, and handles missing `GEMINI_API_KEY` without crashing.
+- **Blocked but acceptable validation scope:** Live Gemini-backed question answering remains blocked because `GEMINI_API_KEY` is absent in the validation environment; task_05 explicitly supports graceful degradation in that case, and the repo's integration tests continue to skip as designed.
+- **Known follow-up risk:** The current `/export` behavior is validated against the existing stub implementation from `task_03`; the fuller CSV naming and metadata requirements remain owned by `task_06`.
+- **Next loop recommendation:** Advance to Closeout for `task_05`; if closeout agrees, return to Build for `task_06`.
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
