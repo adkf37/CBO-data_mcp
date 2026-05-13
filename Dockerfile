@@ -16,6 +16,10 @@ WORKDIR /app
 # Copy installed packages from builder
 COPY --from=builder /install /usr/local
 
+# git is needed by catalog_data.py to clone the CBO data repo
+RUN apt-get update && apt-get install -y --no-install-recommends git \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy source
 COPY src/       ./src/
 COPY web/       ./web/
