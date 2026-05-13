@@ -14,6 +14,8 @@
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"
           integrity="sha384-+VfUPEb0PdtChMwmBcBmykRMDd+v6D/oFmB3rZM/puCMDYcIvF968OimRh4KQY9a"
           crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
+          crossorigin="anonymous"></script>
   <style>
     /* ─── DESIGN TOKENS ──────────────────────────────────── */
     :root {
@@ -312,6 +314,27 @@
       font-size: 0.7rem; color: var(--text-muted); font-weight: 500;
     }
 
+    /* interactive charts */
+    .chart-wrap {
+      margin-top: 0.85rem;
+      background: #fff;
+      border: 1px solid var(--rule);
+      border-radius: var(--radius);
+      padding: 0.75rem 0.75rem 0.5rem;
+    }
+    .chart-wrap canvas { max-height: 340px; }
+    .chart-dl-btn {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      margin-top: 0.45rem;
+      background: none;
+      border: 1px solid var(--rule);
+      border-radius: 9999px;
+      padding: 0.2rem 0.65rem;
+      font-size: 0.7rem; font-weight: 500; color: var(--text-muted);
+      cursor: pointer; transition: border-color .15s, color .15s;
+    }
+    .chart-dl-btn:hover { border-color: var(--navy); color: var(--navy); }
+
     /* typing indicator */
     .typing-dots { display: flex; gap: 4px; align-items: center; height: 18px; }
     .typing-dots span {
@@ -544,7 +567,90 @@
     input.disabled = on;
   }
 
-  function appendMessage(role, html, toolCalls) {
+  // ─── Chart colours (CBO palette) ────────────────────────
+  const _CHART_COLORS = [
+    '#003366','#cf2920','#f4b860','#2ca02c','#9467bd',
+    '#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf',
+  ];
+
+  function _buildChartConfig(cd) {
+    const isBar = cd.type === 'bar';
+    const datasets = (cd.datasets || []).map((ds, i) => {
+      const color = _CHART_COLORS[i % _CHART_COLORS.length];
+      return {
+        label: ds.label,
+        data: ds.data,
+        borderColor: color,
+        backgroundColor: isBar ? color + 'cc' : color + '22',
+        borderWidth: isBar ? 0 : 2,
+        fill: false,
+        tension: 0.35,
+        pointRadius: isBar ? 0 : 4,
+        pointHoverRadius: isBar ? 0 : 6,
+      };
+    });
+    return {
+      type: cd.type,
+      data: { labels: cd.labels, datasets },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          title: {
+            display: !!cd.title,
+            text: cd.title,
+            font: { size: 13, weight: '600' },
+            color: '#1a1a1a',
+            padding: { bottom: 10 },
+          },
+          legend: { display: datasets.length > 1, position: 'bottom' },
+          tooltip: { mode: 'index', intersect: false },
+        },
+        scales: {
+          x: {
+            title: { display: !!cd.x_label, text: cd.x_label, font: { size: 11 } },
+            ticks: { maxRotation: isBar ? 45 : 0, font: { size: 11 } },
+          },
+          y: {
+            title: { display: !!cd.y_label, text: cd.y_label, font: { size: 11 } },
+            ticks: { font: { size: 11 } },
+            beginAtZero: false,
+          },
+        },
+      },
+    };
+  }
+
+  function renderCharts(bubble, charts) {
+    (charts || []).forEach(cd => {
+      const wrap = document.createElement('div');
+      wrap.className = 'chart-wrap';
+
+      const canvas = document.createElement('canvas');
+      wrap.appendChild(canvas);
+
+      const btn = document.createElement('button');
+      btn.className = 'chart-dl-btn';
+      btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+        stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="7 10 12 15 17 10"/>
+        <line x1="12" y1="15" x2="12" y2="3"/>
+      </svg> Download PNG`;
+      wrap.appendChild(btn);
+      bubble.appendChild(wrap);
+
+      const chart = new Chart(canvas, _buildChartConfig(cd));
+      btn.addEventListener('click', () => {
+        const a = document.createElement('a');
+        a.download = (cd.title || 'cbo-chart').replace(/[^a-z0-9]+/gi, '_') + '.png';
+        a.href = canvas.toDataURL('image/png');
+        a.click();
+      });
+    });
+  }
+
+  function appendMessage(role, html, toolCalls, charts) {
     const row = document.createElement('div');
     row.className = 'msg-row msg-row--' + role;
 
@@ -557,6 +663,7 @@
 
     if (role === 'bot') {
       bubble.innerHTML = DOMPurify.sanitize(marked.parse(html));
+      renderCharts(bubble, charts);
       if (toolCalls && toolCalls.length) {
         const bar = document.createElement('div');
         bar.className = 'tool-bar';
@@ -635,7 +742,7 @@
       if (!res.ok) {
         appendError(data.error || `Server error (HTTP ${res.status}).`);
       } else {
-        appendMessage('bot', data.answer || '(no answer)', data.tool_calls || []);
+        appendMessage('bot', data.answer || '(no answer)', data.tool_calls || [], data.charts || []);
       }
     } catch (err) {
       hideTyping();

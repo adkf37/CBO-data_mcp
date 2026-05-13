@@ -764,29 +764,22 @@ def chart_projection(
     year_end: Optional[int] = None,
     kind: str = "line",
     group_by: Optional[str] = None,
-    output_dir: str = "./charts",
-    filename: Optional[str] = None,
     title: Optional[str] = None,
     loader: Optional[DataLoader] = None,
+    # legacy params kept for backward-compat; no longer used
+    output_dir: str = "./charts",
+    filename: Optional[str] = None,
 ) -> dict[str, Any]:
-    """Render a PNG chart of a metric over time and write it to ``output_dir``.
+    """Build Chart.js-compatible JSON for an interactive browser chart.
 
-    For ``kind="line"``, the X axis is the year column and one line is drawn per
-    ``group_by`` value (defaults to ``vintage`` when present, otherwise a single
-    line over the filtered rows). For ``kind="bar"``, bars represent grouped
-    aggregates (``group_by`` defaults to the program/category column).
+    For ``kind="line"``, one dataset per ``group_by`` value (defaults to
+    ``vintage`` when present).  For ``kind="bar"``, one bar per group with
+    bars sorted descending.  Returns ``chart_data`` which the web layer
+    forwards to the frontend for interactive rendering with download support.
     """
     kind_lower = kind.lower()
     if kind_lower not in _CHART_KINDS:
         return {"error": f"Unsupported chart kind '{kind}'. Supported: {sorted(_CHART_KINDS)}."}
-
-    try:
-        import matplotlib
-
-        matplotlib.use("Agg")
-        import matplotlib.pyplot as plt
-    except ImportError:
-        return {"error": "matplotlib is not installed. Add it to requirements.txt."}
 
     df, year_col, err = _filtered_frame(
         file_type,
@@ -802,81 +795,73 @@ def chart_projection(
     if metric not in df.columns:
         return {"error": f"Metric column '{metric}' not found."}
 
-    out_dir = Path(output_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    exported_at = datetime.now(timezone.utc)
-    if filename:
-        stem = _sanitize_filename_component(Path(filename).stem) or "cbo_chart"
-        safe_filename = f"{stem}.png"
-    else:
-        base = _build_auto_filename(
-            file_type=file_type,
-            vintage=vintage,
-            query_params={"metric": metric, "kind": kind_lower},
-            exported_at=exported_at,
-        )
-        safe_filename = base.replace(".csv", ".png")
-    out_path = out_dir / safe_filename
-
-    fig, ax = plt.subplots(figsize=(8, 5))
-    points: list[dict[str, Any]] = []
     series = pd.to_numeric(df[metric], errors="coerce")
+    chart_title = title or f"{file_type} — {metric}"
+    if vintage:
+        chart_title += f" (vintage {vintage})"
 
-    try:
-        if kind_lower == "line":
-            if not year_col:
-                return {"error": "No year column available; line charts need one."}
-            line_group = group_by or ("vintage" if "vintage" in df.columns else None)
-            df_plot = df.assign(_year=pd.to_numeric(df[year_col], errors="coerce"), _val=series)
-            df_plot = df_plot.dropna(subset=["_year", "_val"])
-            if line_group and line_group in df_plot.columns:
-                for label, group_df in df_plot.groupby(line_group):
-                    summed = group_df.groupby("_year")["_val"].sum().sort_index()
-                    ax.plot(summed.index, summed.values, marker="o", label=str(label))
-                    points.extend(
-                        {"group": str(label), "year": int(float(str(y))), "value": float(v)}
-                        for y, v in summed.items()
-                    )
-                ax.legend(loc="best", fontsize=8)
-            else:
-                summed = df_plot.groupby("_year")["_val"].sum().sort_index()
-                ax.plot(summed.index, summed.values, marker="o", color="#1f77b4")
-                points = [
-                    {"year": int(float(str(y))), "value": float(v)} for y, v in summed.items()
-                ]
-            ax.set_xlabel(year_col)
-            ax.set_ylabel(metric)
-        else:  # bar
-            bar_group = group_by or _select_first_column(list(df.columns), _PROGRAM_COLUMNS)
-            if not bar_group:
-                return {"error": "No group_by column provided and no program column found for bar chart."}
-            grouped = series.groupby(df[bar_group]).sum().sort_values(ascending=False).head(15)
-            ax.bar(
-                [str(i) for i in grouped.index],
-                [float(v) for v in grouped.values],
-                color="#1f77b4",
-            )
-            ax.set_xlabel(bar_group)
-            ax.set_ylabel(f"sum({metric})")
-            for label in ax.get_xticklabels():
-                label.set_rotation(45)
-                label.set_ha("right")
-            points = [
-                {"group": str(idx), "value": float(val)} for idx, val in grouped.items()
-            ]
+    points: list[dict[str, Any]] = []
+    datasets: list[dict[str, Any]] = []
+    labels: list[Any] = []
 
-        chart_title = title or f"{file_type} — {metric}"
-        if vintage:
-            chart_title += f" (vintage {vintage})"
-        ax.set_title(chart_title)
-        ax.grid(True, linestyle="--", alpha=0.4)
-        fig.tight_layout()
-        fig.savefig(str(out_path), dpi=120)
-    finally:
-        plt.close(fig)
+    if kind_lower == "line":
+        if not year_col:
+            return {"error": "No year column available; line charts need one."}
+        line_group = group_by or ("vintage" if "vintage" in df.columns else None)
+        df_plot = df.assign(
+            _year=pd.to_numeric(df[year_col], errors="coerce"),
+            _val=series,
+        ).dropna(subset=["_year", "_val"])
+
+        if line_group and line_group in df_plot.columns:
+            all_years: set[int] = set()
+            grouped_series: list[tuple[str, "pd.Series"]] = []
+            for lbl, grp in df_plot.groupby(line_group):
+                summed = grp.groupby("_year")["_val"].sum().sort_index()
+                grouped_series.append((str(lbl), summed))
+                all_years.update(int(float(str(y))) for y in summed.index)
+            labels = sorted(all_years)
+            for lbl, summed in grouped_series:
+                year_map = {int(float(str(y))): float(v) for y, v in summed.items()}
+                datasets.append({
+                    "label": lbl,
+                    "data": [year_map.get(yr) for yr in labels],
+                })
+                points.extend(
+                    {"group": lbl, "year": yr, "value": year_map[yr]}
+                    for yr in labels if yr in year_map
+                )
+        else:
+            summed = df_plot.groupby("_year")["_val"].sum().sort_index()
+            labels = [int(float(str(y))) for y in summed.index]
+            datasets = [{"label": metric, "data": [float(v) for v in summed.values]}]
+            points = [{"year": yr, "value": float(v)} for yr, v in zip(labels, summed.values)]
+
+        x_label = year_col or "year"
+        y_label = metric
+
+    else:  # bar
+        bar_group = group_by or _select_first_column(list(df.columns), _PROGRAM_COLUMNS)
+        if not bar_group:
+            return {"error": "No group_by column provided and no program column found for bar chart."}
+        grouped = series.groupby(df[bar_group]).sum().sort_values(ascending=False).head(15)
+        labels = [str(i) for i in grouped.index]
+        datasets = [{"label": f"sum({metric})", "data": [float(v) for v in grouped.values]}]
+        points = [{"group": lbl, "value": float(v)} for lbl, v in zip(labels, grouped.values)]
+        x_label = bar_group
+        y_label = f"sum({metric})"
+
+    chart_data: dict[str, Any] = {
+        "type": kind_lower,
+        "title": chart_title,
+        "x_label": x_label,
+        "y_label": y_label,
+        "labels": labels,
+        "datasets": datasets,
+    }
 
     return {
-        "file_path": str(out_path.resolve()),
+        "chart_data": chart_data,
         "chart_kind": kind_lower,
         "metric": metric,
         "point_count": len(points),

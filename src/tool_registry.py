@@ -198,9 +198,13 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
     {
         "name": "chart_projection",
         "description": (
-            "Render a PNG chart (line or bar) of a metric and save it under "
-            "./charts/. Returns the absolute file path plus the underlying "
-            "data points so the answer can cite both."
+            "Build an interactive chart (line or bar) of a metric and return "
+            "Chart.js-compatible JSON so the web UI can render it with zoom, "
+            "hover tooltips, and a download-as-PNG button. "
+            "The response includes chart_data (rendered in the browser) and "
+            "points (raw numbers you can cite in the answer). "
+            "Do NOT include a file path in the answer — tell the user the chart "
+            "is displayed below and they can download it with the button."
         ),
         "parameters": {
             "type": "object",
@@ -213,8 +217,6 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "year_end": {"type": "integer"},
                 "kind": {"type": "string"},
                 "group_by": {"type": "string"},
-                "output_dir": {"type": "string"},
-                "filename": {"type": "string"},
                 "title": {"type": "string"},
             },
             "required": ["file_type", "metric"],

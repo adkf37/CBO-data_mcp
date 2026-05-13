@@ -154,7 +154,7 @@ def test_summarize_file_type_returns_schema_and_year_range():
 # ── chart_projection ──────────────────────────────────────────────────────────
 
 
-def test_chart_projection_line_writes_png(tmp_path: Path):
+def test_chart_projection_line_returns_chart_data(tmp_path: Path):
     result = chart_projection(
         "medicaid",
         metric="value",
@@ -165,15 +165,15 @@ def test_chart_projection_line_writes_png(tmp_path: Path):
         loader=FakeLoader(),
     )
     assert "error" not in result, result
-    out = Path(result["file_path"])
-    assert out.exists()
-    assert out.suffix == ".png"
-    assert out.stat().st_size > 0
+    cd = result["chart_data"]
+    assert cd["type"] == "line"
+    assert "labels" in cd
+    assert "datasets" in cd
     assert result["chart_kind"] == "line"
     assert result["point_count"] >= 1
 
 
-def test_chart_projection_bar_writes_png(tmp_path: Path):
+def test_chart_projection_bar_returns_chart_data(tmp_path: Path):
     result = chart_projection(
         "medicaid",
         metric="value",
@@ -183,8 +183,10 @@ def test_chart_projection_bar_writes_png(tmp_path: Path):
         loader=FakeLoader(),
     )
     assert "error" not in result, result
-    out = Path(result["file_path"])
-    assert out.exists()
+    cd = result["chart_data"]
+    assert cd["type"] == "bar"
+    assert "labels" in cd
+    assert "datasets" in cd
     assert result["chart_kind"] == "bar"
     # 3 program groups in fake data
     assert result["point_count"] == 3

@@ -109,12 +109,20 @@ def chat() -> tuple[Any, int]:
             {"name": tc["tool"], "args": tc.get("args", {})}
             for tc in agent.last_trace
         ]
+        charts = [
+            tc["result"]["chart_data"]
+            for tc in agent.last_trace
+            if tc["tool"] == "chart_projection"
+            and isinstance(tc.get("result"), dict)
+            and "chart_data" in tc["result"]
+        ]
         return (
             jsonify(
                 {
                     "answer": answer,
                     "session_id": session_id,
                     "tool_calls": tool_calls,
+                    "charts": charts,
                 }
             ),
             200,
