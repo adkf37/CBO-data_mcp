@@ -159,5 +159,12 @@
 - **Build-loop validation evidence:** `python -m pytest tests/test_cli.py tests/test_csv_export.py tests/test_mcp_tools.py -q --no-cov` passed (11/11), `python -m pytest tests/ -m "not integration" --cov=src --cov-report=term` passed (42 passed, 3 deselected, 78% `src/` coverage), and `python -m pytest -q` passed (42 passed, 3 deselected).
 - **Next task:** `task_08` — Documentation.
 
+### 2026-05-13 — Decision D-022 (Task ID: task_08)
+- **Routing applied:** Coordinator routed this Build slice to Scribe as the primary owner per `.squad/routing.md` (documentation authoring and handoff artifacts), with Lead reviewing completeness.
+- **task_08 implementation completed:** Created `README.md` (project description, prerequisites, install, data prep, CLI usage, example questions, testing, project structure, and known limitations), `QUICK_START.md` (5-step zero-to-first-answer guide), and `.env.example` (required env var template). Updated `backlog/README.md` success criteria checkboxes to all checked.
+- **Docstring verification:** All public classes and functions in `src/` (`DataLoader`, `CBOAgent`, `list_file_types`, `list_vintages`, `get_projection`, `compare_vintages`, `search_programs`, `export_csv`, `list_tool_names`, `get_tool`, `get_gemini_tool_declarations`) carry inline docstrings; no additions were needed.
+- **`backlog/tasks/task_08_docs.md` checklist:** All five acceptance criteria boxes now checked.
+- **Sprint completion:** `task_08` is the final task in `.squad/sprint.md`. All 8 sprint tasks are now complete. `STATUS.md` sets `Next Action: Validate`.
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.

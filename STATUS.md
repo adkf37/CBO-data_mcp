@@ -8,13 +8,13 @@
 | Priority | low |
 | Blocking | None |
 | GitHub Repo | https://github.com/adkf37/CBO-data_mcp |
-| Next Action | Build |
+| Next Action | Validate |
 
 ## Current Objective
 
-**Task ID:** `task_07`
+**Task ID:** `task_08`
 
-Build work for `task_07` (Tests and Validation) is complete. The Tester-owned slice added the required shared fixtures in `tests/conftest.py` (`sample_catalog`, `sample_df`, `mock_agent`), expanded `pytest.ini` with `testpaths`, default non-integration coverage settings, and a 70% fail-under threshold, and aligned the task checklist with the implemented testing contract. Validation commands passed after the change: `python -m pytest tests/test_cli.py tests/test_csv_export.py tests/test_mcp_tools.py -q --no-cov` (11 passed), `python -m pytest tests/ -m "not integration" --cov=src --cov-report=term` (42 passed, 3 deselected, 78% total `src/` coverage), and `python -m pytest -q` (42 passed, 3 deselected). The project is not eligible for `Complete` because `.squad/sprint.md` still has unfinished work (`task_08` documentation). The next explicit build slice is `task_08`.
+Build work for `task_08` (Documentation) is complete. The Scribe-owned slice created `README.md` (project description, prerequisites, installation, data preparation, CLI usage, example questions, testing commands, project structure, and known limitations), `QUICK_START.md` (5-step zero-to-first-answer guide), and `.env.example` (required environment variable template). The `backlog/README.md` success criteria are now all checked off. All public classes and functions in `src/` already carried inline docstrings; no source changes were needed. With `task_08` complete, all 8 sprint tasks in `.squad/sprint.md` are now finished. The next step is Validate.
 
 ## Recent Activity
 
@@ -41,6 +41,7 @@ Build work for `task_07` (Tests and Validation) is complete. The Tester-owned sl
 - 2026-05-13: Validate completed for task_06 — dependency install, syntax validation, targeted export/CLI/MCP tests, full pytest regression, and non-integration coverage checks all passed; Next Action set to Closeout
 - 2026-05-13: Closeout completed for task_06 — review artifacts refreshed, task_06 checklist aligned to evidence, and the repo returned to Build for `task_07`
 - 2026-05-13: task_07 Build completed — `tests/conftest.py` added with shared fixtures (`sample_catalog`, `sample_df`, `mock_agent`), `pytest.ini` now sets `testpaths` plus default `--cov=src --cov-fail-under=70 -m "not integration"` options, task_07 checklist aligned, and targeted/acceptance/full pytest commands passed
+- 2026-05-13: task_08 Build completed — `README.md`, `QUICK_START.md`, and `.env.example` created; `backlog/README.md` success criteria all checked; all 8 sprint tasks are now complete
 
 ## Artifacts
 
@@ -70,8 +71,10 @@ Build work for `task_07` (Tests and Validation) is complete. The Tester-owned sl
 | Pytest Fixtures | `./tests/conftest.py` | created (task_07) |
 | CLI Entry Point | `./main.py` | created (task_05) |
 | CLI Tests | `./tests/test_cli.py` | created (task_05) |
-| CSV Export Tests | `./tests/test_csv_export.py` | created (task_06) |
+| README | `./README.md` | created (task_08) |
+| Quick Start | `./QUICK_START.md` | created (task_08) |
+| Env Example | `./.env.example` | created (task_08) |
 
 ## Needs Human Input
 
-- None. The next action is automated Build work for `task_08`.
+- None. All 8 sprint tasks are complete. The next action is Validate.
