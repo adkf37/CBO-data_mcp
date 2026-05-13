@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -7,7 +7,7 @@
   <meta name="description" content="Ask questions about CBO baseline projections, budget outlooks, and program spending." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Libre+Franklin:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Jost:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"
           integrity="sha384-/TQbtLCAerC3jgaim+N78RZSDYV7ryeoBCVqTuzRrFec2akfBkHS7ACQ3PQhvMVi"
           crossorigin="anonymous"></script>
@@ -17,43 +17,47 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"
           crossorigin="anonymous"></script>
   <style>
-    /* ─── DESIGN TOKENS ──────────────────────────────────── */
+    /* â”€â”€â”€ DESIGN TOKENS â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     :root {
-      --navy:        #003366;
-      --navy-deep:   #001d3d;
-      --navy-mid:    #002b55;
-      --red:         #cf2920;
-      --red-hover:   #a82018;
-      --cream:       #faf8f5;
-      --warm-white:  #f4f1ec;
+      --bg:          #f4f0e8;
+      --bg-warm:     #ece8df;
+      --card:        #ffffff;
+      --dark:        #0d1c13;
+      --dark-mid:    #162a1c;
+      --green:       #2d6a4f;
+      --green-light: #40916c;
+      --gold:        #c9a227;
+      --gold-light:  #e9c46a;
       --text:        #1a1a1a;
-      --text-muted:  #5a6068;
-      --text-light:  #8a8f96;
-      --rule:        #e2ddd8;
-      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
-      --shadow-md:   0 4px 16px rgba(0,0,0,.10);
-      --radius:      10px;
-      --font-display: 'DM Serif Display', Georgia, serif;
-      --font-body:    'Libre Franklin', system-ui, sans-serif;
+      --text-muted:  #5a5a5a;
+      --text-light:  #8a8a8a;
+      --rule:        #ddd8ce;
+      --rule-dark:   rgba(255,255,255,0.1);
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.07);
+      --shadow-md:   0 4px 20px rgba(0,0,0,.09);
+      --radius:      8px;
+      --font-display: 'Cormorant Garamond', Georgia, serif;
+      --font-body:    'Jost', system-ui, sans-serif;
+      --font-mono:    'JetBrains Mono', 'Fira Code', Consolas, monospace;
       --max-width:    1120px;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     html { font-size: 16px; }
     body {
       font-family: var(--font-body);
-      background: var(--cream);
+      font-weight: 400;
+      background: var(--bg);
       color: var(--text);
       display: flex;
       flex-direction: column;
       min-height: 100vh;
     }
 
-    /* ─── TOP NAV ─────────────────────────────────────────── */
+    /* â”€â”€â”€ TOP NAV â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .top-nav {
-      background: var(--navy-deep);
-      border-bottom: 2px solid var(--red);
+      background: var(--dark);
+      border-bottom: 1px solid rgba(201,162,39,0.5);
       position: sticky;
       top: 0;
       z-index: 100;
@@ -61,92 +65,139 @@
     .top-nav__inner {
       max-width: var(--max-width);
       margin: 0 auto;
-      padding: 0.6rem 1.5rem;
+      padding: 0 1.5rem;
+      height: 46px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       gap: 1rem;
     }
     .top-nav__brand {
-      color: #fff;
-      font-family: var(--font-body);
-      font-weight: 600;
-      font-size: 0.85rem;
-      letter-spacing: 0.04em;
-      text-transform: uppercase;
       display: flex;
       align-items: center;
-      gap: 0.5rem;
+      gap: 0.65rem;
     }
-    .top-nav__star { color: var(--red); font-size: 0.9rem; }
+    .top-nav__mark {
+      width: 24px; height: 24px;
+      border: 1.5px solid var(--gold);
+      border-radius: 3px;
+      display: flex; align-items: center; justify-content: center;
+      font-family: var(--font-display);
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+    .top-nav__name {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.8);
+    }
+    .top-nav__sep {
+      width: 1px; height: 14px;
+      background: rgba(255,255,255,0.18);
+    }
+    .top-nav__sub {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      font-weight: 400;
+      color: rgba(255,255,255,0.38);
+      letter-spacing: 0.02em;
+    }
     .top-nav__links {
       list-style: none;
       display: flex;
-      gap: 1.25rem;
+      gap: 1.5rem;
     }
     .top-nav__links a {
-      color: rgba(255,255,255,0.7);
+      color: rgba(255,255,255,0.45);
       text-decoration: none;
-      font-size: 0.78rem;
-      font-weight: 500;
+      font-size: 0.72rem;
+      font-weight: 400;
       letter-spacing: 0.02em;
       transition: color .15s;
     }
-    .top-nav__links a:hover { color: #fff; }
+    .top-nav__links a:hover { color: rgba(255,255,255,0.9); }
 
-    /* ─── HERO ────────────────────────────────────────────── */
+    /* â”€â”€â”€ HERO â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .hero {
-      background: linear-gradient(135deg, var(--navy-deep) 0%, var(--navy-mid) 60%, var(--navy) 100%);
-      color: #fff;
+      background: var(--bg);
+      border-bottom: 1px solid var(--rule);
       position: relative;
       overflow: hidden;
     }
-    .hero::before {
-      content: '';
+    .hero::after {
+      content: 'CBO';
       position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse at 70% 50%, rgba(207,41,32,0.12) 0%, transparent 70%);
+      right: -0.02em;
+      top: 50%;
+      transform: translateY(-50%);
+      font-family: var(--font-display);
+      font-size: clamp(80px, 14vw, 155px);
+      font-weight: 600;
+      color: rgba(0,0,0,0.04);
       pointer-events: none;
-    }
-    .hero__bg-grid {
-      position: absolute;
-      inset: 0;
-      background:
-        repeating-linear-gradient(0deg, transparent, transparent 44px, rgba(255,255,255,0.025) 44px, rgba(255,255,255,0.025) 45px),
-        repeating-linear-gradient(90deg, transparent, transparent 44px, rgba(255,255,255,0.025) 44px, rgba(255,255,255,0.025) 45px);
-      pointer-events: none;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      user-select: none;
     }
     .hero__inner {
       max-width: var(--max-width);
       margin: 0 auto;
-      padding: 1.4rem 1.5rem 1.2rem;
+      padding: 1.4rem 1.5rem 1.25rem;
       position: relative;
     }
     .hero__eyebrow {
-      font-size: 0.72rem;
-      font-weight: 600;
-      letter-spacing: 0.12em;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-family: var(--font-mono);
+      font-size: 0.62rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
-      color: rgba(255,255,255,0.5);
+      color: var(--green);
       margin-bottom: 0.4rem;
+    }
+    .hero__eyebrow::before {
+      content: '';
+      display: inline-block;
+      width: 16px; height: 1.5px;
+      background: var(--green);
     }
     .hero__headline {
       font-family: var(--font-display);
-      font-size: 1.6rem;
-      font-weight: 400;
-      line-height: 1.2;
-      color: #fff;
-      margin-bottom: 0.4rem;
+      font-size: clamp(1.45rem, 3vw, 1.9rem);
+      font-weight: 500;
+      line-height: 1.15;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+      letter-spacing: -0.01em;
     }
-    .hero__headline em { color: #f4b860; font-style: italic; }
-    .hero__subtitle {
-      font-size: 0.82rem;
-      color: rgba(255,255,255,0.62);
-      font-weight: 400;
-      line-height: 1.5;
+    .hero__headline em { font-style: italic; color: var(--green); }
+    .hero__meta {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      flex-wrap: wrap;
+    }
+    .hero__stat {
+      font-family: var(--font-mono);
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+    .hero__stat strong { color: var(--text); font-weight: 500; }
+    .hero__stat-dot {
+      width: 3px; height: 3px;
+      border-radius: 50%;
+      background: var(--rule);
+      flex-shrink: 0;
     }
 
-    /* ─── MAIN LAYOUT ─────────────────────────────────────── */
+    /* â”€â”€â”€ MAIN LAYOUT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .main-layout {
       flex: 1;
       max-width: var(--max-width);
@@ -154,20 +205,21 @@
       width: 100%;
       padding: 1.5rem;
       display: grid;
-      grid-template-columns: 1fr 260px;
+      grid-template-columns: 1fr 272px;
       gap: 1.5rem;
       align-items: start;
     }
 
-    /* ─── CHAT ────────────────────────────────────────────── */
+    /* â”€â”€â”€ CHAT â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .chat-wrapper {
-      background: #fff;
+      background: var(--card);
       border-radius: var(--radius);
+      border: 1px solid var(--rule);
       box-shadow: var(--shadow-md);
       display: flex;
       flex-direction: column;
       min-height: 560px;
-      max-height: calc(100vh - 220px);
+      max-height: calc(100vh - 200px);
     }
     .messages {
       flex: 1;
@@ -181,6 +233,8 @@
     .input-area {
       padding: 0.75rem 1rem;
       border-top: 1px solid var(--rule);
+      background: var(--bg);
+      border-radius: 0 0 var(--radius) var(--radius);
     }
     .chat-form {
       display: flex;
@@ -190,26 +244,31 @@
     .chat-input {
       flex: 1;
       border: 1.5px solid var(--rule);
-      border-radius: 8px;
+      border-radius: 6px;
       padding: 0.6rem 0.85rem;
       font-family: var(--font-body);
       font-size: 0.88rem;
+      font-weight: 400;
       color: var(--text);
-      background: var(--cream);
+      background: var(--card);
       outline: none;
-      transition: border-color .15s;
+      transition: border-color .15s, box-shadow .15s;
     }
-    .chat-input:focus { border-color: var(--navy); background: #fff; }
+    .chat-input:focus {
+      border-color: var(--green);
+      box-shadow: 0 0 0 3px rgba(45,106,79,0.1);
+    }
     .chat-input::placeholder { color: var(--text-light); }
     .submit-btn {
-      background: var(--navy);
+      background: var(--green);
       color: #fff;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       padding: 0.6rem 1.1rem;
       font-family: var(--font-body);
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       font-weight: 600;
+      letter-spacing: 0.03em;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -217,7 +276,7 @@
       transition: background .15s;
       white-space: nowrap;
     }
-    .submit-btn:hover:not(:disabled) { background: var(--navy-mid); }
+    .submit-btn:hover:not(:disabled) { background: var(--green-light); }
     .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
     .spinner {
@@ -231,12 +290,15 @@
 
     .chat-meta {
       text-align: center;
-      font-size: 0.7rem;
+      font-size: 0.63rem;
+      font-weight: 400;
       color: var(--text-light);
-      padding: 0.25rem 0 0.5rem;
+      padding: 0.25rem 0 0;
+      font-family: var(--font-mono);
+      letter-spacing: 0.02em;
     }
 
-    /* ─── CHAT BUBBLES ────────────────────────────────────── */
+    /* â”€â”€â”€ CHAT BUBBLES â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .msg-row {
       display: flex;
       align-items: flex-start;
@@ -245,56 +307,64 @@
     .msg-row--user { flex-direction: row-reverse; }
     .avatar {
       width: 2rem; height: 2rem;
-      border-radius: 50%;
+      border-radius: 4px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em;
+      font-size: 0.58rem; font-weight: 500; letter-spacing: 0.06em;
       flex-shrink: 0;
-      font-family: var(--font-body);
+      font-family: var(--font-mono);
+      text-transform: uppercase;
     }
-    .avatar--bot  { background: var(--navy); color: #fff; }
-    .avatar--user { background: #475569;    color: #fff; }
+    .avatar--bot  {
+      background: var(--dark);
+      color: var(--gold-light);
+      border: 1px solid rgba(201,162,39,0.3);
+    }
+    .avatar--user { background: var(--green); color: #fff; }
     .bubble {
       max-width: 78%;
-      padding: 0.65rem 0.9rem;
+      padding: 0.7rem 0.9rem;
       border-radius: var(--radius);
       font-size: 0.875rem;
       line-height: 1.65;
     }
     .bubble--bot {
-      background: var(--warm-white);
+      background: var(--card);
       border: 1px solid var(--rule);
       color: var(--text);
     }
     .bubble--user {
-      background: var(--navy);
-      color: #fff;
+      background: var(--dark);
+      color: rgba(255,255,255,0.9);
     }
     .bubble--bot p { margin-bottom: 0.5rem; }
     .bubble--bot p:last-child { margin-bottom: 0; }
     .bubble--bot ul { list-style: disc; padding-left: 1.2rem; margin-bottom: 0.5rem; }
     .bubble--bot ol { list-style: decimal; padding-left: 1.2rem; margin-bottom: 0.5rem; }
     .bubble--bot li { margin-bottom: 0.2rem; line-height: 1.6; }
-    .bubble--bot strong { color: var(--navy-deep); font-weight: 600; }
+    .bubble--bot strong { color: var(--dark); font-weight: 600; }
     .bubble--bot code {
-      background: #f0ede8; color: var(--navy);
+      background: var(--bg-warm); color: var(--green);
       padding: 0.1rem 0.35rem; border-radius: 3px;
-      font-size: 0.82em; font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+      font-size: 0.82em; font-family: var(--font-mono);
     }
     .bubble--bot pre code {
       display: block; padding: 0.75rem; overflow-x: auto;
       white-space: pre; font-size: 0.78em;
+      background: var(--dark); color: var(--gold-light);
     }
     .bubble--bot h3 {
-      font-family: var(--font-display); font-size: 1rem;
-      color: var(--navy-deep); margin: 0.75rem 0 0.35rem; font-weight: normal;
+      font-family: var(--font-display); font-size: 1.05rem;
+      font-weight: 500; font-style: italic;
+      color: var(--dark); margin: 0.75rem 0 0.35rem;
     }
     .bubble--bot table {
       width: 100%; border-collapse: collapse; font-size: 0.82em;
       margin: 0.5rem 0;
     }
     .bubble--bot th {
-      background: var(--navy); color: #fff; text-align: left;
-      padding: 0.35rem 0.5rem; font-weight: 600;
+      background: var(--dark); color: rgba(255,255,255,0.9); text-align: left;
+      padding: 0.35rem 0.5rem; font-weight: 500;
+      font-size: 0.76em; letter-spacing: 0.04em;
     }
     .bubble--bot td {
       padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--rule);
@@ -309,15 +379,16 @@
     }
     .tool-badge {
       display: inline-flex; align-items: center; gap: 0.25rem;
-      background: var(--cream); border: 1px solid var(--rule);
+      background: var(--bg); border: 1px solid var(--rule);
       border-radius: 9999px; padding: 0.15rem 0.55rem;
-      font-size: 0.7rem; color: var(--text-muted); font-weight: 500;
+      font-size: 0.66rem; font-family: var(--font-mono);
+      color: var(--text-muted); font-weight: 400;
     }
 
     /* interactive charts */
     .chart-wrap {
       margin-top: 0.85rem;
-      background: #fff;
+      background: var(--card);
       border: 1px solid var(--rule);
       border-radius: var(--radius);
       padding: 0.75rem 0.75rem 0.5rem;
@@ -330,73 +401,160 @@
       border: 1px solid var(--rule);
       border-radius: 9999px;
       padding: 0.2rem 0.65rem;
-      font-size: 0.7rem; font-weight: 500; color: var(--text-muted);
+      font-size: 0.66rem; font-family: var(--font-mono);
+      font-weight: 400; color: var(--text-muted);
       cursor: pointer; transition: border-color .15s, color .15s;
     }
-    .chart-dl-btn:hover { border-color: var(--navy); color: var(--navy); }
+    .chart-dl-btn:hover { border-color: var(--green); color: var(--green); }
 
     /* typing indicator */
     .typing-dots { display: flex; gap: 4px; align-items: center; height: 18px; }
     .typing-dots span {
-      width: 6px; height: 6px; border-radius: 50%;
-      background: var(--text-muted);
+      width: 5px; height: 5px; border-radius: 50%;
+      background: var(--green); opacity: 0.4;
       animation: bounce 1.2s ease-in-out infinite;
     }
     .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
     .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
     @keyframes bounce {
       0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-      40%            { transform: translateY(-6px); opacity: 1; }
+      40%            { transform: translateY(-5px); opacity: 1; }
     }
 
     /* error bubble */
     .bubble--error {
-      background: #fff5f5; border-color: #fca5a5; color: #991b1b;
+      background: #fefce8; border-color: #fde047; color: #713f12;
     }
 
-    /* ─── SIDE PANEL ──────────────────────────────────────── */
-    .suggestions-panel {
-      display: flex; flex-direction: column; gap: 0.75rem;
+    /* â”€â”€â”€ SIDEBAR â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+    .sidebar {
+      background: var(--dark-mid);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
     }
-    .panel__label {
-      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
-      text-transform: uppercase; color: var(--text-muted);
+    .sidebar__section {
+      padding: 0.9rem 1rem;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
     }
-    .capability-card {
-      background: #fff; border: 1px solid var(--rule);
-      border-radius: var(--radius); padding: 0.75rem;
-      box-shadow: var(--shadow-sm);
+    .sidebar__section:last-child { border-bottom: none; }
+    .sidebar__label {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold);
+      margin-bottom: 0.7rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
     }
-    .capability-card__header {
-      display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;
+    .sidebar__label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(201,162,39,0.2);
     }
-    .capability-card__icon { font-size: 1rem; }
-    .capability-card__title {
-      font-size: 0.82rem; font-weight: 600; color: var(--navy-deep);
+
+    /* program groups */
+    .prog-group { margin-bottom: 0.6rem; }
+    .prog-group:last-child { margin-bottom: 0; }
+    .prog-group__name {
+      font-family: var(--font-mono);
+      font-size: 0.56rem;
+      font-weight: 400;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+      margin-bottom: 0.3rem;
     }
-    .capability-card__text {
-      font-size: 0.77rem; color: var(--text-muted); line-height: 1.5;
+    .prog-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.22rem;
     }
-    .panel-divider {
-      height: 1px; background: var(--rule); margin: 0.25rem 0;
+    .prog-tag {
+      font-family: var(--font-body);
+      font-size: 0.68rem;
+      font-weight: 400;
+      color: rgba(255,255,255,0.7);
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 3px;
+      padding: 0.12rem 0.38rem;
+      line-height: 1.5;
     }
-    .panel-chip {
-      background: #fff; border: 1px solid var(--rule);
-      border-radius: 8px; padding: 0.5rem 0.7rem;
-      font-family: var(--font-body); font-size: 0.77rem;
-      color: var(--navy); cursor: pointer; text-align: left;
-      transition: background .12s, border-color .12s;
+    .prog-tag--new {
+      color: var(--gold-light);
+      background: rgba(201,162,39,0.12);
+      border-color: rgba(201,162,39,0.25);
+    }
+
+    /* vintage table */
+    .vintage-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.28rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .vintage-row:last-child { border-bottom: none; }
+    .vintage-name {
+      font-family: var(--font-body);
+      font-size: 0.73rem;
+      color: rgba(255,255,255,0.7);
+      font-weight: 400;
+    }
+    .vintage-badge {
+      font-family: var(--font-mono);
+      font-size: 0.6rem;
+      color: var(--gold);
+      background: rgba(201,162,39,0.14);
+      border: 1px solid rgba(201,162,39,0.25);
+      border-radius: 3px;
+      padding: 0.08rem 0.32rem;
+    }
+
+    /* example question chips */
+    .ask-chip {
+      display: block;
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 5px;
+      padding: 0.48rem 0.6rem;
+      font-family: var(--font-body);
+      font-size: 0.72rem;
+      font-weight: 400;
+      color: rgba(255,255,255,0.68);
+      cursor: pointer;
+      text-align: left;
       line-height: 1.4;
+      margin-bottom: 0.32rem;
+      transition: background .12s, border-color .12s, color .12s;
     }
-    .panel-chip:hover { background: var(--warm-white); border-color: var(--navy); }
+    .ask-chip:last-child { margin-bottom: 0; }
+    .ask-chip:hover {
+      background: rgba(45,106,79,0.22);
+      border-color: rgba(64,145,108,0.38);
+      color: rgba(255,255,255,0.92);
+    }
+    .ask-chip__arrow {
+      color: var(--gold);
+      margin-right: 0.25rem;
+      font-size: 0.65rem;
+    }
 
-    /* ─── FOOTER ──────────────────────────────────────────── */
+    /* â”€â”€â”€ FOOTER â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     .site-footer {
-      background: var(--navy-deep);
-      border-top: 2px solid var(--red);
-      color: rgba(255,255,255,0.5);
-      font-size: 0.75rem;
-      padding: 0.9rem 1.5rem;
+      background: var(--dark);
+      border-top: 1px solid rgba(201,162,39,0.4);
+      color: rgba(255,255,255,0.35);
+      font-size: 0.65rem;
+      padding: 0.75rem 1.5rem;
+      font-family: var(--font-mono);
+      letter-spacing: 0.02em;
     }
     .site-footer__inner {
       max-width: var(--max-width);
@@ -404,57 +562,63 @@
       display: flex; justify-content: space-between; align-items: center;
       gap: 1rem; flex-wrap: wrap;
     }
-    .site-footer__links { display: flex; gap: 1rem; }
+    .site-footer__links { display: flex; gap: 1.25rem; }
     .site-footer__links a {
-      color: rgba(255,255,255,0.5); text-decoration: none;
+      color: rgba(255,255,255,0.35); text-decoration: none;
       transition: color .15s;
     }
-    .site-footer__links a:hover { color: #fff; }
+    .site-footer__links a:hover { color: rgba(255,255,255,0.8); }
 
-    /* ─── RESPONSIVE ──────────────────────────────────────── */
+    /* â”€â”€â”€ RESPONSIVE â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
     @media (max-width: 768px) {
       .main-layout {
         grid-template-columns: 1fr;
         padding: 1rem;
       }
-      .suggestions-panel { display: none; }
+      .sidebar { display: none; }
       .top-nav__links { display: none; }
+      .top-nav__sub { display: none; }
+      .top-nav__sep { display: none; }
     }
   </style>
 </head>
 <body>
 
-<!-- ═══ TOP NAV ══════════════════════════════════════════════ -->
+<!-- â•â•â• TOP NAV â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <nav class="top-nav">
   <div class="top-nav__inner">
-    <span class="top-nav__brand">
-      <span class="top-nav__star" aria-hidden="true">★</span>
-      Congressional Budget Office · Data Tools
-    </span>
+    <div class="top-nav__brand">
+      <div class="top-nav__mark">CG</div>
+      <span class="top-nav__name">CBO Data</span>
+      <div class="top-nav__sep"></div>
+      <span class="top-nav__sub">Baseline Projection Explorer</span>
+    </div>
     <ul class="top-nav__links">
-      <li><a href="https://www.cbo.gov/about/products/budget-economic-data" target="_blank" rel="noopener">CBO Data</a></li>
-      <li><a href="https://www.cbo.gov/publication/51118" target="_blank" rel="noopener">10-Year Budget Projections</a></li>
-      <li><a href="https://www.cbo.gov/topics/budget" target="_blank" rel="noopener">Topics</a></li>
+      <li><a href="https://www.cbo.gov/about/products/budget-economic-data" target="_blank" rel="noopener">CBO Data Portal</a></li>
+      <li><a href="https://www.cbo.gov/topics/budget" target="_blank" rel="noopener">Budget Topics</a></li>
     </ul>
   </div>
 </nav>
 
-<!-- ═══ HERO ══════════════════════════════════════════════════ -->
+<!-- â•â•â• HERO â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <header class="hero">
-  <div class="hero__bg-grid" aria-hidden="true"></div>
   <div class="hero__inner">
-    <p class="hero__eyebrow">CBO Baseline Projections</p>
-    <h1 class="hero__headline">CBO Data <em>Assistant</em></h1>
-    <p class="hero__subtitle">
-      Budget projections · Program spending · Revenue trends · Vintage comparisons
-    </p>
+    <p class="hero__eyebrow">Baseline Projection Data · 2019–2026</p>
+    <h1 class="hero__headline">CBO Program <em>Expenditure Explorer</em></h1>
+    <div class="hero__meta">
+      <span class="hero__stat"><strong>50+</strong> datasets</span>
+      <span class="hero__stat-dot"></span>
+      <span class="hero__stat">vintages <strong>2019-05</strong> → <strong>2026-02</strong></span>
+      <span class="hero__stat-dot"></span>
+      <span class="hero__stat">Medicaid · Medicare · SNAP · SSDI · Social Security + more</span>
+    </div>
   </div>
 </header>
 
-<!-- ═══ MAIN LAYOUT ═══════════════════════════════════════════ -->
+<!-- â•â•â• MAIN LAYOUT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <div class="main-layout">
 
-<!-- ═══ CHAT ══════════════════════════════════════════════════ -->
+<!-- â•â•â• CHAT â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <main class="chat-wrapper">
   <div id="messages" class="messages">
     <!-- Messages appear here -->
@@ -474,65 +638,101 @@
         <span id="btn-spinner" class="spinner" style="display:none;"></span>
       </button>
     </form>
-    <p class="chat-meta">Not official CBO guidance · For research purposes only</p>
+    <p class="chat-meta">// not official CBO guidance · for research use only</p>
   </div>
 </main>
 
-<!-- ═══ RIGHT PANEL ════════════════════════════════════════════ -->
-<aside class="suggestions-panel">
-  <p class="panel__label">What it can do</p>
+<!-- â•â•â• RIGHT PANEL â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
+<aside class="sidebar">
 
-  <div class="capability-card">
-    <div class="capability-card__header">
-      <span class="capability-card__icon" aria-hidden="true">📊</span>
-      <span class="capability-card__title">Projection Lookups</span>
+  <div class="sidebar__section">
+    <p class="sidebar__label">Programs in dataset</p>
+    <div class="prog-group">
+      <p class="prog-group__name">Health</p>
+      <div class="prog-tags">
+        <span class="prog-tag prog-tag--new">Medicaid</span>
+        <span class="prog-tag prog-tag--new">Medicare</span>
+        <span class="prog-tag prog-tag--new">CHIP</span>
+        <span class="prog-tag">Health Insurance</span>
+        <span class="prog-tag">DoD Medicare</span>
+        <span class="prog-tag">Premium Tax Credit</span>
+      </div>
     </div>
-    <p class="capability-card__text">Fetch raw rows from any CBO baseline file across all vintages.</p>
+    <div class="prog-group">
+      <p class="prog-group__name">Income &amp; Benefits</p>
+      <div class="prog-tags">
+        <span class="prog-tag prog-tag--new">SNAP</span>
+        <span class="prog-tag prog-tag--new">SSDI</span>
+        <span class="prog-tag">SSI</span>
+        <span class="prog-tag">Social Security</span>
+        <span class="prog-tag prog-tag--new">TANF</span>
+        <span class="prog-tag prog-tag--new">Unemployment</span>
+      </div>
+    </div>
+    <div class="prog-group">
+      <p class="prog-group__name">Education &amp; Housing</p>
+      <div class="prog-tags">
+        <span class="prog-tag">Pell Grants</span>
+        <span class="prog-tag">Student Loans</span>
+        <span class="prog-tag">Mortgages</span>
+      </div>
+    </div>
+    <div class="prog-group">
+      <p class="prog-group__name">Veterans &amp; Military</p>
+      <div class="prog-tags">
+        <span class="prog-tag">Veterans Benefits</span>
+        <span class="prog-tag">GI Bill</span>
+        <span class="prog-tag">Military Retirement</span>
+      </div>
+    </div>
+    <div class="prog-group">
+      <p class="prog-group__name">Other</p>
+      <div class="prog-tags">
+        <span class="prog-tag prog-tag--new">Foster Care</span>
+        <span class="prog-tag">Child Nutrition</span>
+        <span class="prog-tag">PBGC</span>
+        <span class="prog-tag">Trust Funds</span>
+        <span class="prog-tag">FDIC</span>
+        <span class="prog-tag">Highway Trust</span>
+        <span class="prog-tag">USDA</span>
+      </div>
+    </div>
   </div>
 
-  <div class="capability-card">
-    <div class="capability-card__header">
-      <span class="capability-card__icon" aria-hidden="true">📈</span>
-      <span class="capability-card__title">Growth &amp; Trends</span>
-    </div>
-    <p class="capability-card__text">Year-over-year growth rates, CAGR, and compound changes.</p>
+  <div class="sidebar__section">
+    <p class="sidebar__label">Latest vintage: 2026-02</p>
+    <div class="vintage-row"><span class="vintage-name">Medicaid</span><span class="vintage-badge">2026-02</span></div>
+    <div class="vintage-row"><span class="vintage-name">Medicare</span><span class="vintage-badge">2026-02</span></div>
+    <div class="vintage-row"><span class="vintage-name">SNAP</span><span class="vintage-badge">2026-02</span></div>
+    <div class="vintage-row"><span class="vintage-name">SSDI</span><span class="vintage-badge">2026-02</span></div>
+    <div class="vintage-row"><span class="vintage-name">TANF</span><span class="vintage-badge">2026-02</span></div>
+    <div class="vintage-row"><span class="vintage-name">CHIP</span><span class="vintage-badge">2026-02</span></div>
+    <div class="vintage-row"><span class="vintage-name">Unemployment</span><span class="vintage-badge">2026-02</span></div>
+    <div class="vintage-row"><span class="vintage-name">Foster Care</span><span class="vintage-badge">2026-02</span></div>
+    <div class="vintage-row"><span class="vintage-name">Social Security</span><span class="vintage-badge">2025-01</span></div>
+    <div class="vintage-row"><span class="vintage-name">Pell Grants</span><span class="vintage-badge">2025-01</span></div>
   </div>
 
-  <div class="capability-card">
-    <div class="capability-card__header">
-      <span class="capability-card__icon" aria-hidden="true">🔄</span>
-      <span class="capability-card__title">Vintage Comparison</span>
-    </div>
-    <p class="capability-card__text">Compare how projections changed between CBO baseline releases.</p>
+  <div class="sidebar__section">
+    <p class="sidebar__label">Try asking</p>
+    <button class="ask-chip" onclick="sendSuggestion(this)"><span class="ask-chip__arrow">↗</span>Chart Medicaid enrollment from 2025 to 2034 in the latest projection</button>
+    <button class="ask-chip" onclick="sendSuggestion(this)"><span class="ask-chip__arrow">↗</span>How did Medicare spending projections change between the 2024-06 and 2026-02 baselines?</button>
+    <button class="ask-chip" onclick="sendSuggestion(this)"><span class="ask-chip__arrow">↗</span>What are SNAP's projected outlays over the next 10 years?</button>
+    <button class="ask-chip" onclick="sendSuggestion(this)"><span class="ask-chip__arrow">↗</span>Compare SSDI beneficiary counts across all vintages since 2021</button>
+    <button class="ask-chip" onclick="sendSuggestion(this)"><span class="ask-chip__arrow">↗</span>Show Unemployment Insurance outlays from the 2026-02 projection</button>
   </div>
 
-  <div class="capability-card">
-    <div class="capability-card__header">
-      <span class="capability-card__icon" aria-hidden="true">🏆</span>
-      <span class="capability-card__title">Rankings &amp; Aggregates</span>
-    </div>
-    <p class="capability-card__text">Top-N programs by spending, totals, averages across groups.</p>
-  </div>
-
-  <div class="panel-divider"></div>
-  <p class="panel__label">Try asking</p>
-
-  <button class="panel-chip" onclick="sendSuggestion(this)">What file types are available?</button>
-  <button class="panel-chip" onclick="sendSuggestion(this)">Show me the top 5 mandatory spending programs in 2025</button>
-  <button class="panel-chip" onclick="sendSuggestion(this)">How did the Social Security projection change between the 2023 and 2024 baselines?</button>
-  <button class="panel-chip" onclick="sendSuggestion(this)">What is the projected growth rate for Medicare from 2025 to 2030?</button>
-  <button class="panel-chip" onclick="sendSuggestion(this)">Compare discretionary outlays across the last two vintages</button>
 </aside>
 
 </div><!-- /main-layout -->
 
-<!-- ═══ FOOTER ════════════════════════════════════════════════ -->
+<!-- â•â•â• FOOTER â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• -->
 <footer class="site-footer">
   <div class="site-footer__inner">
-    <div>Powered by Gemini · CBO Baseline Data · Not official CBO guidance</div>
+    <div>// powered by Gemini 2.5 Flash · CBO baseline data · not official CBO guidance</div>
     <div class="site-footer__links">
-      <a href="https://www.cbo.gov" target="_blank" rel="noopener">CBO.gov</a>
-      <a href="https://www.cbo.gov/about/products/budget-economic-data" target="_blank" rel="noopener">Budget &amp; Economic Data</a>
+      <a href="https://www.cbo.gov" target="_blank" rel="noopener">cbo.gov</a>
+      <a href="https://www.cbo.gov/about/products/budget-economic-data" target="_blank" rel="noopener">data portal</a>
     </div>
   </div>
 </footer>
@@ -547,7 +747,7 @@
 
   marked.setOptions({ breaks: true, gfm: true });
 
-  // ─── Session ID ──────────────────────────────────────────
+  // â”€â”€â”€ Session ID â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const SESSION_KEY = 'cbo.sessionId';
   function _genId() {
     if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
@@ -559,7 +759,7 @@
     return sid;
   }
 
-  // ─── Helpers ────────────────────────────────────────────
+  // â”€â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   function setLoading(on) {
     submitBtn.disabled = on;
     btnText.style.display    = on ? 'none' : '';
@@ -567,10 +767,11 @@
     input.disabled = on;
   }
 
-  // ─── Chart colours (CBO palette) ────────────────────────
+  // â”€â”€â”€ Chart colours (CBO palette) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   const _CHART_COLORS = [
-    '#003366','#cf2920','#f4b860','#2ca02c','#9467bd',
-    '#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf',
+    '#2d6a4f', '#c9a227', '#40916c', '#e9c46a',
+    '#1b4332', '#d4a017', '#52b788', '#b5830e',
+    '#74c69d', '#a37700',
   ];
 
   function _buildChartConfig(cd) {
@@ -716,7 +917,7 @@
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
-  // ─── Send question ───────────────────────────────────────
+  // â”€â”€â”€ Send question â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   async function sendQuestion(q) {
     if (!q) return;
     input.value = '';
@@ -747,7 +948,7 @@
     } catch (err) {
       hideTyping();
       if (err.name === 'TimeoutError') {
-        appendError('Request timed out — the question may be too complex. Try a simpler query.');
+        appendError('Request timed out â€” the question may be too complex. Try a simpler query.');
       } else {
         appendError('Could not reach the server. Please try again.');
       }
