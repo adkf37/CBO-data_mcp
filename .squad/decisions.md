@@ -172,5 +172,11 @@
 - **Artifact inspection completed:** Manual review confirmed `README.md`, `QUICK_START.md`, `.env.example`, `tests/conftest.py`, and `pytest.ini` satisfy the `task_07` and `task_08` contracts, while `.squad/validation_report.md` and `STATUS.md` now capture the validation outcome.
 - **Validation recommendation:** Pass to Closeout. The only remaining follow-up items are non-blocking: the upstream `google.generativeai` deprecation warning and the absence of a live API key for true end-to-end Gemini execution.
 
+### 2026-05-13 — Decision D-024 (Task ID: task_08)
+- **Closeout outcome:** Reviewer reran the existing validation commands, rechecked the sprint plan and final task checklists, and confirmed the entire `.squad/sprint.md` now satisfies the closeout Definition of Done. The final project decision is `Complete`.
+- **Completion rationale:** All 8 sprint tasks are complete, all acceptance criteria remain checked in the backlog artifacts, `STATUS.md` is aligned to `Next Action: Complete`, and `.squad/review_report.md` now records the final closeout evidence and decision.
+- **Handoff refresh:** `STATUS.md`, `.squad/review_report.md`, and `project_overview.md` now describe the finished sprint rather than the earlier `task_06` return-to-build state, so a human can understand the current repo state quickly.
+- **Known non-blocking risks:** A live `GEMINI_API_KEY` is still required for true end-to-end Gemini validation beyond the verified skip-path contract, and `google.generativeai` continues to emit a deprecation `FutureWarning`.
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.

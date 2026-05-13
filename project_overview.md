@@ -1,7 +1,7 @@
 # CBO-data_mcp - Project Overview
 
 Date: 2026-05-13
-Status: Closeout complete for task_06; next up is Build for task_07
+Status: Sprint closeout complete; project marked Complete
 
 ## Purpose
 
@@ -31,9 +31,8 @@ https://github.com/adkf37/Gemini_Homicide_Bot
 
 ## Current Handoff Snapshot
 
-- **Completed in this loop:** `task_06` CSV export closeout is complete. Independent review reran `python -m pytest -q` and `python -m pytest tests/ -m "not integration" --cov=src --cov-report=term`; the repo passed with 42 tests green, 3 expected integration skips, and 78% total `src/` coverage.
-- **Current repo state:** the CSV export slice is implemented, validated, and closed out, and the repo is ready to return to Build.
-- **What is now available:** `src/mcp_tools.py` now writes metadata-commented CSV exports with sanitized auto-generated filenames and auto-created export directories; `main.py` `/export` remains wired to the enhanced export path; the repo already has targeted tests for data loading, MCP tools, Gemini orchestration, CLI behavior, and CSV export behavior.
-- **Known gaps before project completion:** `task_07` and `task_08` remain open. The repo still needs `tests/conftest.py` plus fuller `pytest.ini` defaults to satisfy the testing contract, and the root-level end-user docs (`README.md`, `QUICK_START.md`, `.env.example`) are still absent.
-- **Known environment limitations:** Live Gemini-backed querying still requires `GEMINI_API_KEY`, so the 3 integration tests in `tests/test_llm_agent.py` continue to skip in offline review environments. The upstream `google.generativeai` deprecation warning remains a non-blocking future migration item.
-- **Next explicit task:** `task_07` — finish the repository-wide testing contract by adding `tests/conftest.py` fixtures and completing the `pytest.ini` defaults while preserving the passing non-integration and coverage runs.
+- **Completed in this loop:** Final validation and closeout for the completed sprint. Independent review reran `python -m pytest -q`, `python -m pytest tests/ -m "not integration" --cov=src --cov-report=term`, and `python -m pytest tests/test_llm_agent.py -v -o addopts=''`; the repo passed with 42 non-integration tests passed, 3 expected integration deselections in the default contract, 10 LLM-agent unit tests passed, and 77.51% total `src/` coverage.
+- **Current repo state:** The sprint is fully implemented, validated, and closed out. The project is ready for human handoff and local use.
+- **What is now available:** Cataloging (`scripts/catalog_data.py`), cross-vintage data loading (`src/data_loader.py`), MCP tools and registry (`src/mcp_tools.py`, `src/tool_registry.py`), Gemini orchestration (`src/llm_agent.py`), the interactive CLI (`main.py`), CSV export support, shared pytest fixtures/config, and root-level handoff docs (`README.md`, `QUICK_START.md`, `.env.example`).
+- **Known environment limitations:** Live Gemini-backed querying still requires `GEMINI_API_KEY`, so the 3 integration tests in `tests/test_llm_agent.py` skip in offline review environments. The upstream `google.generativeai` deprecation warning remains a non-blocking future migration item.
+- **Next explicit action:** `Complete` — no queued sprint tasks remain in `.squad/sprint.md`.

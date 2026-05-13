@@ -2,19 +2,19 @@
 
 | Field | Value |
 |---|---|
-| Phase | validate |
+| Phase | closeout |
 | Last Updated | 2026-05-13 |
 | Squad Template | web_app |
 | Priority | low |
 | Blocking | None |
 | GitHub Repo | https://github.com/adkf37/CBO-data_mcp |
-| Next Action | Closeout |
+| Next Action | Complete |
 
 ## Current Objective
 
 **Task ID:** `task_08`
 
-Validate work for the completed sprint passed. Independent review reran the repository pytest contract, the explicit non-integration coverage command, and the `tests/test_llm_agent.py` module without default `pytest.ini` addopts to confirm the environment-gated integration tests still skip cleanly when `GEMINI_API_KEY` is absent. Manual inspection also confirmed the `task_07` and `task_08` handoff artifacts (`tests/conftest.py`, `pytest.ini`, `README.md`, `QUICK_START.md`, and `.env.example`) satisfy their backlog acceptance criteria. All 8 sprint tasks remain complete, and the repo is ready for Closeout.
+Final closeout review confirmed the completed sprint satisfies the `.squad/sprint.md` Definition of Done end to end. Independent review reran dependency installation, the repository pytest contract, the explicit non-integration coverage command, and the `tests/test_llm_agent.py` module without default `pytest.ini` addopts to confirm the environment-gated integration tests still skip cleanly when `GEMINI_API_KEY` is absent. Manual inspection also confirmed the `task_07` and `task_08` handoff artifacts (`tests/conftest.py`, `pytest.ini`, `README.md`, `QUICK_START.md`, `.env.example`, and `project_overview.md`) are current enough for handoff. All 8 sprint tasks are complete, the closeout decision is `Complete`, and only non-blocking follow-up risks remain.
 
 ## Recent Activity
 
@@ -43,6 +43,7 @@ Validate work for the completed sprint passed. Independent review reran the repo
 - 2026-05-13: task_07 Build completed — `tests/conftest.py` added with shared fixtures (`sample_catalog`, `sample_df`, `mock_agent`), `pytest.ini` now sets `testpaths` plus default `--cov=src --cov-fail-under=70 -m "not integration"` options, task_07 checklist aligned, and targeted/acceptance/full pytest commands passed
 - 2026-05-13: task_08 Build completed — `README.md`, `QUICK_START.md`, and `.env.example` created; `backlog/README.md` success criteria all checked; all 8 sprint tasks are now complete
 - 2026-05-13: Validate completed for the full sprint — dependency install, default pytest contract, explicit coverage rerun, and LLM integration skip-path checks all passed; Next Action set to Closeout
+- 2026-05-13: Closeout completed for the full sprint — final review confirmed every sprint task satisfies the Definition of Done, handoff artifacts were refreshed, and `Next Action` is now `Complete`
 
 ## Artifacts
 
@@ -51,13 +52,13 @@ Validate work for the completed sprint passed. Independent review reran the repo
 | STATUS.md | `./STATUS.md` | updated |
 | FEEDBACK.md | `./FEEDBACK.md` | existing |
 | Backlog README | `./backlog/README.md` | existing |
-| Backlog Tasks | `./backlog/tasks/` | reviewed & updated (`task_07` checklist aligned) |
+| Backlog Tasks | `./backlog/tasks/` | reviewed; all sprint task checklists complete |
 | Squad Team | `./.squad/team.md` | existing |
 | Squad Routing | `./.squad/routing.md` | existing |
-| Squad Decisions | `./.squad/decisions.md` | updated (D-023 added) |
+| Squad Decisions | `./.squad/decisions.md` | updated (D-024 added) |
 | Validation Report | `./.squad/validation_report.md` | updated (final sprint validation) |
-| Review Report | `./.squad/review_report.md` | updated (task_06 closeout return-to-build decision) |
-| Project Overview | `./project_overview.md` | updated (task_06 handoff) |
+| Review Report | `./.squad/review_report.md` | updated (final closeout decision: `Complete`) |
+| Project Overview | `./project_overview.md` | updated (final handoff snapshot) |
 | Agent Charters | `./.squad/agents/*/charter.md` | existing |
 | Sprint Plan | `./.squad/sprint.md` | existing |
 | Catalog Script | `./scripts/catalog_data.py` | existing (task_01) |
@@ -78,4 +79,4 @@ Validate work for the completed sprint passed. Independent review reran the repo
 
 ## Needs Human Input
 
-- None. All 8 sprint tasks are complete and validated. The next action is Closeout.
+- None. All 8 sprint tasks are complete, validated, and closed out. `Next Action` is `Complete`.
