@@ -42,7 +42,7 @@ _SYSTEM_PROMPT = (
     "intent (e.g. 'enrollment' → unit='Millions of people' → category like "
     "'Total Enrolled Within a Fiscal Year').\n"
     "2. Always pass `category=` and/or `unit=` to `chart_projection`, "
-    "`aggregate_metric`, `top_n`, and `growth_rate` so the slice is "
+    "`compare_vintages`, `aggregate_metric`, `top_n`, and `growth_rate` so the slice is "
     "unit-consistent. If a tool returns a 'mixed units' error, read the "
     "`available_units` / `available_categories` it returns and retry with the "
     "right filter.\n"

@@ -192,6 +192,8 @@ def compare_vintages(
     vintage_b: str,
     program: Optional[str] = None,
     year: Optional[int] = None,
+    category: Optional[str] = None,
+    unit: Optional[str] = None,
     loader: Optional[DataLoader] = None,
 ) -> dict[str, Any]:
     """Compare one metric side-by-side for two vintages.
@@ -210,6 +212,12 @@ def compare_vintages(
         Optional case-insensitive substring filter by program/category.
     year:
         Optional year filter applied to both vintages.
+    category:
+        Optional case-insensitive substring filter on the ``category`` column,
+        used to isolate one series within a program before comparing vintages.
+    unit:
+        Optional exact case-insensitive match on the ``unit`` column so both
+        vintages are compared within the same unit of measure.
     loader:
         Optional pre-configured ``DataLoader`` instance.
 
@@ -233,6 +241,8 @@ def compare_vintages(
         year_start=year,
         year_end=year,
         vintage=vintage_a,
+        category=category,
+        unit=unit,
         loader=loader,
     )
     second = get_projection(
@@ -241,6 +251,8 @@ def compare_vintages(
         year_start=year,
         year_end=year,
         vintage=vintage_b,
+        category=category,
+        unit=unit,
         loader=loader,
     )
 
@@ -254,30 +266,35 @@ def compare_vintages(
     if metric not in df_a.columns or metric not in df_b.columns:
         return {"error": f"Metric column '{metric}' not found in one or both vintages."}
 
-    key_col = _select_first_column(list(df_a.columns), _PROGRAM_COLUMNS) or "index"
-    if key_col not in df_a.columns:
-        df_a[key_col] = df_a.index
-    if key_col not in df_b.columns:
-        df_b[key_col] = df_b.index
+    unit_err_a = _check_unit_consistency(df_a)
+    if unit_err_a is not None:
+        return unit_err_a
+    unit_err_b = _check_unit_consistency(df_b)
+    if unit_err_b is not None:
+        return unit_err_b
 
-    if year is not None and "fiscal_year" in df_a.columns:
-        df_a = df_a[df_a["fiscal_year"] == year]
-    if year is not None and "fiscal_year" in df_b.columns:
-        df_b = df_b[df_b["fiscal_year"] == year]
+    join_keys: list[str] = []
+    year_col = _select_first_column(list(df_a.columns), _YEAR_COLUMNS)
+    if year_col and year_col in df_b.columns:
+        join_keys.append(year_col)
+    for candidate in ("program", "program_name", "name", "category", "unit"):
+        if candidate in df_a.columns and candidate in df_b.columns and candidate not in join_keys:
+            join_keys.append(candidate)
 
-    merged = df_a[[key_col, metric]].merge(
-        df_b[[key_col, metric]],
+    if not join_keys:
+        join_keys = ["comparison_index"]
+        df_a = df_a.copy()
+        df_b = df_b.copy()
+        df_a["comparison_index"] = range(len(df_a))
+        df_b["comparison_index"] = range(len(df_b))
+
+    merged = df_a[join_keys + [metric]].merge(
+        df_b[join_keys + [metric]],
         how="outer",
-        on=key_col,
+        on=join_keys,
         suffixes=("_a", "_b"),
     )
-    merged = merged.rename(
-        columns={
-            key_col: "program_or_category",
-            f"{metric}_a": "value_a",
-            f"{metric}_b": "value_b",
-        }
-    )
+    merged = merged.rename(columns={f"{metric}_a": "value_a", f"{metric}_b": "value_b"})
     merged["vintage_a"] = vintage_a
     merged["vintage_b"] = vintage_b
     rows = merged.to_dict(orient="records")

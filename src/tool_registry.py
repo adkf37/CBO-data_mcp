@@ -76,7 +76,12 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
     },
     {
         "name": "compare_vintages",
-        "description": "Compares a metric side-by-side across two vintages.",
+        "description": (
+            "Compares a metric side-by-side across two vintages. When the user "
+            "means a specific series within a file (for example Medicaid "
+            "enrollment vs Medicaid outlays), pass `category=` and/or `unit=` "
+            "so the comparison stays within one coherent measure."
+        ),
         "parameters": {
             "type": "object",
             "properties": {
@@ -86,6 +91,8 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "vintage_b": {"type": "string"},
                 "program": {"type": "string"},
                 "year": {"type": "integer"},
+                "category": {"type": "string"},
+                "unit": {"type": "string"},
             },
             "required": ["file_type", "metric", "vintage_a", "vintage_b"],
         },

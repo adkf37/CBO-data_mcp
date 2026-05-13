@@ -20,18 +20,32 @@ class FakeLoader:
             [
                 {
                     "program": "Medicaid",
+                    "category": "Total Enrolled Within a Fiscal Year",
+                    "unit": "Millions of people",
                     "fiscal_year": 2029,
                     "value": 100.0,
                     "vintage": "2023-01",
                 },
                 {
                     "program": "Medicaid",
+                    "category": "Total Enrolled Within a Fiscal Year",
+                    "unit": "Millions of people",
                     "fiscal_year": 2029,
                     "value": 110.0,
                     "vintage": "2024-01",
                 },
                 {
+                    "program": "Medicaid",
+                    "category": "Estimated Outlays",
+                    "unit": "Billions of dollars",
+                    "fiscal_year": 2029,
+                    "value": 700.0,
+                    "vintage": "2024-01",
+                },
+                {
                     "program": "CHIP",
+                    "category": "Enrollment",
+                    "unit": "Millions of people",
                     "fiscal_year": 2029,
                     "value": 25.0,
                     "vintage": "2024-01",
@@ -62,6 +76,8 @@ def test_get_projection_filters_known_program_and_year():
     result = get_projection(
         "medicaid",
         program="Medicaid",
+        category="Total Enrolled Within a Fiscal Year",
+        unit="Millions of people",
         year_start=2029,
         year_end=2029,
         loader=FakeLoader(),
@@ -79,6 +95,8 @@ def test_compare_vintages_returns_both_vintage_values():
         vintage_b="2024-01",
         program="Medicaid",
         year=2029,
+        category="Total Enrolled Within a Fiscal Year",
+        unit="Millions of people",
         loader=FakeLoader(),
     )
     assert "error" not in result
@@ -88,6 +106,22 @@ def test_compare_vintages_returns_both_vintage_values():
     assert row["vintage_b"] == "2024-01"
     assert row["value_a"] == 100.0
     assert row["value_b"] == 110.0
+    assert row["category"] == "Total Enrolled Within a Fiscal Year"
+    assert row["unit"] == "Millions of people"
+
+
+def test_compare_vintages_rejects_mixed_units_without_filters():
+    result = compare_vintages(
+        "medicaid",
+        metric="value",
+        vintage_a="2023-01",
+        vintage_b="2024-01",
+        program="Medicaid",
+        year=2029,
+        loader=FakeLoader(),
+    )
+    assert "error" in result
+    assert "multiple units" in result["error"].lower()
 
 
 def test_export_csv_creates_file(tmp_path: Path):

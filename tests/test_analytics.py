@@ -192,6 +192,94 @@ def test_chart_projection_bar_returns_chart_data(tmp_path: Path):
     assert result["point_count"] == 3
 
 
+def test_chart_projection_line_compares_one_series_across_multiple_vintages(tmp_path: Path):
+    df = pd.DataFrame(
+        [
+            {
+                "program": "Medicaid",
+                "category": "Total Enrolled Within a Fiscal Year",
+                "unit": "Millions of people",
+                "fiscal_year": 2026,
+                "value": 88.0,
+                "vintage": "2023-05",
+            },
+            {
+                "program": "Medicaid",
+                "category": "Total Enrolled Within a Fiscal Year",
+                "unit": "Millions of people",
+                "fiscal_year": 2027,
+                "value": 89.0,
+                "vintage": "2023-05",
+            },
+            {
+                "program": "Medicaid",
+                "category": "Total Enrolled Within a Fiscal Year",
+                "unit": "Millions of people",
+                "fiscal_year": 2026,
+                "value": 90.0,
+                "vintage": "2024-06",
+            },
+            {
+                "program": "Medicaid",
+                "category": "Total Enrolled Within a Fiscal Year",
+                "unit": "Millions of people",
+                "fiscal_year": 2027,
+                "value": 91.0,
+                "vintage": "2024-06",
+            },
+            {
+                "program": "Medicaid",
+                "category": "Total Enrolled Within a Fiscal Year",
+                "unit": "Millions of people",
+                "fiscal_year": 2026,
+                "value": 92.0,
+                "vintage": "2026-02",
+            },
+            {
+                "program": "Medicaid",
+                "category": "Total Enrolled Within a Fiscal Year",
+                "unit": "Millions of people",
+                "fiscal_year": 2027,
+                "value": 93.0,
+                "vintage": "2026-02",
+            },
+            {
+                "program": "Medicaid",
+                "category": "Outlays",
+                "unit": "Billions of dollars",
+                "fiscal_year": 2026,
+                "value": 700.0,
+                "vintage": "2026-02",
+            },
+        ]
+    )
+
+    result = chart_projection(
+        "medicaid",
+        metric="value",
+        program="Medicaid",
+        category="Total Enrolled Within a Fiscal Year",
+        unit="Millions of people",
+        kind="line",
+        group_by="vintage",
+        year_start=2026,
+        year_end=2027,
+        output_dir=str(tmp_path),
+        loader=FakeLoader(df),
+    )
+
+    assert "error" not in result, result
+    assert result["chart_data"]["type"] == "line"
+    assert result["chart_data"]["labels"] == [2026, 2027]
+    datasets = {ds["label"]: ds["data"] for ds in result["chart_data"]["datasets"]}
+    assert datasets == {
+        "2023-05": [88.0, 89.0],
+        "2024-06": [90.0, 91.0],
+        "2026-02": [92.0, 93.0],
+    }
+    assert result["unit"] == "Millions of people"
+
+
 def test_chart_projection_rejects_unknown_kind(tmp_path: Path):
     result = chart_projection(
         "medicaid",

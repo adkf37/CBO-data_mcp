@@ -19,8 +19,12 @@ questions and chart generation. Implemented 5 new MCP tools
 (`aggregate_metric`, `top_n`, `growth_rate`, `summarize_file_type`,
 `chart_projection`), persistent chat session + tool tracing on `CBOAgent`,
 and `/chart`, `/reset`, `/trace` CLI commands. `matplotlib>=3.8.0` added.
-Targeted regression: 62 passed, 3 deselected, 78.10% coverage. Repo data
-catalog regenerated successfully (51 file types). Awaiting Validate.
+Follow-up improvements for the same feedback slice added a prompt-based eval
+suite (`evals/cbo_qa.xml`), a live eval runner (`scripts/run_eval_suite.py` +
+`src/eval_runner.py`), and stronger vintage-comparison behavior so
+`compare_vintages` now accepts `category` / `unit` filters and merges on a
+series-aware key instead of comparing broad program rows. Full regression:
+67 passed, 3 deselected, 78.37% coverage. Awaiting Validate.
 
 ## Recent Activity
 
@@ -51,6 +55,7 @@ catalog regenerated successfully (51 file types). Awaiting Validate.
 - 2026-05-13: Validate completed for the full sprint — dependency install, default pytest contract, explicit coverage rerun, and LLM integration skip-path checks all passed; Next Action set to Closeout
 - 2026-05-13: Closeout completed for the full sprint — final review confirmed every sprint task satisfies the Definition of Done, handoff artifacts were refreshed, and `Next Action` is now `Complete`
 - 2026-05-13: Human feedback dispatched (`feedback-2026-05-13`) — added analytical tools (`aggregate_metric`, `top_n`, `growth_rate`, `summarize_file_type`), `chart_projection` (matplotlib PNGs), persistent chat + tracing on `CBOAgent`, and `/chart`, `/reset`, `/trace` CLI commands; pytest 62 passed / 3 deselected / 78.10% coverage; data catalog regenerated (51 file types); Next Action set to `Validate`
+- 2026-05-13: Build follow-up for `feedback-2026-05-13` — `compare_vintages` now accepts `category` / `unit` filters and compares rows on year/program/category/unit keys, `evals/cbo_qa.xml` added with 18 prompt-level regressions, `src/eval_runner.py` + `scripts/run_eval_suite.py` added for live scoring against answer checks and tool traces, and focused/full pytest checks passed (67 passed, 3 deselected, 78.37% coverage)
 
 ## Artifacts
 
@@ -75,9 +80,13 @@ catalog regenerated successfully (51 file types). Awaiting Validate.
 | MCP Tools | `./src/mcp_tools.py` | created (task_03) |
 | Tool Registry | `./src/tool_registry.py` | created (task_03) |
 | LLM Agent | `./src/llm_agent.py` | created (task_04) |
+| Eval Runner | `./src/eval_runner.py` | created (feedback-2026-05-13 follow-up) |
 | LLM Agent Tests | `./tests/test_llm_agent.py` | created (task_04) |
+| Eval Suite | `./evals/cbo_qa.xml` | created (feedback-2026-05-13 follow-up) |
+| Eval Runner Script | `./scripts/run_eval_suite.py` | created (feedback-2026-05-13 follow-up) |
 | Pytest Config | `./pytest.ini` | created (task_04) |
 | Pytest Fixtures | `./tests/conftest.py` | created (task_07) |
+| Eval Runner Tests | `./tests/test_eval_runner.py` | created (feedback-2026-05-13 follow-up) |
 | CLI Entry Point | `./main.py` | created (task_05) |
 | CLI Tests | `./tests/test_cli.py` | created (task_05) |
 | README | `./README.md` | created (task_08) |

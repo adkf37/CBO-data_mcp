@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  CBO MCP evaluation suite.
+
+  This suite is intentionally prompt-first and tool-aware. It focuses on the
+  failure modes that matter for this repo:
+  - discovery before aggregation/charting
+  - unit/category disambiguation inside long-format CBO files
+  - latest-vintage resolution
+  - multi-vintage comparison and charting
+  - graceful handling of unavailable vintages
+-->
+<eval_suite name="cbo_data_mcp" version="1.0" source_basis="feedback-2026-05-13">
+
+  <question id="1" tool="summarize_file_type" type="discovery" question_type="factual" prompt_complexity="simple" audience="general" data_source="medicaid">
+    <prompt>What units and categories are available in the medicaid file?</prompt>
+    <answer_contains>Millions of people</answer_contains>
+    <answer_contains>Billions of dollars</answer_contains>
+    <notes>Discovery-first question; should inspect medicaid categories and units rather than guessing.</notes>
+  </question>
+
+  <question id="2" tool="multi_step" type="chart" question_type="factual" prompt_complexity="simple" audience="general" data_source="medicaid">
+    <prompt>Chart Medicaid enrollment from 2025 to 2034 in the latest projection.</prompt>
+    <expected_tools>list_vintages,summarize_file_type,chart_projection</expected_tools>
+    <answer_contains>2026-02</answer_contains>
+    <answer_contains>Millions of people</answer_contains>
+    <notes>Critical routing case: latest vintage + discovery + category/unit-aware charting.</notes>
+  </question>
+
+  <question id="3" tool="multi_step" type="chart" question_type="comparison" prompt_complexity="simple" audience="general" data_source="medicaid">
+    <prompt>Compare Medicaid enrollment across the 2023-05, 2024-06, and 2026-02 baselines in one chart.</prompt>
+    <expected_tools>summarize_file_type,chart_projection</expected_tools>
+    <answer_contains>2023-05</answer_contains>
+    <answer_contains>2024-06</answer_contains>
+    <answer_contains>2026-02</answer_contains>
+    <notes>Regression target from user feedback. The answer should not apologize for an internal chart-comparison failure.</notes>
+  </question>
+
+  <question id="4" tool="multi_step" type="comparison" question_type="factual" prompt_complexity="simple" audience="general" data_source="medicaid">
+    <prompt>Compare Medicaid enrollment in 2030 between the 2023-05 and 2026-02 baselines.</prompt>
+    <expected_tools>summarize_file_type,compare_vintages</expected_tools>
+    <answer_contains>2030</answer_contains>
+    <answer_contains>Millions of people</answer_contains>
+    <notes>Two-vintage comparison should stay on the enrollment series, not blend outlays and per-enrollee values.</notes>
+  </question>
+
+  <question id="5" tool="multi_step" type="comparison" question_type="summary" prompt_complexity="simple" audience="general" data_source="medicare">
+    <prompt>How did Medicare spending projections change between the 2024-06 and 2026-02 baselines?</prompt>
+    <expected_tools>summarize_file_type,compare_vintages</expected_tools>
+    <answer_contains>2024-06</answer_contains>
+    <answer_contains>2026-02</answer_contains>
+    <answer_contains>Billions of dollars</answer_contains>
+    <notes>Explicit vintage comparison on a spending series.</notes>
+  </question>
+
+  <question id="6" tool="multi_step" type="chart" question_type="factual" prompt_complexity="simple" audience="general" data_source="snap">
+    <prompt>What are SNAP's projected outlays over the next 10 years?</prompt>
+    <expected_tools>list_vintages,summarize_file_type,chart_projection</expected_tools>
+    <answer_contains>Billions of dollars</answer_contains>
+    <notes>Should chart the outlay series from the latest SNAP vintage.</notes>
+  </question>
+
+  <question id="7" tool="multi_step" type="chart" question_type="factual" prompt_complexity="simple" audience="general" data_source="unemployment">
+    <prompt>Show Unemployment Insurance outlays from the 2026-02 projection.</prompt>
+    <expected_tools>summarize_file_type,chart_projection</expected_tools>
+    <answer_contains>2026-02</answer_contains>
+    <answer_contains>Billions of dollars</answer_contains>
+    <notes>Explicit-vintage charting should not need a list_vintages lookup.</notes>
+  </question>
+
+  <question id="8" tool="multi_step" type="chart" question_type="comparison" prompt_complexity="simple" audience="general" data_source="ssdi">
+    <prompt>Compare SSDI beneficiary counts across all vintages since 2021.</prompt>
+    <expected_tools>summarize_file_type,chart_projection</expected_tools>
+    <answer_contains>since 2021</answer_contains>
+    <notes>Multi-vintage line chart with one dataset per vintage.</notes>
+  </question>
+
+  <question id="9" tool="list_vintages" type="availability" question_type="factual" prompt_complexity="simple" audience="general" data_source="socialsecurity">
+    <prompt>What is the most recent Social Security vintage you have?</prompt>
+    <answer_contains>2025-01</answer_contains>
+    <notes>Latest-vintage resolution for a file type that does not have 2026-02 coverage.</notes>
+  </question>
+
+  <question id="10" tool="list_vintages" type="availability" question_type="summary" prompt_complexity="simple" audience="general" data_source="socialsecurity">
+    <prompt>Do you have Social Security data for 2026-02?</prompt>
+    <answer_contains>2025-01</answer_contains>
+    <notes>Should answer gracefully by naming the latest available vintage rather than hallucinating 2026-02 coverage.</notes>
+  </question>
+
+  <question id="11" tool="summarize_file_type" type="discovery" question_type="factual" prompt_complexity="simple" audience="general" data_source="medicaid">
+    <prompt>Which Medicaid categories are reported in millions of people?</prompt>
+    <answer_contains>Millions of people</answer_contains>
+    <answer_contains>Total Enrolled Within a Fiscal Year</answer_contains>
+    <notes>Tests whether the answer uses categories_by_unit rather than a broad program search.</notes>
+  </question>
+
+  <question id="12" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="medicaid">
+    <prompt>How many people are projected to be enrolled in Medicaid in 2029 according to the latest projection?</prompt>
+    <expected_tools>list_vintages,summarize_file_type,get_projection</expected_tools>
+    <answer_contains>2026-02</answer_contains>
+    <answer_contains>Millions of people</answer_contains>
+    <notes>Canonical single-point enrollment lookup.</notes>
+  </question>
+
+  <question id="13" tool="multi_step" type="growth" question_type="factual" prompt_complexity="simple" audience="general" data_source="medicaid">
+    <prompt>What is the growth rate of Medicaid enrollment from 2025 to 2034 in the latest projection?</prompt>
+    <expected_tools>list_vintages,summarize_file_type,growth_rate</expected_tools>
+    <answer_contains>2026-02</answer_contains>
+    <notes>Should use growth_rate on the enrollment series, not on mixed Medicaid values.</notes>
+  </question>
+
+  <question id="14" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="healthinsurance">
+    <prompt>What is the latest healthinsurance vintage you have?</prompt>
+    <expected_tools>list_vintages</expected_tools>
+    <answer_contains>2024-06</answer_contains>
+    <notes>Checks availability handling for a file type whose newest vintage lags behind 2025-01 and 2026-02.</notes>
+  </question>
+
+  <question id="15" tool="multi_step" type="chart" question_type="factual" prompt_complexity="structured" audience="general" data_source="medicare">
+    <prompt>Aim: chart Medicare spending from 2025 through 2034 using the latest projection. Output: identify the vintage, category, and unit used.</prompt>
+    <expected_tools>list_vintages,summarize_file_type,chart_projection</expected_tools>
+    <answer_contains>2026-02</answer_contains>
+    <answer_contains>Billions of dollars</answer_contains>
+    <notes>Structured prompt variant for latest-vintage spending charting.</notes>
+  </question>
+
+  <question id="16" tool="multi_step" type="comparison" question_type="summary" prompt_complexity="structured" audience="general" data_source="snap">
+    <prompt>Aim: compare SNAP outlay projections between the 2024-06 and 2026-02 baselines. Output: state the unit and whether the later baseline is higher or lower in the overlapping years.</prompt>
+    <expected_tools>summarize_file_type,compare_vintages</expected_tools>
+    <answer_contains>Billions of dollars</answer_contains>
+    <notes>Structured comparison prompt with overlapping-year reasoning.</notes>
+  </question>
+
+  <question id="17" tool="summarize_file_type" type="discovery" question_type="factual" prompt_complexity="google_search" audience="general" data_source="medicaid">
+    <prompt>medicaid cbo file enrollment category unit</prompt>
+    <answer_contains>Millions of people</answer_contains>
+    <notes>Search-style phrasing should still trigger discovery rather than a brittle direct lookup.</notes>
+  </question>
+
+  <question id="18" tool="multi_step" type="chart" question_type="comparison" prompt_complexity="simple" audience="general" data_source="medicaid">
+    <prompt>Plot Medicaid enrollment and include separate lines for each vintage you have since 2023.</prompt>
+    <expected_tools>summarize_file_type,chart_projection</expected_tools>
+    <answer_contains>2023</answer_contains>
+    <notes>Open-ended multi-vintage charting prompt should still stay on one enrollment series.</notes>
+  </question>
+
+</eval_suite>

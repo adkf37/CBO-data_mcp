@@ -2,6 +2,31 @@
 
 ## Active Decisions
 
+### 2026-05-13 — Decision D-026 (Task ID: feedback-2026-05-13)
+- **Prompt-eval harness added for the charting/tool-routing feedback loop.**
+  Added `evals/cbo_qa.xml` with 18 prompt-level checks modeled on the
+  `chicago-zoning-mcp` XML format, but tailored to this repo's real failure
+  modes: discovery-first routing, latest-vintage resolution, multi-vintage
+  comparison/charting, and mixed-unit disambiguation.
+- **Reusable live runner added.** `src/eval_runner.py` now loads XML suites,
+  runs prompts through `CBOAgent`, scores answers via exact / contains / regex
+  checks, and validates tool traces against ordered `expected_tools`
+  subsequences. `scripts/run_eval_suite.py` is a thin CLI wrapper for running
+  the suite locally against a live `GEMINI_API_KEY`.
+- **`compare_vintages` made series-aware.** The tool now accepts `category`
+  and `unit`, forwards them into `get_projection`, rejects mixed-unit slices,
+  and merges vintages on a semantic key (`fiscal_year` / program / category /
+  unit) instead of only on the broad program label. This closes a real gap for
+  questions like “compare Medicaid enrollment” where a single program contains
+  multiple incompatible series.
+- **Prompt guidance aligned.** `src/tool_registry.py` and `src/llm_agent.py`
+  now explicitly tell the model to pass `category=` / `unit=` to
+  `compare_vintages`, not just to charting and aggregation tools.
+- **Validation evidence.** Focused regressions on `tests/test_eval_runner.py`,
+  `tests/test_mcp_tools.py`, and `tests/test_analytics.py` passed (27/27 with
+  `-c /dev/null`), and the full project contract passed via `python -m pytest`
+  with 67 passed / 3 deselected / 78.37% coverage.
+
 ### 2026-05-13 — Decision D-025 (Task ID: feedback-2026-05-13)
 - **Capability expansion in response to human feedback.** The closed-out sprint
   delivered 6 retrieval/export tools; that surface area was insufficient for the
