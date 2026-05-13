@@ -7,6 +7,7 @@ All tool outputs are JSON-serializable dict/list structures.
 
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Optional
@@ -17,6 +18,7 @@ from src.data_loader import DataLoader
 
 _PROGRAM_COLUMNS = ("program", "program_name", "category", "name")
 _YEAR_COLUMNS = ("fiscal_year", "year", "calendar_year", "projection_year")
+_SAFE_TOKEN_RE = re.compile(r"[^a-zA-Z0-9_-]+")
 
 
 def _select_first_column(columns: list[str], candidates: tuple[str, ...]) -> Optional[str]:
@@ -29,6 +31,38 @@ def _select_first_column(columns: list[str], candidates: tuple[str, ...]) -> Opt
 
 def _resolve_loader(loader: Optional[DataLoader]) -> DataLoader:
     return loader if loader is not None else DataLoader()
+
+
+def _sanitize_filename_component(value: Any) -> str:
+    token = _SAFE_TOKEN_RE.sub("_", str(value).strip())
+    return token.strip("_")
+
+
+def _build_auto_filename(
+    *,
+    file_type: Optional[str],
+    vintage: Optional[str],
+    query_params: Optional[dict[str, Any]],
+    exported_at: datetime,
+) -> str:
+    parts: list[str] = []
+    if file_type:
+        sanitized = _sanitize_filename_component(file_type)
+        if sanitized:
+            parts.append(sanitized)
+    if query_params:
+        for value in query_params.values():
+            sanitized = _sanitize_filename_component(value)
+            if sanitized:
+                parts.append(sanitized)
+    if vintage:
+        sanitized = _sanitize_filename_component(vintage)
+        if sanitized:
+            parts.append(sanitized)
+    if not parts:
+        parts.append("cbo_export")
+    timestamp = exported_at.strftime("%Y%m%d_%H%M%S")
+    return "_".join(parts + [timestamp]) + ".csv"
 
 
 def list_file_types(*, loader: Optional[DataLoader] = None) -> list[dict[str, Any]] | dict[str, Any]:
@@ -322,6 +356,9 @@ def export_csv(
     *,
     output_dir: str = "./exports",
     filename: Optional[str] = None,
+    file_type: Optional[str] = None,
+    vintage: Optional[str] = None,
+    query_params: Optional[dict[str, Any]] = None,
 ) -> dict[str, Any]:
     """Export query rows to CSV.
 
@@ -332,7 +369,14 @@ def export_csv(
     output_dir:
         Destination directory for the output file (created if needed).
     filename:
-        Optional explicit filename. Defaults to ``cbo_export_<timestamp>.csv``.
+        Optional explicit filename. Defaults to an auto-generated filename that
+        includes file type, query parameters, and timestamp.
+    file_type:
+        Optional dataset identifier used for metadata headers and auto filenames.
+    vintage:
+        Optional vintage label used for metadata headers and auto filenames.
+    query_params:
+        Optional query-parameter mapping used for auto filenames.
 
     Returns
     -------
@@ -349,10 +393,30 @@ def export_csv(
         out_dir = Path(output_dir)
         out_dir.mkdir(parents=True, exist_ok=True)
 
-        safe_filename = filename or f"cbo_export_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.csv"
+        exported_at = datetime.now(timezone.utc)
+        if filename:
+            incoming = Path(filename).name
+            stem = _sanitize_filename_component(Path(incoming).stem) or "cbo_export"
+            safe_filename = f"{stem}.csv"
+        else:
+            safe_filename = _build_auto_filename(
+                file_type=file_type,
+                vintage=vintage,
+                query_params=query_params,
+                exported_at=exported_at,
+            )
         out_path = out_dir / safe_filename
 
-        pd.DataFrame(rows).to_csv(out_path, index=False)
+        metadata = {
+            "file_type": file_type or "unknown",
+            "vintage": vintage or "unknown",
+            "export_timestamp": exported_at.isoformat(),
+        }
+        frame = pd.DataFrame(rows)
+        with out_path.open("w", encoding="utf-8", newline="") as handle:
+            for key, value in metadata.items():
+                handle.write(f"# {key}: {value}\n")
+            frame.to_csv(handle, index=False)
         return {"file_path": str(out_path.resolve()), "row_count": len(rows)}
     except Exception as exc:  # noqa: BLE001
         return {"error": f"Failed to export CSV: {exc}"}

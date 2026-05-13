@@ -128,5 +128,13 @@
 - **Known follow-up risks:** Live Gemini-backed querying still requires `GEMINI_API_KEY`, and the fuller CSV export naming/metadata/directory requirements remain owned by `task_06`.
 - **Return-to-build target:** The next automatable task is `task_06` (CSV Export Capability).
 
+### 2026-05-13 — Decision D-018 (Task ID: task_06)
+- **Routing applied:** Coordinator routed the implementation slice to Backend Dev (CSV export + CLI export wiring), Tester (targeted export regression coverage), and Scribe (status/decision refresh) per `.squad/routing.md`.
+- **task_06 implementation advanced:** `src/mcp_tools.py` now writes export metadata headers (`# file_type`, `# vintage`, `# export_timestamp`), sanitizes filename components, auto-generates filenames containing file type/query/timestamp when no filename is supplied, and always creates the output directory (`Path.mkdir(parents=True, exist_ok=True)`).
+- **CLI alignment:** `main.py` `/export` now forwards `file_type="cli_session"` and query context so CLI-triggered exports produce the enhanced metadata-aware output without changing command semantics.
+- **Coverage updates:** Added `tests/test_csv_export.py` to assert file creation, metadata headers, valid parseability with `pandas.read_csv(comment="#")`, expected columns, auto-name content, directory creation, and filename sanitization; updated existing export assertions in `tests/test_mcp_tools.py` and `tests/test_cli.py` to read metadata-commented CSV output.
+- **Git hygiene:** Added `exports/` to `.gitignore` so runtime CSV outputs are not committed.
+- **Build-loop validation evidence:** `python -m pytest tests/test_csv_export.py tests/test_cli.py tests/test_mcp_tools.py -q` passed (11/11) and `python -m pytest -q` passed (42 passed, 3 skipped). Recommended next step is Validate for `task_06`.
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
