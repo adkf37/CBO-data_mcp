@@ -54,7 +54,12 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
     },
     {
         "name": "get_projection",
-        "description": "Returns filtered projection rows by file type, program, year range, and vintage.",
+        "description": (
+            "Returns filtered projection rows by file type, program, year range, "
+            "vintage, category, and unit. Use `category` to isolate one series "
+            "within a program (e.g. only the 'Total Enrolled Within a Fiscal "
+            "Year' rows of Medicaid) and `unit` to guarantee unit consistency."
+        ),
         "parameters": {
             "type": "object",
             "properties": {
@@ -63,6 +68,8 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "year_start": {"type": "integer"},
                 "year_end": {"type": "integer"},
                 "vintage": {"type": "string"},
+                "category": {"type": "string"},
+                "unit": {"type": "string"},
             },
             "required": ["file_type"],
         },
@@ -118,7 +125,12 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
             "Aggregate a numeric metric across rows with optional grouping. "
             "Use this for sums, averages, min/max, or counts. agg must be one of "
             "sum, mean, min, max, median, count. Provide group_by to get one row "
-            "per group (for example group_by='fiscal_year' to see a yearly total)."
+            "per group (for example group_by='fiscal_year' to see a yearly total). "
+            "IMPORTANT: many CBO datasets pack outlays, enrollment counts, and "
+            "per-enrollee dollars into the same file under different `unit` "
+            "values. The tool refuses to aggregate across mixed units — pass "
+            "`unit=` (e.g. 'Millions of people') or `category=` to pick one "
+            "unit-consistent series before aggregating."
         ),
         "parameters": {
             "type": "object",
@@ -131,6 +143,8 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "year_start": {"type": "integer"},
                 "year_end": {"type": "integer"},
                 "vintage": {"type": "string"},
+                "category": {"type": "string"},
+                "unit": {"type": "string"},
             },
             "required": ["file_type", "metric"],
         },
@@ -140,7 +154,8 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
         "description": (
             "Return the top (or bottom) N groups ranked by an aggregated metric. "
             "Defaults to grouping by the program/category column. Set ascending=true "
-            "for the bottom N."
+            "for the bottom N. Supply `unit=` / `category=` to keep the ranking "
+            "unit-consistent."
         ),
         "parameters": {
             "type": "object",
@@ -155,6 +170,8 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "year_start": {"type": "integer"},
                 "year_end": {"type": "integer"},
                 "vintage": {"type": "string"},
+                "category": {"type": "string"},
+                "unit": {"type": "string"},
             },
             "required": ["file_type", "metric"],
         },
@@ -163,8 +180,8 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
         "name": "growth_rate",
         "description": (
             "Compute absolute change, percentage change, and CAGR for a metric "
-            "between two years. Narrow with program and vintage for per-program "
-            "growth."
+            "between two years. Narrow with program / category / unit to ensure "
+            "a single coherent series; mixed-unit slices are rejected."
         ),
         "parameters": {
             "type": "object",
@@ -175,6 +192,8 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "year_end": {"type": "integer"},
                 "program": {"type": "string"},
                 "vintage": {"type": "string"},
+                "category": {"type": "string"},
+                "unit": {"type": "string"},
             },
             "required": ["file_type", "metric", "year_start", "year_end"],
         },
@@ -183,8 +202,11 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
         "name": "summarize_file_type",
         "description": (
             "Discovery tool: returns the schema (columns, dtypes), row count, "
-            "year range, vintage list, and most frequent program names for a "
-            "file type. Call this first when working with an unfamiliar dataset."
+            "year range, vintage list, most frequent program names, AND the full "
+            "list of `categories`, `units`, and a `categories_by_unit` mapping "
+            "that shows which categories report in which unit. Call this FIRST "
+            "whenever you are about to chart or aggregate, so you can pick the "
+            "correct unit-consistent category for the user's question."
         ),
         "parameters": {
             "type": "object",
@@ -203,6 +225,15 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
             "hover tooltips, and a download-as-PNG button. "
             "The response includes chart_data (rendered in the browser) and "
             "points (raw numbers you can cite in the answer). "
+            "CRITICAL: in CBO files the same `program` often contains rows with "
+            "different `unit` values (outlays in $B, enrollment in millions of "
+            "people, per-enrollee in $). The tool REJECTS mixed-unit slices. "
+            "Always pass `category=` and/or `unit=` to isolate one series — "
+            "e.g. for 'Medicaid enrollment over the next 10 years' pass "
+            "file_type='medicaid', program='Medicaid', "
+            "category='Total Enrolled Within a Fiscal Year', "
+            "unit='Millions of people'. Call `summarize_file_type` first if "
+            "you do not yet know which category/unit to pick. "
             "Do NOT include a file path in the answer — tell the user the chart "
             "is displayed below and they can download it with the button."
         ),
@@ -218,6 +249,8 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "kind": {"type": "string"},
                 "group_by": {"type": "string"},
                 "title": {"type": "string"},
+                "category": {"type": "string"},
+                "unit": {"type": "string"},
             },
             "required": ["file_type", "metric"],
         },

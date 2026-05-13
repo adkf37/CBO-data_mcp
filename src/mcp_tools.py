@@ -132,22 +132,32 @@ def get_projection(
     year_start: Optional[int] = None,
     year_end: Optional[int] = None,
     vintage: Optional[str] = None,
+    category: Optional[str] = None,
+    unit: Optional[str] = None,
     loader: Optional[DataLoader] = None,
 ) -> dict[str, Any]:
-    """Get projection rows filtered by file type, program, year range, and vintage.
+    """Get projection rows filtered by file type, program, year range, vintage,
+    category, and unit.
 
     Parameters
     ----------
     file_type:
         The CBO file type identifier.
     program:
-        Optional case-insensitive substring filter for program/category values.
+        Optional case-insensitive substring filter for program values.
     year_start:
         Optional inclusive lower bound for year filtering.
     year_end:
         Optional inclusive upper bound for year filtering.
     vintage:
         Optional exact vintage filter (``YYYY`` or ``YYYY-MM``).
+    category:
+        Optional case-insensitive substring filter on the ``category`` column,
+        used to isolate a specific series within a program (e.g. only the
+        enrollment rows of Medicaid).
+    unit:
+        Optional exact case-insensitive match on the ``unit`` column. Use this
+        to guarantee that the returned rows share a single unit of measure.
     loader:
         Optional pre-configured ``DataLoader`` instance.
 
@@ -157,44 +167,21 @@ def get_projection(
         On success, returns ``{"rows": list[dict], "row_count": int}``.
         On failure, returns ``{"error": "...message..."}``.
     """
-    if not file_type:
-        return {"error": "file_type is required."}
-    if year_start is not None and year_end is not None and year_start > year_end:
-        return {"error": "year_start must be less than or equal to year_end."}
-
-    try:
-        dl = _resolve_loader(loader)
-        df = dl.load_file_type(file_type).copy()
-
-        if vintage:
-            if "vintage" not in df.columns:
-                return {"error": "Dataset does not include a 'vintage' column."}
-            df = df[df["vintage"] == vintage]
-
-        if program:
-            program_col = _select_first_column(list(df.columns), _PROGRAM_COLUMNS)
-            if not program_col:
-                return {"error": "No program/category column found for program filter."}
-            df = df[
-                df[program_col]
-                .astype(str)
-                .str.contains(program, case=False, na=False, regex=False)
-            ]
-
-        year_col = _select_first_column(list(df.columns), _YEAR_COLUMNS)
-        if (year_start is not None or year_end is not None) and not year_col:
-            return {"error": "No supported year column found for year filtering."}
-        if year_col:
-            numeric_years = pd.to_numeric(df[year_col], errors="coerce")
-            if year_start is not None:
-                df = df[numeric_years >= year_start]
-            if year_end is not None:
-                df = df[numeric_years <= year_end]
-
-        rows = df.to_dict(orient="records")
-        return {"rows": rows, "row_count": len(rows)}
-    except Exception as exc:  # noqa: BLE001
-        return {"error": f"Failed to get projection for '{file_type}': {exc}"}
+    df, _year_col, err = _filtered_frame(
+        file_type,
+        program=program,
+        year_start=year_start,
+        year_end=year_end,
+        vintage=vintage,
+        category=category,
+        unit=unit,
+        loader=loader,
+    )
+    if err is not None:
+        return err
+    assert df is not None
+    rows = df.to_dict(orient="records")
+    return {"rows": rows, "row_count": len(rows)}
 
 
 def compare_vintages(
@@ -436,12 +423,20 @@ def _filtered_frame(
     year_start: Optional[int] = None,
     year_end: Optional[int] = None,
     vintage: Optional[str] = None,
+    category: Optional[str] = None,
+    unit: Optional[str] = None,
     loader: Optional[DataLoader] = None,
 ) -> tuple[Optional[pd.DataFrame], Optional[str], Optional[dict[str, Any]]]:
     """Shared filtering pipeline used by aggregation/charting tools.
 
     Returns ``(dataframe, year_column, error_dict)``. On any failure ``error_dict``
     is populated and the other two values are ``None``.
+
+    ``program`` matches against the first available program column (``program``
+    or ``program_name``).  ``category`` matches against the ``category`` column
+    specifically (so callers can filter the slice of a program — e.g. only
+    enrollment rows of Medicaid).  ``unit`` does an exact case-insensitive
+    match against the ``unit`` column to guarantee unit-consistent slices.
     """
     if not file_type:
         return None, None, {"error": "file_type is required."}
@@ -459,7 +454,12 @@ def _filtered_frame(
         df = df[df["vintage"] == vintage]
 
     if program:
-        program_col = _select_first_column(list(df.columns), _PROGRAM_COLUMNS)
+        # Filter against the *program* column only (not category) so callers
+        # can independently filter by category below.
+        program_col = _select_first_column(list(df.columns), ("program", "program_name", "name"))
+        if not program_col:
+            # Fall back to category if there is no real program column.
+            program_col = _select_first_column(list(df.columns), ("category",))
         if not program_col:
             return None, None, {"error": "No program/category column found for program filter."}
         df = df[
@@ -467,6 +467,20 @@ def _filtered_frame(
             .astype(str)
             .str.contains(program, case=False, na=False, regex=False)
         ]
+
+    if category:
+        if "category" not in df.columns:
+            return None, None, {"error": "Dataset does not include a 'category' column."}
+        df = df[
+            df["category"]
+            .astype(str)
+            .str.contains(category, case=False, na=False, regex=False)
+        ]
+
+    if unit:
+        if "unit" not in df.columns:
+            return None, None, {"error": "Dataset does not include a 'unit' column."}
+        df = df[df["unit"].astype(str).str.lower() == unit.lower()]
 
     year_col = _select_first_column(list(df.columns), _YEAR_COLUMNS)
     if (year_start is not None or year_end is not None) and not year_col:
@@ -479,6 +493,36 @@ def _filtered_frame(
             df = df[numeric_years <= year_end]
 
     return df, year_col, None
+
+
+def _check_unit_consistency(df: pd.DataFrame) -> Optional[dict[str, Any]]:
+    """Return an error dict if the filtered frame mixes incompatible units.
+
+    Many CBO datasets pack outlays, enrollment counts, and per-enrollee dollar
+    figures into the same file under different ``unit`` values.  Summing or
+    plotting across mixed units produces nonsense, so we refuse and tell the
+    caller exactly how to disambiguate.
+    """
+    if "unit" not in df.columns or df.empty:
+        return None
+    units = sorted(u for u in df["unit"].dropna().astype(str).unique() if u.strip())
+    if len(units) <= 1:
+        return None
+    available_categories: list[str] = []
+    if "category" in df.columns:
+        available_categories = sorted(
+            df["category"].dropna().astype(str).unique().tolist()
+        )
+    return {
+        "error": (
+            "Filtered slice mixes multiple units of measure: "
+            f"{units}. Aggregating or charting across different units is not "
+            "meaningful. Narrow the slice by passing `unit=` (one of the units "
+            "above) or `category=` to select a specific series."
+        ),
+        "available_units": units,
+        "available_categories": available_categories,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -496,9 +540,16 @@ def aggregate_metric(
     year_start: Optional[int] = None,
     year_end: Optional[int] = None,
     vintage: Optional[str] = None,
+    category: Optional[str] = None,
+    unit: Optional[str] = None,
     loader: Optional[DataLoader] = None,
 ) -> dict[str, Any]:
     """Aggregate a numeric metric across rows, optionally grouped.
+
+    When the filtered slice contains rows with multiple ``unit`` values the
+    call is rejected (units are not commensurable). Pass ``unit=`` or
+    ``category=`` to narrow the slice. Aggregations that group by ``unit``
+    itself are allowed and skip the consistency check.
 
     Parameters
     ----------
@@ -511,7 +562,7 @@ def aggregate_metric(
     group_by:
         Optional column name to group by (for example ``"fiscal_year"`` or
         ``"program"``). When omitted, returns a single overall aggregate.
-    program, year_start, year_end, vintage:
+    program, year_start, year_end, vintage, category, unit:
         Optional filters applied before aggregation.
 
     Returns
@@ -533,6 +584,8 @@ def aggregate_metric(
         year_start=year_start,
         year_end=year_end,
         vintage=vintage,
+        category=category,
+        unit=unit,
         loader=loader,
     )
     if err is not None:
@@ -541,6 +594,13 @@ def aggregate_metric(
 
     if metric not in df.columns:
         return {"error": f"Metric column '{metric}' not found. Available: {list(df.columns)}"}
+
+    # Block silent cross-unit aggregation unless caller is explicitly grouping
+    # by unit (which keeps results per-unit and therefore meaningful).
+    if group_by != "unit" and agg_lower != "count":
+        unit_err = _check_unit_consistency(df)
+        if unit_err is not None:
+            return unit_err
 
     series = pd.to_numeric(df[metric], errors="coerce")
     if group_by:
@@ -584,6 +644,8 @@ def top_n(
     year_start: Optional[int] = None,
     year_end: Optional[int] = None,
     vintage: Optional[str] = None,
+    category: Optional[str] = None,
+    unit: Optional[str] = None,
     loader: Optional[DataLoader] = None,
 ) -> dict[str, Any]:
     """Return the top (or bottom) N groups ranked by an aggregated metric.
@@ -600,6 +662,8 @@ def top_n(
         year_start=year_start,
         year_end=year_end,
         vintage=vintage,
+        category=category,
+        unit=unit,
         loader=loader,
     )
     if err is not None:
@@ -619,6 +683,8 @@ def top_n(
         year_start=year_start,
         year_end=year_end,
         vintage=vintage,
+        category=category,
+        unit=unit,
         loader=loader,
     )
     if "error" in aggregated:
@@ -645,13 +711,15 @@ def growth_rate(
     year_end: int,
     program: Optional[str] = None,
     vintage: Optional[str] = None,
+    category: Optional[str] = None,
+    unit: Optional[str] = None,
     loader: Optional[DataLoader] = None,
 ) -> dict[str, Any]:
     """Compute absolute change and CAGR for a metric between two years.
 
     Values for each endpoint year are summed across remaining rows after filters,
-    so callers should narrow ``program`` (and optionally ``vintage``) when they
-    want a per-program growth rate.
+    so callers should narrow ``program`` / ``category`` / ``unit`` to a single
+    coherent series before calling.  Mixed-unit slices are rejected.
     """
     if year_start >= year_end:
         return {"error": "year_start must be strictly less than year_end."}
@@ -662,6 +730,8 @@ def growth_rate(
         year_start=year_start,
         year_end=year_end,
         vintage=vintage,
+        category=category,
+        unit=unit,
         loader=loader,
     )
     if err is not None:
@@ -671,6 +741,10 @@ def growth_rate(
         return {"error": "No supported year column found for growth calculation."}
     if metric not in df.columns:
         return {"error": f"Metric column '{metric}' not found."}
+
+    unit_err = _check_unit_consistency(df)
+    if unit_err is not None:
+        return unit_err
 
     numeric_years = pd.to_numeric(df[year_col], errors="coerce")
     series = pd.to_numeric(df[metric], errors="coerce")
@@ -741,6 +815,25 @@ def summarize_file_type(
     if "vintage" in df.columns:
         vintages = sorted(df["vintage"].dropna().astype(str).unique().tolist())
 
+    # Discovery aids: list categories and units so the LLM can pick a
+    # unit-consistent slice before charting/aggregating.
+    categories: list[str] = []
+    if "category" in df.columns:
+        categories = sorted(df["category"].dropna().astype(str).unique().tolist())
+    units: list[str] = []
+    if "unit" in df.columns:
+        units = sorted(df["unit"].dropna().astype(str).unique().tolist())
+
+    # For each unit, list categories that report in that unit. This is the
+    # most useful breadcrumb when the user asks for a specific metric like
+    # "enrollment" (Millions of people) vs "outlays" (Billions of dollars).
+    categories_by_unit: dict[str, list[str]] = {}
+    if "unit" in df.columns and "category" in df.columns:
+        for u, sub in df.dropna(subset=["unit", "category"]).groupby("unit"):
+            categories_by_unit[str(u)] = sorted(
+                sub["category"].astype(str).unique().tolist()
+            )
+
     return {
         "file_type": file_type,
         "row_count": int(len(df)),
@@ -751,6 +844,9 @@ def summarize_file_type(
         "year_range": year_range,
         "vintages": vintages,
         "top_programs": top_programs,
+        "categories": categories,
+        "units": units,
+        "categories_by_unit": categories_by_unit,
     }
 
 
@@ -765,6 +861,8 @@ def chart_projection(
     kind: str = "line",
     group_by: Optional[str] = None,
     title: Optional[str] = None,
+    category: Optional[str] = None,
+    unit: Optional[str] = None,
     loader: Optional[DataLoader] = None,
     # legacy params kept for backward-compat; no longer used
     output_dir: str = "./charts",
@@ -776,6 +874,10 @@ def chart_projection(
     ``vintage`` when present).  For ``kind="bar"``, one bar per group with
     bars sorted descending.  Returns ``chart_data`` which the web layer
     forwards to the frontend for interactive rendering with download support.
+
+    Mixed-unit slices are rejected — pass ``unit=`` or ``category=`` to pick
+    one series.  When the filtered slice resolves to a single unit, the
+    chart's y-axis label automatically includes that unit.
     """
     kind_lower = kind.lower()
     if kind_lower not in _CHART_KINDS:
@@ -787,6 +889,8 @@ def chart_projection(
         year_start=year_start,
         year_end=year_end,
         vintage=vintage,
+        category=category,
+        unit=unit,
         loader=loader,
     )
     if err is not None:
@@ -795,8 +899,21 @@ def chart_projection(
     if metric not in df.columns:
         return {"error": f"Metric column '{metric}' not found."}
 
+    unit_err = _check_unit_consistency(df)
+    if unit_err is not None:
+        return unit_err
+
+    # Derive a single resolved unit (if any) to label the y-axis.
+    resolved_unit: Optional[str] = None
+    if "unit" in df.columns and not df.empty:
+        unique_units = [u for u in df["unit"].dropna().astype(str).unique() if u.strip()]
+        if len(unique_units) == 1:
+            resolved_unit = unique_units[0]
+
     series = pd.to_numeric(df[metric], errors="coerce")
     chart_title = title or f"{file_type} — {metric}"
+    if category:
+        chart_title += f" · {category}"
     if vintage:
         chart_title += f" (vintage {vintage})"
 
@@ -838,7 +955,7 @@ def chart_projection(
             points = [{"year": yr, "value": float(v)} for yr, v in zip(labels, summed.values)]
 
         x_label = year_col or "year"
-        y_label = metric
+        y_label = f"{metric} ({resolved_unit})" if resolved_unit else metric
 
     else:  # bar
         bar_group = group_by or _select_first_column(list(df.columns), _PROGRAM_COLUMNS)
@@ -849,7 +966,9 @@ def chart_projection(
         datasets = [{"label": f"sum({metric})", "data": [float(v) for v in grouped.values]}]
         points = [{"group": lbl, "value": float(v)} for lbl, v in zip(labels, grouped.values)]
         x_label = bar_group
-        y_label = f"sum({metric})"
+        y_label = (
+            f"sum({metric}) ({resolved_unit})" if resolved_unit else f"sum({metric})"
+        )
 
     chart_data: dict[str, Any] = {
         "type": kind_lower,
@@ -864,6 +983,7 @@ def chart_projection(
         "chart_data": chart_data,
         "chart_kind": kind_lower,
         "metric": metric,
+        "unit": resolved_unit,
         "point_count": len(points),
         "points": points,
     }
