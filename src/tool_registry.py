@@ -8,12 +8,17 @@ from collections.abc import Callable
 from typing import Any
 
 from src.mcp_tools import (
+    aggregate_metric,
+    chart_projection,
     compare_vintages,
     export_csv,
     get_projection,
+    growth_rate,
     list_file_types,
     list_vintages,
     search_programs,
+    summarize_file_type,
+    top_n,
 )
 
 ToolFn = Callable[..., Any]
@@ -25,6 +30,11 @@ TOOL_FUNCTIONS: dict[str, ToolFn] = {
     "compare_vintages": compare_vintages,
     "search_programs": search_programs,
     "export_csv": export_csv,
+    "aggregate_metric": aggregate_metric,
+    "top_n": top_n,
+    "growth_rate": growth_rate,
+    "summarize_file_type": summarize_file_type,
+    "chart_projection": chart_projection,
 }
 
 _TOOL_DECLARATIONS: list[dict[str, Any]] = [
@@ -100,6 +110,114 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "query_params": {"type": "object"},
             },
             "required": ["rows"],
+        },
+    },
+    {
+        "name": "aggregate_metric",
+        "description": (
+            "Aggregate a numeric metric across rows with optional grouping. "
+            "Use this for sums, averages, min/max, or counts. agg must be one of "
+            "sum, mean, min, max, median, count. Provide group_by to get one row "
+            "per group (for example group_by='fiscal_year' to see a yearly total)."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_type": {"type": "string"},
+                "metric": {"type": "string"},
+                "agg": {"type": "string"},
+                "group_by": {"type": "string"},
+                "program": {"type": "string"},
+                "year_start": {"type": "integer"},
+                "year_end": {"type": "integer"},
+                "vintage": {"type": "string"},
+            },
+            "required": ["file_type", "metric"],
+        },
+    },
+    {
+        "name": "top_n",
+        "description": (
+            "Return the top (or bottom) N groups ranked by an aggregated metric. "
+            "Defaults to grouping by the program/category column. Set ascending=true "
+            "for the bottom N."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_type": {"type": "string"},
+                "metric": {"type": "string"},
+                "n": {"type": "integer"},
+                "group_by": {"type": "string"},
+                "agg": {"type": "string"},
+                "ascending": {"type": "boolean"},
+                "program": {"type": "string"},
+                "year_start": {"type": "integer"},
+                "year_end": {"type": "integer"},
+                "vintage": {"type": "string"},
+            },
+            "required": ["file_type", "metric"],
+        },
+    },
+    {
+        "name": "growth_rate",
+        "description": (
+            "Compute absolute change, percentage change, and CAGR for a metric "
+            "between two years. Narrow with program and vintage for per-program "
+            "growth."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_type": {"type": "string"},
+                "metric": {"type": "string"},
+                "year_start": {"type": "integer"},
+                "year_end": {"type": "integer"},
+                "program": {"type": "string"},
+                "vintage": {"type": "string"},
+            },
+            "required": ["file_type", "metric", "year_start", "year_end"],
+        },
+    },
+    {
+        "name": "summarize_file_type",
+        "description": (
+            "Discovery tool: returns the schema (columns, dtypes), row count, "
+            "year range, vintage list, and most frequent program names for a "
+            "file type. Call this first when working with an unfamiliar dataset."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_type": {"type": "string"},
+                "vintage": {"type": "string"},
+            },
+            "required": ["file_type"],
+        },
+    },
+    {
+        "name": "chart_projection",
+        "description": (
+            "Render a PNG chart (line or bar) of a metric and save it under "
+            "./charts/. Returns the absolute file path plus the underlying "
+            "data points so the answer can cite both."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "file_type": {"type": "string"},
+                "metric": {"type": "string"},
+                "program": {"type": "string"},
+                "vintage": {"type": "string"},
+                "year_start": {"type": "integer"},
+                "year_end": {"type": "integer"},
+                "kind": {"type": "string"},
+                "group_by": {"type": "string"},
+                "output_dir": {"type": "string"},
+                "filename": {"type": "string"},
+                "title": {"type": "string"},
+            },
+            "required": ["file_type", "metric"],
         },
     },
 ]

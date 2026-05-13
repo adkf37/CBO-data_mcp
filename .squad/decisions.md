@@ -2,6 +2,39 @@
 
 ## Active Decisions
 
+### 2026-05-13 — Decision D-025 (Task ID: feedback-2026-05-13)
+- **Capability expansion in response to human feedback.** The closed-out sprint
+  delivered 6 retrieval/export tools; that surface area was insufficient for the
+  multi-step "complicated questions" use case (rankings, growth rates, grouped
+  aggregations) and had no charting story. Inspired by `chicago-zoning-mcp`
+  (discovery-first multi-tool design) and `Gemini_Homicide_Bot` (PNG chart
+  generation), 5 new tools were added under `src/mcp_tools.py` and registered
+  in `src/tool_registry.py`:
+  - `aggregate_metric` — sum/mean/min/max/median/count with optional `group_by`.
+  - `top_n` — ranked groups by an aggregated metric, descending or ascending.
+  - `growth_rate` — absolute change, pct change, and CAGR between two years.
+  - `summarize_file_type` — schema + year range + vintage list + top programs.
+  - `chart_projection` — matplotlib `line`/`bar` PNGs written to `./charts/`.
+- **Agent behavior changes.** `CBOAgent` now keeps the Gemini chat session
+  alive across `ask()` calls so follow-up questions inherit context, exposes
+  `last_trace` (per-call list of tool/args/result entries) for `/trace`, and
+  ships a strengthened system prompt that mandates schema-discovery-before-
+  aggregation and prescribes which tool to use for each question shape.
+- **CLI additions.** `/chart`, `/reset`, and `/trace` commands added to
+  `main.py`; `/chart` accepts `key=value` overrides for kind, program, vintage,
+  and year range.
+- **Dependency change.** `matplotlib>=3.8.0` added to `requirements.txt`. The
+  chart tool forces the headless `Agg` backend and writes PNGs only.
+- **Test coverage.** 20 new unit tests across `tests/test_analytics.py`,
+  `tests/test_llm_agent.py` (chat persistence + tracing), and `tests/test_cli.py`
+  (`/chart`, `/reset`, `/trace`); registry-count assertion updated. Full suite
+  62 passed / 3 deselected / 78.10% coverage; `python scripts/catalog_data.py`
+  re-ran cleanly and confirmed 51 catalogued file types.
+- **Next loop recommendation.** Validate the new slice (rerun pytest, syntax
+  check, optionally exercise an integration query if `GEMINI_API_KEY` is set),
+  then Closeout. No backlog task file was created since this work was driven
+  by `FEEDBACK.md`, per the Maestro lifecycle for feedback-scoped builds.
+
 ### 2026-05-12 — Decision D-001 (Task ID: SQUAD-INIT-2026-05-12)
 - Adopt a 5-member working roster (Lead, Backend Dev, Data Engineer, Tester, Scribe) aligned to backlog domains.
 - Retire Ralph from active roster and move artifacts to `.squad/agents/_alumni/ralph/` to comply with Maestro guidance.

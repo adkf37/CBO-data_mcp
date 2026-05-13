@@ -201,6 +201,48 @@ class TestCBOAgentAskToolCalling:
         assert chat_mock.send_message.call_count == 1 + _MAX_TOOL_ITERATIONS
         assert result == "Stopped after cap."
 
+    def test_chat_session_persists_across_asks(self, agent, patched_genai):
+        """Two consecutive ask() calls reuse the same chat session."""
+        chat_mock = patched_genai.GenerativeModel.return_value.start_chat.return_value
+        chat_mock.send_message.side_effect = [
+            _make_text_response("first"),
+            _make_text_response("second"),
+        ]
+
+        agent.ask("first question")
+        agent.ask("second question")
+
+        # start_chat called once across both asks → conversation state persists
+        assert patched_genai.GenerativeModel.return_value.start_chat.call_count == 1
+
+    def test_reset_clears_chat_and_trace(self, agent, patched_genai):
+        """reset() drops the cached chat so the next ask starts a new session."""
+        chat_mock = patched_genai.GenerativeModel.return_value.start_chat.return_value
+        chat_mock.send_message.return_value = _make_text_response("hi")
+        agent.ask("hello")
+        agent.last_trace = [{"tool": "x", "args": {}, "result": {}}]
+
+        agent.reset()
+
+        assert agent.last_trace == []
+        agent.ask("again")
+        assert patched_genai.GenerativeModel.return_value.start_chat.call_count == 2
+
+    def test_trace_records_tool_calls(self, agent, patched_genai, monkeypatch):
+        chat_mock = patched_genai.GenerativeModel.return_value.start_chat.return_value
+        chat_mock.send_message.side_effect = [
+            _make_fn_call_response("list_file_types", {}),
+            _make_text_response("done"),
+        ]
+        monkeypatch.setattr(
+            "src.llm_agent.get_tool", lambda name: lambda **_: [{"file_type": "x"}]
+        )
+
+        agent.ask("list types")
+
+        assert len(agent.last_trace) == 1
+        assert agent.last_trace[0]["tool"] == "list_file_types"
+
 
 # ── integration tests (skipped when GEMINI_API_KEY is absent) ─────────────────
 

@@ -120,7 +120,7 @@ def test_get_projection_invalid_year_range_returns_error():
     assert result["error"] == "year_start must be less than or equal to year_end."
 
 
-def test_tool_registry_contains_all_six_tools():
+def test_tool_registry_contains_all_registered_tools():
     assert set(list_tool_names()) == {
         "list_file_types",
         "list_vintages",
@@ -128,10 +128,14 @@ def test_tool_registry_contains_all_six_tools():
         "compare_vintages",
         "search_programs",
         "export_csv",
+        "aggregate_metric",
+        "top_n",
+        "growth_rate",
+        "summarize_file_type",
+        "chart_projection",
     }
 
 
 def test_tool_registry_exposes_gemini_declarations():
     declarations = get_gemini_tool_declarations()
-    assert len(declarations) == 6
     assert {d["name"] for d in declarations} == set(list_tool_names())

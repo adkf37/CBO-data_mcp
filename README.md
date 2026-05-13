@@ -94,6 +94,9 @@ cbo>
 | `/types` | List all available CBO file types |
 | `/vintages <file_type>` | List available vintages for a file type |
 | `/export [filename]` | Export the last answer to CSV in `./exports/` |
+| `/chart <file_type> <metric> [k=v]` | Render a PNG chart in `./charts/` (kind=line\|bar, program=, vintage=, year_start=, year_end=, group_by=) |
+| `/reset` | Clear the agent's conversation memory |
+| `/trace` | Show the MCP tools called for the last question |
 | `/quit` or `/exit` | Exit the CLI |
 
 ---
@@ -104,10 +107,29 @@ cbo>
 cbo> How many people are projected to be enrolled in Medicaid in 2029?
 cbo> Compare Medicare spending in 2024 versus 2025 projections.
 cbo> What is the CBO deficit projection for 2030?
+cbo> Which mandatory spending programs grow the fastest between 2025 and 2034?
+cbo> Plot Medicaid outlays by year for the latest vintage.
 cbo> /types
 cbo> /vintages medicaid
+cbo> /chart medicaid value kind=line program=Medicaid
 cbo> /export medicaid_2029.csv
 ```
+
+### MCP Tools Available to the Agent
+
+| Tool | Purpose |
+|---|---|
+| `list_file_types` | Enumerate every CBO file type plus its vintages and description. |
+| `list_vintages` | Vintages available for one file type. |
+| `summarize_file_type` | Schema (columns, dtypes), year range, vintage list, and most frequent program names — call first on unfamiliar datasets. |
+| `get_projection` | Filtered row-level lookups by program, year range, and vintage. |
+| `search_programs` | Substring search across program/category names. |
+| `compare_vintages` | Side-by-side metric comparison between two vintages. |
+| `aggregate_metric` | sum/mean/min/max/median/count of a metric, optionally grouped. |
+| `top_n` | Top (or bottom) N groups ranked by an aggregated metric. |
+| `growth_rate` | Absolute change, percentage change, and CAGR between two years. |
+| `chart_projection` | Render a PNG line/bar chart to `./charts/`. |
+| `export_csv` | Persist any tool's rows to `./exports/` with metadata header. |
 
 Expected answer format (natural language, tool-cited):
 

@@ -22,11 +22,27 @@ log = logging.getLogger(__name__)
 _MAX_TOOL_ITERATIONS = 10
 
 _SYSTEM_PROMPT = (
-    "You are a helpful analyst of U.S. Congressional Budget Office (CBO) data. "
-    "When answering questions, always cite the file type and vintage used to "
-    "derive each figure. "
-    "Use the available tools to retrieve the data you need before answering. "
-    "If multiple vintages or file types are relevant, compare them explicitly."
+    "You are a careful analyst of U.S. Congressional Budget Office (CBO) baseline "
+    "projection data. Your job is to answer the user's question with numbers "
+    "drawn from the available MCP tools — never invent figures.\n\n"
+    "Tool-use playbook:\n"
+    "1. If you do not know which file type or column to query, call "
+    "`list_file_types` and then `summarize_file_type` to learn the schema, year "
+    "range, vintages, and program names before issuing analytical calls.\n"
+    "2. Use `get_projection` for raw row-level lookups, `aggregate_metric` for "
+    "totals/averages/group_by, `top_n` for rankings, `growth_rate` for "
+    "year-over-year change/CAGR, and `compare_vintages` for projection revisions.\n"
+    "3. Chain tools when needed (for example summarize → aggregate → top_n) "
+    "instead of guessing.\n"
+    "4. When the user asks for a chart/plot/visualization, call "
+    "`chart_projection` and report the saved file path.\n"
+    "5. Always cite the file_type and vintage that produced each figure, and "
+    "state units (millions, billions, percent of GDP, etc.) when the column "
+    "name implies them.\n"
+    "6. If a tool returns an error, read the message, adjust parameters, and try "
+    "again before giving up.\n"
+    "7. Treat the conversation as multi-turn: follow-up questions may reuse the "
+    "previously identified file type or program."
 )
 
 
@@ -92,6 +108,18 @@ class CBOAgent:
             tools=tools,
             system_instruction=_SYSTEM_PROMPT,
         )
+        self._chat: Any = None
+        self.last_trace: list[dict[str, Any]] = []
+
+    def reset(self) -> None:
+        """Clear conversation history so the next ``ask`` starts fresh."""
+        self._chat = None
+        self.last_trace = []
+
+    def _ensure_chat(self) -> Any:
+        if self._chat is None:
+            self._chat = self._model.start_chat()
+        return self._chat
 
     def ask(self, question: str) -> str:
         """Resolve a natural-language question about CBO data.
@@ -99,6 +127,7 @@ class CBOAgent:
         Runs the Gemini tool-calling loop, dispatching each function call
         through the tool registry and feeding the results back to the model
         until it produces a final text answer or the iteration cap is reached.
+        Conversation state persists across calls; use :meth:`reset` to clear it.
 
         Parameters
         ----------
@@ -110,8 +139,9 @@ class CBOAgent:
         str
             The model's final text answer with tool-sourced data cited.
         """
-        chat = self._model.start_chat()
+        chat = self._ensure_chat()
         response = chat.send_message(question)
+        self.last_trace = []
 
         for _ in range(_MAX_TOOL_ITERATIONS):
             fn_calls = [
@@ -132,6 +162,7 @@ class CBOAgent:
                     result = get_tool(name)(**args)
                 except Exception as exc:  # noqa: BLE001
                     result = {"error": str(exc)}
+                self.last_trace.append({"tool": name, "args": args, "result": result})
 
                 fn_responses.append(
                     genai.protos.Part(

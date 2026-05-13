@@ -6,7 +6,7 @@ from dataclasses import dataclass, field
 from typing import Protocol
 
 from src.llm_agent import CBOAgent
-from src.mcp_tools import export_csv, list_file_types, list_vintages
+from src.mcp_tools import chart_projection, export_csv, list_file_types, list_vintages
 
 try:  # pragma: no cover - platform-specific
     import readline  # noqa: F401
@@ -61,6 +61,15 @@ class CBOCLI:
             if raw.startswith("/export"):
                 self._handle_export(raw)
                 continue
+            if raw.startswith("/chart"):
+                self._handle_chart(raw)
+                continue
+            if raw == "/reset":
+                self._handle_reset()
+                continue
+            if raw == "/trace":
+                self._handle_trace()
+                continue
 
             self._handle_question(raw)
 
@@ -73,13 +82,17 @@ class CBOCLI:
     def _print_help(self) -> None:
         lines = [
             "Commands:",
-            "  /help                 Show this help message",
-            "  /types                List available CBO file types",
-            "  /vintages <file_type> List vintages for one file type",
-            "  /export [filename]    Export the last question/answer to CSV",
-            "  /quit or /exit        Exit the CLI",
+            "  /help                              Show this help message",
+            "  /types                             List available CBO file types",
+            "  /vintages <file_type>              List vintages for one file type",
+            "  /export [filename]                 Export the last question/answer to CSV",
+            "  /chart <file_type> <metric> [k=v]  Render a PNG chart (kind=line|bar, program=, vintage=, year_start=, year_end=)",
+            "  /reset                             Clear the agent's conversation memory",
+            "  /trace                             Show the tools called for the last question",
+            "  /quit or /exit                     Exit the CLI",
             "Example:",
             "  How many people are projected to be enrolled in Medicaid in 2029?",
+            "  /chart medicaid value kind=line vintage=2025-01",
         ]
         self._print_wrapped("\n".join(lines))
 
@@ -135,6 +148,58 @@ class CBOCLI:
         self.state.last_answer = answer
         self.state.last_rows = [{"question": question, "answer": answer}]
         self._print_wrapped(answer)
+
+    def _handle_chart(self, raw: str) -> None:
+        parts = raw.split()[1:]
+        if len(parts) < 2:
+            self._print_wrapped(
+                "Usage: /chart <file_type> <metric> [kind=line|bar] [program=...] "
+                "[vintage=...] [year_start=...] [year_end=...] [group_by=...]"
+            )
+            return
+        file_type, metric = parts[0], parts[1]
+        kwargs: dict[str, object] = {}
+        for token in parts[2:]:
+            if "=" not in token:
+                continue
+            key, value = token.split("=", 1)
+            if key in {"year_start", "year_end"}:
+                try:
+                    kwargs[key] = int(value)
+                except ValueError:
+                    self._print_wrapped(f"Invalid integer for {key}: {value}")
+                    return
+            else:
+                kwargs[key] = value
+        result = chart_projection(file_type, metric=metric, **kwargs)
+        if "error" in result:
+            self._print_wrapped(f"Error: {result['error']}")
+            return
+        self._print_wrapped(
+            f"Saved {result['chart_kind']} chart with {result['point_count']} point(s) "
+            f"to {result['file_path']}"
+        )
+
+    def _handle_reset(self) -> None:
+        self.state = CLIState()
+        if self.agent is not None and hasattr(self.agent, "reset"):
+            try:
+                self.agent.reset()
+            except Exception as exc:  # noqa: BLE001
+                self._print_wrapped(f"Reset warning: {exc}")
+        self._print_wrapped("Conversation memory cleared.")
+
+    def _handle_trace(self) -> None:
+        if self.agent is None or not hasattr(self.agent, "last_trace"):
+            self._print_wrapped("No trace available.")
+            return
+        trace = getattr(self.agent, "last_trace", []) or []
+        if not trace:
+            self._print_wrapped("No tool calls were made for the last question.")
+            return
+        for i, step in enumerate(trace, 1):
+            args_preview = ", ".join(f"{k}={v!r}" for k, v in step.get("args", {}).items())
+            self._print_wrapped(f"{i}. {step.get('tool')}({args_preview})")
 
     def _print_wrapped(self, text: str) -> None:
         for line in text.splitlines() or [""]:

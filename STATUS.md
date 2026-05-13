@@ -2,19 +2,25 @@
 
 | Field | Value |
 |---|---|
-| Phase | closeout |
+| Phase | build |
 | Last Updated | 2026-05-13 |
 | Squad Template | web_app |
-| Priority | low |
+| Priority | medium |
 | Blocking | None |
 | GitHub Repo | https://github.com/adkf37/CBO-data_mcp |
-| Next Action | Complete |
+| Next Action | Validate |
 
 ## Current Objective
 
-**Task ID:** `task_08`
+**Task ID:** `feedback-2026-05-13`
 
-Final closeout review confirmed the completed sprint satisfies the `.squad/sprint.md` Definition of Done end to end. Independent review reran dependency installation, the repository pytest contract, the explicit non-integration coverage command, and the `tests/test_llm_agent.py` module without default `pytest.ini` addopts to confirm the environment-gated integration tests still skip cleanly when `GEMINI_API_KEY` is absent. Manual inspection also confirmed the `task_07` and `task_08` handoff artifacts (`tests/conftest.py`, `pytest.ini`, `README.md`, `QUICK_START.md`, `.env.example`, and `project_overview.md`) are current enough for handoff. All 8 sprint tasks are complete, the closeout decision is `Complete`, and only non-blocking follow-up risks remain.
+Human feedback (2026-05-13) requested stronger support for complicated
+questions and chart generation. Implemented 5 new MCP tools
+(`aggregate_metric`, `top_n`, `growth_rate`, `summarize_file_type`,
+`chart_projection`), persistent chat session + tool tracing on `CBOAgent`,
+and `/chart`, `/reset`, `/trace` CLI commands. `matplotlib>=3.8.0` added.
+Targeted regression: 62 passed, 3 deselected, 78.10% coverage. Repo data
+catalog regenerated successfully (51 file types). Awaiting Validate.
 
 ## Recent Activity
 
@@ -44,6 +50,7 @@ Final closeout review confirmed the completed sprint satisfies the `.squad/sprin
 - 2026-05-13: task_08 Build completed — `README.md`, `QUICK_START.md`, and `.env.example` created; `backlog/README.md` success criteria all checked; all 8 sprint tasks are now complete
 - 2026-05-13: Validate completed for the full sprint — dependency install, default pytest contract, explicit coverage rerun, and LLM integration skip-path checks all passed; Next Action set to Closeout
 - 2026-05-13: Closeout completed for the full sprint — final review confirmed every sprint task satisfies the Definition of Done, handoff artifacts were refreshed, and `Next Action` is now `Complete`
+- 2026-05-13: Human feedback dispatched (`feedback-2026-05-13`) — added analytical tools (`aggregate_metric`, `top_n`, `growth_rate`, `summarize_file_type`), `chart_projection` (matplotlib PNGs), persistent chat + tracing on `CBOAgent`, and `/chart`, `/reset`, `/trace` CLI commands; pytest 62 passed / 3 deselected / 78.10% coverage; data catalog regenerated (51 file types); Next Action set to `Validate`
 
 ## Artifacts
 
