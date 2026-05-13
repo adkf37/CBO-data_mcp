@@ -151,5 +151,13 @@
 - **Known follow-up risks:** Live Gemini-backed validation still requires `GEMINI_API_KEY`, and the upstream `google.generativeai` deprecation warning remains a non-blocking future migration item.
 - **Return-to-build target:** The next automatable task is `task_07` (Tests and Validation).
 
+### 2026-05-13 — Decision D-021 (Task ID: task_07)
+- **Routing applied:** Coordinator routed this Build slice to Tester as the primary owner per `.squad/routing.md` (test authoring + validation evidence), with Scribe updating lifecycle artifacts after implementation.
+- **task_07 implementation completed:** Added `tests/conftest.py` with the required reusable fixtures (`sample_catalog`, `sample_df`, `mock_agent`) so test modules can share synthetic data and a patched canned-response agent without depending on external CBO/Gemini services.
+- **Pytest contract completed:** Expanded `pytest.ini` to include `testpaths = tests`, a default non-integration run marker (`-m "not integration"`), and coverage guardrails (`--cov=src --cov-fail-under=70`) while retaining the registered `integration` marker.
+- **Checklist alignment:** Updated `backlog/tasks/task_07_tests.md` acceptance checkboxes to match the implemented and validated test/coverage configuration.
+- **Build-loop validation evidence:** `python -m pytest tests/test_cli.py tests/test_csv_export.py tests/test_mcp_tools.py -q --no-cov` passed (11/11), `python -m pytest tests/ -m "not integration" --cov=src --cov-report=term` passed (42 passed, 3 deselected, 78% `src/` coverage), and `python -m pytest -q` passed (42 passed, 3 deselected).
+- **Next task:** `task_08` — Documentation.
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.

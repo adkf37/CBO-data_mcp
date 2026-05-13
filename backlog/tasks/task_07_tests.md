@@ -13,17 +13,17 @@ Write a comprehensive test suite covering unit, integration, and smoke tests for
 
 ## Acceptance Criteria
 
-- [ ] `tests/` directory exists with a `conftest.py` and fixtures for mock data.
-- [ ] Unit tests for:
+- [x] `tests/` directory exists with a `conftest.py` and fixtures for mock data.
+- [x] Unit tests for:
   - `test_data_loader.py` — data loading and cross-vintage consolidation
   - `test_mcp_tools.py` — all 6 MCP tools with known inputs
   - `test_csv_export.py` — CSV export correctness
   - `test_cli.py` — CLI REPL commands (using mock agent)
-- [ ] Integration tests (marked `@pytest.mark.integration`) for:
+- [x] Integration tests (marked `@pytest.mark.integration`) for:
   - `test_llm_agent.py` — end-to-end with 3 benchmark queries (skipped if `GEMINI_API_KEY` not set)
-- [ ] All unit tests pass with `pytest tests/ -m "not integration"`.
-- [ ] Test coverage report generated with `pytest --cov=src tests/`.
-- [ ] A `pytest.ini` or `pyproject.toml` configures `testpaths`, `markers`, and minimum coverage threshold (≥ 70%).
+- [x] All unit tests pass with `pytest tests/ -m "not integration"`.
+- [x] Test coverage report generated with `pytest --cov=src tests/`.
+- [x] A `pytest.ini` or `pyproject.toml` configures `testpaths`, `markers`, and minimum coverage threshold (≥ 70%).
 
 ## Implementation Notes
 
