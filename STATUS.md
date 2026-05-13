@@ -2,19 +2,19 @@
 
 | Field | Value |
 |---|---|
-| Phase | build |
+| Phase | validate |
 | Last Updated | 2026-05-13 |
 | Squad Template | web_app |
 | Priority | low |
 | Blocking | None |
 | GitHub Repo | https://github.com/adkf37/CBO-data_mcp |
-| Next Action | Validate |
+| Next Action | Closeout |
 
 ## Current Objective
 
 **Task ID:** `task_06`
 
-Build work for `task_06` (CSV Export Capability) is now implemented. `src/mcp_tools.py` replaces the task_03 export stub with full export behavior: sanitized filenames, auto-generated names containing file type/query/timestamp, metadata comment headers (`file_type`, `vintage`, `export_timestamp`), and guaranteed `./exports/` directory creation. CLI `/export` now passes task-context metadata to the tool, and new focused coverage was added in `tests/test_csv_export.py` (plus updates to existing export assertions in CLI/MCP tests). Validation-ready evidence from this build loop: `python -m pytest tests/test_csv_export.py tests/test_cli.py tests/test_mcp_tools.py -q` (11 passed) and `python -m pytest -q` (42 passed, 3 skipped). The sprint still has unfinished tasks (`task_07`, `task_08`), so the project remains in-progress and should hand off to Validate for independent verification of `task_06`.
+Validate work for `task_06` (CSV Export Capability) is complete. Independent validation in this fresh clone confirmed the enhanced `src/mcp_tools.py` export flow and CLI wiring in `main.py`: `python -m py_compile main.py src/mcp_tools.py` passed, `python -m pytest tests/test_csv_export.py tests/test_cli.py tests/test_mcp_tools.py -q` passed (11/11), `python -m pytest -q` passed (42 passed, 3 skipped), and `python -m pytest tests/ -m "not integration" --cov=src --cov-report=term` reported 78% total `src/` coverage. The only blocked scope remains live Gemini-backed execution because `GEMINI_API_KEY` is absent in the validation environment; that is already handled by the existing integration-test skip contract. The repo should now hand off to Closeout for task_06, with `task_07` and `task_08` still pending afterward.
 
 ## Recent Activity
 
@@ -38,6 +38,7 @@ Build work for `task_06` (CSV Export Capability) is now implemented. `src/mcp_to
 - 2026-05-13: Validate completed for task_05 — dependency install, CLI startup check, targeted CLI smoke tests, and full pytest regression checks all passed; Next Action set to Closeout
 - 2026-05-13: Closeout completed for task_05 — review artifacts refreshed, task_05 Definition of Done confirmed, and the repo returned to Build for `task_06`
 - 2026-05-13: task_06 Build completed — `src/mcp_tools.py` now performs full CSV export naming/metadata/directory handling, `tests/test_csv_export.py` added, export-related test expectations updated, and targeted/full pytest checks passed
+- 2026-05-13: Validate completed for task_06 — dependency install, syntax validation, targeted export/CLI/MCP tests, full pytest regression, and non-integration coverage checks all passed; Next Action set to Closeout
 
 ## Artifacts
 
@@ -49,8 +50,8 @@ Build work for `task_06` (CSV Export Capability) is now implemented. `src/mcp_to
 | Backlog Tasks | `./backlog/tasks/` | reviewed & updated |
 | Squad Team | `./.squad/team.md` | existing |
 | Squad Routing | `./.squad/routing.md` | existing |
-| Squad Decisions | `./.squad/decisions.md` | updated (D-018 added) |
-| Validation Report | `./.squad/validation_report.md` | updated (task_05 validation) |
+| Squad Decisions | `./.squad/decisions.md` | updated (D-019 added) |
+| Validation Report | `./.squad/validation_report.md` | updated (task_06 validation) |
 | Review Report | `./.squad/review_report.md` | updated (task_05 closeout return-to-build decision) |
 | Project Overview | `./project_overview.md` | updated (task_05 handoff) |
 | Agent Charters | `./.squad/agents/*/charter.md` | existing |
@@ -70,4 +71,4 @@ Build work for `task_06` (CSV Export Capability) is now implemented. `src/mcp_to
 
 ## Needs Human Input
 
-- None. The next action is automated Validate work for `task_06`.
+- None. The next action is automated Closeout work for `task_06`.
