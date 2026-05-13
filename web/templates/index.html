@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CBO Data Assistant</title>
+  <meta name="description" content="Ask questions about CBO baseline projections, budget outlooks, and program spending." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Libre+Franklin:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/marked@12.0.2/marked.min.js"
+          integrity="sha384-/TQbtLCAerC3jgaim+N78RZSDYV7ryeoBCVqTuzRrFec2akfBkHS7ACQ3PQhvMVi"
+          crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.1.6/dist/purify.min.js"
+          integrity="sha384-+VfUPEb0PdtChMwmBcBmykRMDd+v6D/oFmB3rZM/puCMDYcIvF968OimRh4KQY9a"
+          crossorigin="anonymous"></script>
+  <style>
+    /* ─── DESIGN TOKENS ──────────────────────────────────── */
+    :root {
+      --navy:        #003366;
+      --navy-deep:   #001d3d;
+      --navy-mid:    #002b55;
+      --red:         #cf2920;
+      --red-hover:   #a82018;
+      --cream:       #faf8f5;
+      --warm-white:  #f4f1ec;
+      --text:        #1a1a1a;
+      --text-muted:  #5a6068;
+      --text-light:  #8a8f96;
+      --rule:        #e2ddd8;
+      --shadow-sm:   0 1px 3px rgba(0,0,0,.08);
+      --shadow-md:   0 4px 16px rgba(0,0,0,.10);
+      --radius:      10px;
+      --font-display: 'DM Serif Display', Georgia, serif;
+      --font-body:    'Libre Franklin', system-ui, sans-serif;
+      --max-width:    1120px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 16px; }
+    body {
+      font-family: var(--font-body);
+      background: var(--cream);
+      color: var(--text);
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ─── TOP NAV ─────────────────────────────────────────── */
+    .top-nav {
+      background: var(--navy-deep);
+      border-bottom: 2px solid var(--red);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .top-nav__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 0.6rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+    .top-nav__brand {
+      color: #fff;
+      font-family: var(--font-body);
+      font-weight: 600;
+      font-size: 0.85rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .top-nav__star { color: var(--red); font-size: 0.9rem; }
+    .top-nav__links {
+      list-style: none;
+      display: flex;
+      gap: 1.25rem;
+    }
+    .top-nav__links a {
+      color: rgba(255,255,255,0.7);
+      text-decoration: none;
+      font-size: 0.78rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      transition: color .15s;
+    }
+    .top-nav__links a:hover { color: #fff; }
+
+    /* ─── HERO ────────────────────────────────────────────── */
+    .hero {
+      background: linear-gradient(135deg, var(--navy-deep) 0%, var(--navy-mid) 60%, var(--navy) 100%);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 70% 50%, rgba(207,41,32,0.12) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero__bg-grid {
+      position: absolute;
+      inset: 0;
+      background:
+        repeating-linear-gradient(0deg, transparent, transparent 44px, rgba(255,255,255,0.025) 44px, rgba(255,255,255,0.025) 45px),
+        repeating-linear-gradient(90deg, transparent, transparent 44px, rgba(255,255,255,0.025) 44px, rgba(255,255,255,0.025) 45px);
+      pointer-events: none;
+    }
+    .hero__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      padding: 1.4rem 1.5rem 1.2rem;
+      position: relative;
+    }
+    .hero__eyebrow {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 0.4rem;
+    }
+    .hero__headline {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 400;
+      line-height: 1.2;
+      color: #fff;
+      margin-bottom: 0.4rem;
+    }
+    .hero__headline em { color: #f4b860; font-style: italic; }
+    .hero__subtitle {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.62);
+      font-weight: 400;
+      line-height: 1.5;
+    }
+
+    /* ─── MAIN LAYOUT ─────────────────────────────────────── */
+    .main-layout {
+      flex: 1;
+      max-width: var(--max-width);
+      margin: 0 auto;
+      width: 100%;
+      padding: 1.5rem;
+      display: grid;
+      grid-template-columns: 1fr 260px;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    /* ─── CHAT ────────────────────────────────────────────── */
+    .chat-wrapper {
+      background: #fff;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+      min-height: 560px;
+      max-height: calc(100vh - 220px);
+    }
+    .messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.25rem 1.25rem 0.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      scroll-behavior: smooth;
+    }
+    .input-area {
+      padding: 0.75rem 1rem;
+      border-top: 1px solid var(--rule);
+    }
+    .chat-form {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .chat-input {
+      flex: 1;
+      border: 1.5px solid var(--rule);
+      border-radius: 8px;
+      padding: 0.6rem 0.85rem;
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      color: var(--text);
+      background: var(--cream);
+      outline: none;
+      transition: border-color .15s;
+    }
+    .chat-input:focus { border-color: var(--navy); background: #fff; }
+    .chat-input::placeholder { color: var(--text-light); }
+    .submit-btn {
+      background: var(--navy);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.6rem 1.1rem;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: background .15s;
+      white-space: nowrap;
+    }
+    .submit-btn:hover:not(:disabled) { background: var(--navy-mid); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .spinner {
+      width: 14px; height: 14px;
+      border: 2px solid rgba(255,255,255,0.35);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .chat-meta {
+      text-align: center;
+      font-size: 0.7rem;
+      color: var(--text-light);
+      padding: 0.25rem 0 0.5rem;
+    }
+
+    /* ─── CHAT BUBBLES ────────────────────────────────────── */
+    .msg-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.75rem;
+    }
+    .msg-row--user { flex-direction: row-reverse; }
+    .avatar {
+      width: 2rem; height: 2rem;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.02em;
+      flex-shrink: 0;
+      font-family: var(--font-body);
+    }
+    .avatar--bot  { background: var(--navy); color: #fff; }
+    .avatar--user { background: #475569;    color: #fff; }
+    .bubble {
+      max-width: 78%;
+      padding: 0.65rem 0.9rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      line-height: 1.65;
+    }
+    .bubble--bot {
+      background: var(--warm-white);
+      border: 1px solid var(--rule);
+      color: var(--text);
+    }
+    .bubble--user {
+      background: var(--navy);
+      color: #fff;
+    }
+    .bubble--bot p { margin-bottom: 0.5rem; }
+    .bubble--bot p:last-child { margin-bottom: 0; }
+    .bubble--bot ul { list-style: disc; padding-left: 1.2rem; margin-bottom: 0.5rem; }
+    .bubble--bot ol { list-style: decimal; padding-left: 1.2rem; margin-bottom: 0.5rem; }
+    .bubble--bot li { margin-bottom: 0.2rem; line-height: 1.6; }
+    .bubble--bot strong { color: var(--navy-deep); font-weight: 600; }
+    .bubble--bot code {
+      background: #f0ede8; color: var(--navy);
+      padding: 0.1rem 0.35rem; border-radius: 3px;
+      font-size: 0.82em; font-family: 'SF Mono', 'Fira Code', Consolas, monospace;
+    }
+    .bubble--bot pre code {
+      display: block; padding: 0.75rem; overflow-x: auto;
+      white-space: pre; font-size: 0.78em;
+    }
+    .bubble--bot h3 {
+      font-family: var(--font-display); font-size: 1rem;
+      color: var(--navy-deep); margin: 0.75rem 0 0.35rem; font-weight: normal;
+    }
+    .bubble--bot table {
+      width: 100%; border-collapse: collapse; font-size: 0.82em;
+      margin: 0.5rem 0;
+    }
+    .bubble--bot th {
+      background: var(--navy); color: #fff; text-align: left;
+      padding: 0.35rem 0.5rem; font-weight: 600;
+    }
+    .bubble--bot td {
+      padding: 0.3rem 0.5rem; border-bottom: 1px solid var(--rule);
+    }
+    .bubble--bot tr:last-child td { border-bottom: none; }
+
+    /* tool call badges */
+    .tool-bar {
+      display: flex; flex-wrap: wrap; gap: 0.3rem;
+      margin-top: 0.5rem; padding-top: 0.4rem;
+      border-top: 1px solid var(--rule);
+    }
+    .tool-badge {
+      display: inline-flex; align-items: center; gap: 0.25rem;
+      background: var(--cream); border: 1px solid var(--rule);
+      border-radius: 9999px; padding: 0.15rem 0.55rem;
+      font-size: 0.7rem; color: var(--text-muted); font-weight: 500;
+    }
+
+    /* typing indicator */
+    .typing-dots { display: flex; gap: 4px; align-items: center; height: 18px; }
+    .typing-dots span {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--text-muted);
+      animation: bounce 1.2s ease-in-out infinite;
+    }
+    .typing-dots span:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dots span:nth-child(3) { animation-delay: 0.4s; }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
+      40%            { transform: translateY(-6px); opacity: 1; }
+    }
+
+    /* error bubble */
+    .bubble--error {
+      background: #fff5f5; border-color: #fca5a5; color: #991b1b;
+    }
+
+    /* ─── SIDE PANEL ──────────────────────────────────────── */
+    .suggestions-panel {
+      display: flex; flex-direction: column; gap: 0.75rem;
+    }
+    .panel__label {
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: var(--text-muted);
+    }
+    .capability-card {
+      background: #fff; border: 1px solid var(--rule);
+      border-radius: var(--radius); padding: 0.75rem;
+      box-shadow: var(--shadow-sm);
+    }
+    .capability-card__header {
+      display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem;
+    }
+    .capability-card__icon { font-size: 1rem; }
+    .capability-card__title {
+      font-size: 0.82rem; font-weight: 600; color: var(--navy-deep);
+    }
+    .capability-card__text {
+      font-size: 0.77rem; color: var(--text-muted); line-height: 1.5;
+    }
+    .panel-divider {
+      height: 1px; background: var(--rule); margin: 0.25rem 0;
+    }
+    .panel-chip {
+      background: #fff; border: 1px solid var(--rule);
+      border-radius: 8px; padding: 0.5rem 0.7rem;
+      font-family: var(--font-body); font-size: 0.77rem;
+      color: var(--navy); cursor: pointer; text-align: left;
+      transition: background .12s, border-color .12s;
+      line-height: 1.4;
+    }
+    .panel-chip:hover { background: var(--warm-white); border-color: var(--navy); }
+
+    /* ─── FOOTER ──────────────────────────────────────────── */
+    .site-footer {
+      background: var(--navy-deep);
+      border-top: 2px solid var(--red);
+      color: rgba(255,255,255,0.5);
+      font-size: 0.75rem;
+      padding: 0.9rem 1.5rem;
+    }
+    .site-footer__inner {
+      max-width: var(--max-width);
+      margin: 0 auto;
+      display: flex; justify-content: space-between; align-items: center;
+      gap: 1rem; flex-wrap: wrap;
+    }
+    .site-footer__links { display: flex; gap: 1rem; }
+    .site-footer__links a {
+      color: rgba(255,255,255,0.5); text-decoration: none;
+      transition: color .15s;
+    }
+    .site-footer__links a:hover { color: #fff; }
+
+    /* ─── RESPONSIVE ──────────────────────────────────────── */
+    @media (max-width: 768px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+        padding: 1rem;
+      }
+      .suggestions-panel { display: none; }
+      .top-nav__links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══ TOP NAV ══════════════════════════════════════════════ -->
+<nav class="top-nav">
+  <div class="top-nav__inner">
+    <span class="top-nav__brand">
+      <span class="top-nav__star" aria-hidden="true">★</span>
+      Congressional Budget Office · Data Tools
+    </span>
+    <ul class="top-nav__links">
+      <li><a href="https://www.cbo.gov/about/products/budget-economic-data" target="_blank" rel="noopener">CBO Data</a></li>
+      <li><a href="https://www.cbo.gov/publication/51118" target="_blank" rel="noopener">Budget Outlook</a></li>
+      <li><a href="https://www.cbo.gov/topics/budget" target="_blank" rel="noopener">Topics</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ═══ HERO ══════════════════════════════════════════════════ -->
+<header class="hero">
+  <div class="hero__bg-grid" aria-hidden="true"></div>
+  <div class="hero__inner">
+    <p class="hero__eyebrow">CBO Baseline Projections</p>
+    <h1 class="hero__headline">CBO Data <em>Assistant</em></h1>
+    <p class="hero__subtitle">
+      Budget projections · Program spending · Revenue trends · Vintage comparisons
+    </p>
+  </div>
+</header>
+
+<!-- ═══ MAIN LAYOUT ═══════════════════════════════════════════ -->
+<div class="main-layout">
+
+<!-- ═══ CHAT ══════════════════════════════════════════════════ -->
+<main class="chat-wrapper">
+  <div id="messages" class="messages">
+    <!-- Messages appear here -->
+  </div>
+
+  <div class="input-area">
+    <form id="chat-form" class="chat-form">
+      <input
+        id="question-input"
+        type="text"
+        placeholder="Ask about CBO projections…"
+        autocomplete="off"
+        class="chat-input"
+      />
+      <button type="submit" id="submit-btn" class="submit-btn">
+        <span id="btn-text">Ask</span>
+        <span id="btn-spinner" class="spinner" style="display:none;"></span>
+      </button>
+    </form>
+    <p class="chat-meta">Not official CBO guidance · For research purposes only</p>
+  </div>
+</main>
+
+<!-- ═══ RIGHT PANEL ════════════════════════════════════════════ -->
+<aside class="suggestions-panel">
+  <p class="panel__label">What it can do</p>
+
+  <div class="capability-card">
+    <div class="capability-card__header">
+      <span class="capability-card__icon" aria-hidden="true">📊</span>
+      <span class="capability-card__title">Projection Lookups</span>
+    </div>
+    <p class="capability-card__text">Fetch raw rows from any CBO baseline file across all vintages.</p>
+  </div>
+
+  <div class="capability-card">
+    <div class="capability-card__header">
+      <span class="capability-card__icon" aria-hidden="true">📈</span>
+      <span class="capability-card__title">Growth &amp; Trends</span>
+    </div>
+    <p class="capability-card__text">Year-over-year growth rates, CAGR, and compound changes.</p>
+  </div>
+
+  <div class="capability-card">
+    <div class="capability-card__header">
+      <span class="capability-card__icon" aria-hidden="true">🔄</span>
+      <span class="capability-card__title">Vintage Comparison</span>
+    </div>
+    <p class="capability-card__text">Compare how projections changed between CBO baseline releases.</p>
+  </div>
+
+  <div class="capability-card">
+    <div class="capability-card__header">
+      <span class="capability-card__icon" aria-hidden="true">🏆</span>
+      <span class="capability-card__title">Rankings &amp; Aggregates</span>
+    </div>
+    <p class="capability-card__text">Top-N programs by spending, totals, averages across groups.</p>
+  </div>
+
+  <div class="panel-divider"></div>
+  <p class="panel__label">Try asking</p>
+
+  <button class="panel-chip" onclick="sendSuggestion(this)">What file types are available?</button>
+  <button class="panel-chip" onclick="sendSuggestion(this)">Show me the top 5 mandatory spending programs in 2025</button>
+  <button class="panel-chip" onclick="sendSuggestion(this)">How did the Social Security projection change between the 2023 and 2024 baselines?</button>
+  <button class="panel-chip" onclick="sendSuggestion(this)">What is the projected growth rate for Medicare from 2025 to 2030?</button>
+  <button class="panel-chip" onclick="sendSuggestion(this)">Compare discretionary outlays across the last two vintages</button>
+</aside>
+
+</div><!-- /main-layout -->
+
+<!-- ═══ FOOTER ════════════════════════════════════════════════ -->
+<footer class="site-footer">
+  <div class="site-footer__inner">
+    <div>Powered by Gemini · CBO Baseline Data · Not official CBO guidance</div>
+    <div class="site-footer__links">
+      <a href="https://www.cbo.gov" target="_blank" rel="noopener">CBO.gov</a>
+      <a href="https://www.cbo.gov/about/products/budget-economic-data" target="_blank" rel="noopener">Budget &amp; Economic Data</a>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const messagesEl = document.getElementById('messages');
+  const form       = document.getElementById('chat-form');
+  const input      = document.getElementById('question-input');
+  const submitBtn  = document.getElementById('submit-btn');
+  const btnText    = document.getElementById('btn-text');
+  const btnSpinner = document.getElementById('btn-spinner');
+
+  marked.setOptions({ breaks: true, gfm: true });
+
+  // ─── Session ID ──────────────────────────────────────────
+  const SESSION_KEY = 'cbo.sessionId';
+  function _genId() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return 'sid-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2);
+  }
+  function getSessionId() {
+    let sid = sessionStorage.getItem(SESSION_KEY);
+    if (!sid) { sid = _genId(); sessionStorage.setItem(SESSION_KEY, sid); }
+    return sid;
+  }
+
+  // ─── Helpers ────────────────────────────────────────────
+  function setLoading(on) {
+    submitBtn.disabled = on;
+    btnText.style.display    = on ? 'none' : '';
+    btnSpinner.style.display = on ? ''     : 'none';
+    input.disabled = on;
+  }
+
+  function appendMessage(role, html, toolCalls) {
+    const row = document.createElement('div');
+    row.className = 'msg-row msg-row--' + role;
+
+    const av = document.createElement('div');
+    av.className = 'avatar avatar--' + role;
+    av.textContent = role === 'bot' ? 'CBO' : 'You';
+
+    const bubble = document.createElement('div');
+    bubble.className = 'bubble bubble--' + role;
+
+    if (role === 'bot') {
+      bubble.innerHTML = DOMPurify.sanitize(marked.parse(html));
+      if (toolCalls && toolCalls.length) {
+        const bar = document.createElement('div');
+        bar.className = 'tool-bar';
+        toolCalls.forEach(tc => {
+          const badge = document.createElement('span');
+          badge.className = 'tool-badge';
+          badge.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+          </svg> ${tc.name}`;
+          bar.appendChild(badge);
+        });
+        bubble.appendChild(bar);
+      }
+    } else {
+      bubble.textContent = html;
+    }
+
+    row.appendChild(av);
+    row.appendChild(bubble);
+    messagesEl.appendChild(row);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function showTyping() {
+    const row = document.createElement('div');
+    row.id = 'typing';
+    row.className = 'msg-row';
+    row.innerHTML = `
+      <div class="avatar avatar--bot">CBO</div>
+      <div class="bubble bubble--bot">
+        <div class="typing-dots"><span></span><span></span><span></span></div>
+      </div>`;
+    messagesEl.appendChild(row);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  function hideTyping() {
+    const el = document.getElementById('typing');
+    if (el) el.remove();
+  }
+
+  function appendError(msg) {
+    const row = document.createElement('div');
+    row.className = 'msg-row';
+    row.innerHTML = `
+      <div class="avatar avatar--bot">CBO</div>
+      <div class="bubble bubble--bot bubble--error">${DOMPurify.sanitize(msg)}</div>`;
+    messagesEl.appendChild(row);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+  }
+
+  // ─── Send question ───────────────────────────────────────
+  async function sendQuestion(q) {
+    if (!q) return;
+    input.value = '';
+    appendMessage('user', q, null);
+    showTyping();
+    setLoading(true);
+
+    try {
+      const res = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question: q, session_id: getSessionId() }),
+      });
+      hideTyping();
+      const data = await res.json();
+      if (!res.ok) {
+        appendError(data.error || 'Something went wrong.');
+      } else {
+        appendMessage('bot', data.answer || '(no answer)', data.tool_calls || []);
+      }
+    } catch (err) {
+      hideTyping();
+      appendError('Could not reach the server. Please try again.');
+    } finally {
+      setLoading(false);
+      input.focus();
+    }
+  }
+
+  form.addEventListener('submit', e => {
+    e.preventDefault();
+    sendQuestion(input.value.trim());
+  });
+
+  function sendSuggestion(btn) {
+    sendQuestion(btn.textContent.trim());
+  }
+
+  input.focus();
+</script>
+</body>
+</html>
