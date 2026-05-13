@@ -136,5 +136,13 @@
 - **Git hygiene:** Added `exports/` to `.gitignore` so runtime CSV outputs are not committed.
 - **Build-loop validation evidence:** `python -m pytest tests/test_csv_export.py tests/test_cli.py tests/test_mcp_tools.py -q` passed (11/11) and `python -m pytest -q` passed (42 passed, 3 skipped). Recommended next step is Validate for `task_06`.
 
+### 2026-05-13 — Decision D-019 (Task ID: task_06)
+- **Validation evidence recorded:** `python -m pip install -r requirements.txt`, `python -m py_compile main.py src/mcp_tools.py`, `python -m pytest tests/test_csv_export.py tests/test_cli.py tests/test_mcp_tools.py -q`, `python -m pytest -q`, and `python -m pytest tests/ -m "not integration" --cov=src --cov-report=term` all passed in the independent validation environment.
+- **Acceptance gate passed:** The evidence confirms `export_csv` writes parseable CSV files with metadata comment headers, auto-generated filenames include sanitized task context plus timestamp data, missing export directories are created automatically, CLI `/export` still works against the enhanced format, and `exports/` remains gitignored.
+- **Additional quality signal:** The non-integration coverage run measured 78% total `src/` coverage (`mcp_tools.py` 72%), which is a strong indicator that the task_06 slice is adequately exercised while the broader testing contract remains owned by `task_07`.
+- **Blocked but acceptable validation scope:** Live Gemini-backed execution remains blocked because `GEMINI_API_KEY` is absent; the repo's integration tests continue to skip or deselect cleanly by design.
+- **Known non-blocking risk:** `google.generativeai` still emits an upstream deprecation warning during test collection. This is already tracked as follow-up work rather than a validation failure.
+- **Next loop recommendation:** Advance to Closeout for `task_06`; if closeout agrees, return to Build for `task_07`.
+
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
