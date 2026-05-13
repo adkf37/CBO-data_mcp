@@ -2,19 +2,19 @@
 
 | Field | Value |
 |---|---|
-| Phase | build |
+| Phase | validate |
 | Last Updated | 2026-05-13 |
 | Squad Template | web_app |
 | Priority | low |
 | Blocking | None |
 | GitHub Repo | https://github.com/adkf37/CBO-data_mcp |
-| Next Action | Validate |
+| Next Action | Closeout |
 
 ## Current Objective
 
 **Task ID:** `task_08`
 
-Build work for `task_08` (Documentation) is complete. The Scribe-owned slice created `README.md` (project description, prerequisites, installation, data preparation, CLI usage, example questions, testing commands, project structure, and known limitations), `QUICK_START.md` (5-step zero-to-first-answer guide), and `.env.example` (required environment variable template). The `backlog/README.md` success criteria are now all checked off. All public classes and functions in `src/` already carried inline docstrings; no source changes were needed. With `task_08` complete, all 8 sprint tasks in `.squad/sprint.md` are now finished. The next step is Validate.
+Validate work for the completed sprint passed. Independent review reran the repository pytest contract, the explicit non-integration coverage command, and the `tests/test_llm_agent.py` module without default `pytest.ini` addopts to confirm the environment-gated integration tests still skip cleanly when `GEMINI_API_KEY` is absent. Manual inspection also confirmed the `task_07` and `task_08` handoff artifacts (`tests/conftest.py`, `pytest.ini`, `README.md`, `QUICK_START.md`, and `.env.example`) satisfy their backlog acceptance criteria. All 8 sprint tasks remain complete, and the repo is ready for Closeout.
 
 ## Recent Activity
 
@@ -42,6 +42,7 @@ Build work for `task_08` (Documentation) is complete. The Scribe-owned slice cre
 - 2026-05-13: Closeout completed for task_06 — review artifacts refreshed, task_06 checklist aligned to evidence, and the repo returned to Build for `task_07`
 - 2026-05-13: task_07 Build completed — `tests/conftest.py` added with shared fixtures (`sample_catalog`, `sample_df`, `mock_agent`), `pytest.ini` now sets `testpaths` plus default `--cov=src --cov-fail-under=70 -m "not integration"` options, task_07 checklist aligned, and targeted/acceptance/full pytest commands passed
 - 2026-05-13: task_08 Build completed — `README.md`, `QUICK_START.md`, and `.env.example` created; `backlog/README.md` success criteria all checked; all 8 sprint tasks are now complete
+- 2026-05-13: Validate completed for the full sprint — dependency install, default pytest contract, explicit coverage rerun, and LLM integration skip-path checks all passed; Next Action set to Closeout
 
 ## Artifacts
 
@@ -53,8 +54,8 @@ Build work for `task_08` (Documentation) is complete. The Scribe-owned slice cre
 | Backlog Tasks | `./backlog/tasks/` | reviewed & updated (`task_07` checklist aligned) |
 | Squad Team | `./.squad/team.md` | existing |
 | Squad Routing | `./.squad/routing.md` | existing |
-| Squad Decisions | `./.squad/decisions.md` | updated (D-021 added) |
-| Validation Report | `./.squad/validation_report.md` | updated (task_06 validation) |
+| Squad Decisions | `./.squad/decisions.md` | updated (D-023 added) |
+| Validation Report | `./.squad/validation_report.md` | updated (final sprint validation) |
 | Review Report | `./.squad/review_report.md` | updated (task_06 closeout return-to-build decision) |
 | Project Overview | `./project_overview.md` | updated (task_06 handoff) |
 | Agent Charters | `./.squad/agents/*/charter.md` | existing |
@@ -77,4 +78,4 @@ Build work for `task_08` (Documentation) is complete. The Scribe-owned slice cre
 
 ## Needs Human Input
 
-- None. All 8 sprint tasks are complete. The next action is Validate.
+- None. All 8 sprint tasks are complete and validated. The next action is Closeout.
