@@ -180,7 +180,7 @@ def get_projection(
     if err is not None:
         return err
     assert df is not None
-    rows = df.to_dict(orient="records")
+    rows = _json_records(df)
     return {"rows": rows, "row_count": len(rows)}
 
 
@@ -297,7 +297,7 @@ def compare_vintages(
     merged = merged.rename(columns={f"{metric}_a": "value_a", f"{metric}_b": "value_b"})
     merged["vintage_a"] = vintage_a
     merged["vintage_b"] = vintage_b
-    rows = merged.to_dict(orient="records")
+    rows = _json_records(merged)
     return {"rows": rows, "row_count": len(rows)}
 
 
@@ -873,6 +873,8 @@ def chart_projection(
     metric: str,
     program: Optional[str] = None,
     vintage: Optional[str] = None,
+    vintages: Optional[list[str]] = None,
+    vintage_start: Optional[str] = None,
     year_start: Optional[int] = None,
     year_end: Optional[int] = None,
     kind: str = "line",
@@ -905,7 +907,7 @@ def chart_projection(
         program=program,
         year_start=year_start,
         year_end=year_end,
-        vintage=vintage,
+        vintage=vintage if not vintages and not vintage_start else None,
         category=category,
         unit=unit,
         loader=loader,
@@ -913,6 +915,17 @@ def chart_projection(
     if err is not None:
         return err
     assert df is not None
+    if vintages:
+        if "vintage" not in df.columns:
+            return {"error": "Dataset does not include a 'vintage' column."}
+        wanted = {str(item) for item in vintages}
+        df = df[df["vintage"].astype(str).isin(wanted)]
+    if vintage_start:
+        if "vintage" not in df.columns:
+            return {"error": "Dataset does not include a 'vintage' column."}
+        df = df[df["vintage"].astype(str) >= vintage_start]
+    if df.empty:
+        return {"error": "No rows matched the chart filters."}
     if metric not in df.columns:
         return {"error": f"Metric column '{metric}' not found."}
 
@@ -933,6 +946,10 @@ def chart_projection(
         chart_title += f" · {category}"
     if vintage:
         chart_title += f" (vintage {vintage})"
+    if vintages:
+        chart_title += f" (vintages {', '.join(str(item) for item in vintages)})"
+    elif vintage_start:
+        chart_title += f" (vintages since {vintage_start})"
 
     points: list[dict[str, Any]] = []
     datasets: list[dict[str, Any]] = []
@@ -1001,9 +1018,20 @@ def chart_projection(
         "chart_kind": kind_lower,
         "metric": metric,
         "unit": resolved_unit,
+        "vintage": vintage,
+        "vintages": sorted(df["vintage"].dropna().astype(str).unique().tolist()) if "vintage" in df.columns else [],
+        "category": category,
         "point_count": len(points),
         "points": points,
     }
+
+
+def _json_records(df: pd.DataFrame) -> list[dict[str, Any]]:
+    """Return DataFrame rows with pandas/numpy scalars converted for JSON tools."""
+    return [
+        {str(key): _coerce_scalar(value) for key, value in row.items()}
+        for row in df.to_dict(orient="records")
+    ]
 
 
 def _coerce_scalar(value: Any) -> Any:

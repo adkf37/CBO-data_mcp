@@ -229,7 +229,10 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
         "description": (
             "Build an interactive chart (line or bar) of a metric and return "
             "Chart.js-compatible JSON so the web UI can render it with zoom, "
-            "hover tooltips, and a download-as-PNG button. "
+            "hover tooltips, and a download-as-PNG button. Supports multi-vintage "
+            "line charts: omit `vintage`, set `group_by='vintage'`, and pass "
+            "`vintages=[...]` for explicit vintages or `vintage_start='YYYY'` "
+            "for all vintages since a year. "
             "The response includes chart_data (rendered in the browser) and "
             "points (raw numbers you can cite in the answer). "
             "CRITICAL: in CBO files the same `program` often contains rows with "
@@ -251,6 +254,8 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "metric": {"type": "string"},
                 "program": {"type": "string"},
                 "vintage": {"type": "string"},
+                "vintages": {"type": "array", "items": {"type": "string"}},
+                "vintage_start": {"type": "string"},
                 "year_start": {"type": "integer"},
                 "year_end": {"type": "integer"},
                 "kind": {"type": "string"},

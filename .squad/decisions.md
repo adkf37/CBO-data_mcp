@@ -2,6 +2,99 @@
 
 ## Active Decisions
 
+### 2026-05-13 — Decision D-030 (Task ID: feedback-2026-05-13)
+- **Attached eval run triaged.** The 6/18 live pass rate in
+  `evals/eval_suite_run_051326.json` grouped into four repair classes:
+  multi-vintage chart refusal (Q3/Q8/Q18), model routing from memory instead
+  of tools (Q6/Q10/Q11/Q12/Q13), JSON/API instability after tool calls
+  (Q1/Q5), and missing/common file alias guidance for SNAP, SSDI,
+  Unemployment Insurance, and Social Security.
+- **Eval isolation fixed.** `evaluate_question()` now calls `reset()` when the
+  agent supports it, and `WebEvalAgent.reset()` clears the Cloud Run chat
+  session through `/api/session/reset`. Prompt eval questions now run as
+  independent cases rather than inheriting prior chat context.
+- **Tool outputs made safer.** `get_projection()` and `compare_vintages()` now
+  serialize DataFrame rows through a JSON-safe coercion path so non-overlapping
+  vintage comparisons produce `None` rather than pandas/numpy null values that
+  can destabilize downstream model/function-response handling.
+- **Multi-vintage charting made explicit.** `chart_projection()` now accepts
+  `vintages=[...]` for named baselines and `vintage_start='YYYY'` for prompts
+  like “since 2023,” while continuing to use `group_by='vintage'` for separate
+  lines. The Gemini tool schema exposes both parameters, reducing the chance
+  that the model concludes charts are limited to one vintage.
+- **Prompt routing tightened.** `CBOAgent` now includes common file aliases and
+  measure mappings for Medicaid enrollment, Medicare/SNAP outlays, SSDI
+  beneficiary counts, Unemployment Insurance, Social Security, latest-vintage
+  lookups, and “show over years” chart intent.
+- **Validation evidence.** Real-data smoke checks succeeded for Medicaid
+  multi-vintage charting, SNAP outlays, and Medicare vintage comparison. Focused
+  tests passed at 48 passed / 3 deselected, static editor checks reported no
+  errors in touched source files, and full `python -m pytest` passed with 80
+  passed / 3 deselected / 77% coverage.
+
+### 2026-05-13 — Decision D-029 (Task ID: feedback-2026-05-13)
+- **The public Cloud Run URL is valid.** Both
+  `https://cbo-data-mcp-367018855220.us-central1.run.app` and
+  `https://cbo-data-mcp-f36lbjyvaq-uc.a.run.app` returned healthy `/api/health`
+  responses and successfully answered simple `/api/chat` probes during this
+  debugging pass, so the earlier stack trace was not caused by a dead base URL.
+- **Runner failure mode hardened.** `src/eval_runner.py` now wraps non-2xx
+  `/api/chat` responses from `WebEvalAgent` in a `RuntimeError` that includes
+  the HTTP status, target URL, and up to 500 characters of response body. This
+  preserves the server-side error detail that was previously lost behind
+  `response.raise_for_status()`.
+- **Per-question errors no longer abort the suite.** `evaluate_question()` now
+  catches agent exceptions and converts them into a normal failed eval result
+  with the question id, prompt, partial tool trace, and `agent error: ...`
+  message. That means a bad live prompt now shows up as a scored failure rather
+  than terminating the run with a traceback that makes the URL look broken.
+- **Validation evidence.** `python -m pytest tests/test_eval_runner.py tests/test_run_eval_suite.py --no-cov`
+  passed at 11/11, and a live rerun against the public URL returned structured
+  JSON results instead of crashing.
+
+### 2026-05-13 — Decision D-028 (Task ID: feedback-2026-05-13)
+- **Live-site eval mode added.** `src/eval_runner.py` now includes
+  `WebEvalAgent`, which drives eval prompts through the deployed Flask app's
+  `POST /api/chat` endpoint and records tool traces from the returned
+  `tool_calls`. `scripts/run_eval_suite.py` now accepts `--base-url` (or
+  `CBO_EVAL_BASE_URL`) so the same XML suite can run against Cloud Run without
+  a local `GEMINI_API_KEY`.
+- **Deployment model clarified.** The GitHub deployment workflow already sets
+  the Cloud Run service secret via `--set-secrets=GEMINI_API_KEY=...`, so the
+  correct way to evaluate the deployed app is through the web API, not by
+  expecting the local shell to inherit the cloud secret.
+- **Health preflight added.** Before running live evals, the runner now checks
+  `/api/health` and blocks early if the base URL is unreachable or the deployed
+  service reports `api_key_configured=false`.
+- **First production evidence captured.** Using Cloud Run URL
+  `https://cbo-data-mcp-f36lbjyvaq-uc.a.run.app`, `/api/health` returned
+  `status=ok`, `api_key_configured=true`, and `tools_count=11`. A representative
+  live eval slice on questions 2, 3, 4, and 10 yielded 1 pass / 3 fails:
+  question 2 skipped `list_vintages`, question 3 refused the multi-vintage
+  Medicaid chart entirely, question 4 skipped `summarize_file_type`, and
+  question 10 passed. This is useful evidence that the production app is now
+  reachable for evals but still needs routing/prompt/tool improvements.
+- **Validation evidence.** Focused tests for the web adapter and CLI mode
+  passed (9/9), and full `python -m pytest` now passes with 73 passed / 3
+  deselected / 79% coverage.
+
+### 2026-05-13 — Decision D-027 (Task ID: feedback-2026-05-13)
+- **Eval-runner prerequisites now fail cleanly.** `scripts/run_eval_suite.py`
+  no longer surfaces a raw traceback when `GEMINI_API_KEY` is missing. It now
+  parses the suite first, reports a clean `blocked` state with an actionable
+  message, and exits without stack noise.
+- **Offline validation path added.** The runner now supports
+  `--validate-only`, which parses and summarizes the XML suite without needing
+  live Gemini access. This makes the eval harness usable in local/dev
+  environments before secrets are configured.
+- **Selection summary fixed.** Validation-only output now respects
+  `--question-id` and `--limit` consistently instead of reporting the first N
+  questions unconditionally.
+- **Regression coverage added.** `tests/test_run_eval_suite.py` now covers the
+  blocked-without-key path, the `--validate-only` JSON path, and question
+  filtering behavior. Full pytest passed with 70 passed / 3 deselected / 74%
+  coverage.
+
 ### 2026-05-13 — Decision D-026 (Task ID: feedback-2026-05-13)
 - **Prompt-eval harness added for the charting/tool-routing feedback loop.**
   Added `evals/cbo_qa.xml` with 18 prompt-level checks modeled on the

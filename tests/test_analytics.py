@@ -280,6 +280,101 @@ def test_chart_projection_line_compares_one_series_across_multiple_vintages(tmp_
     assert result["unit"] == "Millions of people"
 
 
+def test_chart_projection_filters_explicit_vintages(tmp_path: Path):
+    df = pd.DataFrame(
+        [
+            {
+                "program": "Medicaid",
+                "category": "Total Enrolled Within a Fiscal Year",
+                "unit": "Millions of people",
+                "fiscal_year": 2026,
+                "value": 88.0,
+                "vintage": "2023-05",
+            },
+            {
+                "program": "Medicaid",
+                "category": "Total Enrolled Within a Fiscal Year",
+                "unit": "Millions of people",
+                "fiscal_year": 2026,
+                "value": 90.0,
+                "vintage": "2024-06",
+            },
+            {
+                "program": "Medicaid",
+                "category": "Total Enrolled Within a Fiscal Year",
+                "unit": "Millions of people",
+                "fiscal_year": 2026,
+                "value": 92.0,
+                "vintage": "2026-02",
+            },
+        ]
+    )
+
+    result = chart_projection(
+        "medicaid",
+        metric="value",
+        program="Medicaid",
+        category="Total Enrolled Within a Fiscal Year",
+        unit="Millions of people",
+        kind="line",
+        group_by="vintage",
+        vintages=["2023-05", "2026-02"],
+        output_dir=str(tmp_path),
+        loader=FakeLoader(df),
+    )
+
+    assert "error" not in result, result
+    assert result["vintages"] == ["2023-05", "2026-02"]
+    labels = [dataset["label"] for dataset in result["chart_data"]["datasets"]]
+    assert labels == ["2023-05", "2026-02"]
+
+
+def test_chart_projection_filters_vintages_since_start(tmp_path: Path):
+    df = pd.DataFrame(
+        [
+            {
+                "program": "SSDI",
+                "category": "All Disabled Workers",
+                "unit": "Thousands",
+                "fiscal_year": 2026,
+                "value": 100.0,
+                "vintage": "2022-05",
+            },
+            {
+                "program": "SSDI",
+                "category": "All Disabled Workers",
+                "unit": "Thousands",
+                "fiscal_year": 2026,
+                "value": 110.0,
+                "vintage": "2023-05",
+            },
+            {
+                "program": "SSDI",
+                "category": "All Disabled Workers",
+                "unit": "Thousands",
+                "fiscal_year": 2026,
+                "value": 120.0,
+                "vintage": "2026-02",
+            },
+        ]
+    )
+
+    result = chart_projection(
+        "medicaid",
+        metric="value",
+        category="All Disabled Workers",
+        unit="Thousands",
+        kind="line",
+        group_by="vintage",
+        vintage_start="2023",
+        output_dir=str(tmp_path),
+        loader=FakeLoader(df),
+    )
+
+    assert "error" not in result, result
+    assert result["vintages"] == ["2023-05", "2026-02"]
+
+
 def test_chart_projection_rejects_unknown_kind(tmp_path: Path):
     result = chart_projection(
         "medicaid",

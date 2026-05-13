@@ -124,6 +124,22 @@ def test_compare_vintages_rejects_mixed_units_without_filters():
     assert "multiple units" in result["error"].lower()
 
 
+def test_compare_vintages_returns_json_safe_nulls_for_non_overlapping_rows():
+    result = compare_vintages(
+        "medicaid",
+        metric="value",
+        vintage_a="2023-01",
+        vintage_b="2024-01",
+        unit="Millions of people",
+        loader=FakeLoader(),
+    )
+
+    assert "error" not in result
+    chip_row = next(row for row in result["rows"] if row.get("program") == "CHIP")
+    assert chip_row["value_a"] is None
+    assert chip_row["value_b"] == 25.0
+
+
 def test_export_csv_creates_file(tmp_path: Path):
     rows = [{"program": "Medicaid", "value": 110.0}]
     result = export_csv(
@@ -173,3 +189,7 @@ def test_tool_registry_contains_all_registered_tools():
 def test_tool_registry_exposes_gemini_declarations():
     declarations = get_gemini_tool_declarations()
     assert {d["name"] for d in declarations} == set(list_tool_names())
+    chart_decl = next(decl for decl in declarations if decl["name"] == "chart_projection")
+    properties = chart_decl["parameters"]["properties"]
+    assert properties["vintages"]["type"] == "array"
+    assert properties["vintage_start"]["type"] == "string"

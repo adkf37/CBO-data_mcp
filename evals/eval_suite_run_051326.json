@@ -1,0 +1,220 @@
+
+{
+  "suite": {
+    "name": "cbo_data_mcp",
+    "version": "1.0",
+    "source_basis": "feedback-2026-05-13"
+  },
+  "results": [
+    {
+      "id": "1",
+      "prompt": "What units and categories are available in the medicaid file?",
+      "answer": "",
+      "trace_tools": [],
+      "passed": false,
+      "failures": [
+        "agent error: HTTP 500 from https://cbo-data-mcp-367018855220.us-central1.run.app/api/chat: {\"error\":\"An unexpected error occurred. Please try again.\"}"
+      ]
+    },
+    {
+      "id": "2",
+      "prompt": "Chart Medicaid enrollment from 2025 to 2034 in the latest projection.",
+      "answer": "The chart illustrating Medicaid enrollment projections from 2025 to 2034, based on the CBO's 'medicaid' file type and the latest 2026-02 vintage, is displayed below. The projection shows enrollment (Total Enrolled Within a Fiscal Year, in Millions of people) starting at 98 million in 2025, reaching 99 million in 2026, and then gradually declining to 88 million by 2034.\n",
+      "trace_tools": [
+        "list_vintages",
+        "summarize_file_type",
+        "chart_projection"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "3",
+      "prompt": "Compare Medicaid enrollment across the 2023-05, 2024-06, and 2026-02 baselines in one chart.",
+      "answer": "I am sorry, but I cannot display Medicaid enrollment across three different vintages (2023-05, 2024-06, and 2026-02) on a single chart. My charting tool is limited to displaying data from one vintage at a time.\n\nHowever, I can provide:\n1.  Separate charts for each vintage.\n2.  A table comparing the enrollment figures for each year across these vintages.\n\nWould you like me to proceed with either of these options?",
+      "trace_tools": [],
+      "passed": false,
+      "failures": [
+        "tool trace did not contain expected subsequence ['summarize_file_type', 'chart_projection']; saw []"
+      ]
+    },
+    {
+      "id": "4",
+      "prompt": "Compare Medicaid enrollment in 2030 between the 2023-05 and 2026-02 baselines.",
+      "answer": "In 2030, the CBO's 2023-05 baseline projected Medicaid enrollment (Total Enrolled Within a Fiscal Year) to be 97 Million people, while the more recent 2026-02 baseline projects it to be 89 Million people. This comparison uses the 'medicaid' file type.",
+      "trace_tools": [
+        "compare_vintages"
+      ],
+      "passed": false,
+      "failures": [
+        "missing answer_contains fragment 'Millions of people'",
+        "tool trace did not contain expected subsequence ['summarize_file_type', 'compare_vintages']; saw ['compare_vintages']"
+      ]
+    },
+    {
+      "id": "5",
+      "prompt": "How did Medicare spending projections change between the 2024-06 and 2026-02 baselines?",
+      "answer": "",
+      "trace_tools": [
+        "compare_vintages"
+      ],
+      "passed": false,
+      "failures": [
+        "agent error: HTTP 500 from https://cbo-data-mcp-367018855220.us-central1.run.app/api/chat: {\"error\":\"An unexpected error occurred. Please try again.\"}"
+      ]
+    },
+    {
+      "id": "6",
+      "prompt": "What are SNAP's projected outlays over the next 10 years?",
+      "answer": "I'm sorry, I cannot fulfill this request directly as 'SNAP' is not an available file type in the CBO data.\n\nHere are the available file types:\n*   **medicaid**: Baseline projections for Medicaid outlays and enrollment.\n*   **medicare**: Baseline projections for Medicare outlays and enrollment.\n*   **social_security**: Baseline projections for Social Security outlays and revenues.\n\nWould you like to explore projections for any of these programs, or perhaps search for \"SNAP\" within one of the existing file types?",
+      "trace_tools": [],
+      "passed": false,
+      "failures": [
+        "missing answer_contains fragment 'Billions of dollars'",
+        "tool trace did not contain expected subsequence ['list_vintages', 'summarize_file_type', 'chart_projection']; saw []"
+      ]
+    },
+    {
+      "id": "7",
+      "prompt": "Show Unemployment Insurance outlays from the 2026-02 projection.",
+      "answer": "The CBO's 2026-02 projection for Unemployment Insurance outlays (Total, in Millions of dollars) are as follows:\n\n*   **2026**: 43,530 Million dollars\n*   **2027**: 46,151 Million dollars\n*   **2028**: 47,350 Million dollars\n*   **2029**: 48,085 Million dollars\n*   **2030**: 48,710 Million dollars\n*   **2031**: 50,005 Million dollars\n*   **2032**: 51,455 Million dollars\n*   **2033**: 52,925 Million dollars\n*   **2034**: 54,415 Million dollars\n*   **2035**: 55,920 Million dollars\n*   **2036**: 57,450 Million dollars",
+      "trace_tools": [
+        "list_file_types",
+        "summarize_file_type",
+        "get_projection"
+      ],
+      "passed": false,
+      "failures": [
+        "missing answer_contains fragment 'Billions of dollars'",
+        "tool trace did not contain expected subsequence ['summarize_file_type', 'chart_projection']; saw ['list_file_types', 'summarize_file_type', 'get_projection']"
+      ]
+    },
+    {
+      "id": "8",
+      "prompt": "Compare SSDI beneficiary counts across all vintages since 2021.",
+      "answer": "I am sorry, but I cannot display SSDI beneficiary counts across multiple vintages (2021-07, 2022-05, 2023-05, 2024-02, 2024-06, 2025-01, and 2026-02) on a single chart using the available tools. My charting tool is limited to displaying data from one vintage at a time.\n\nHowever, I can provide a table comparing the \"Total Beneficiaries\" (in Thousands of people) from each of these vintages.\n\nPlease let me know if you would like me to generate this table.",
+      "trace_tools": [
+        "list_vintages",
+        "summarize_file_type"
+      ],
+      "passed": false,
+      "failures": [
+        "missing answer_contains fragment 'since 2021'",
+        "tool trace did not contain expected subsequence ['summarize_file_type', 'chart_projection']; saw ['list_vintages', 'summarize_file_type']"
+      ]
+    },
+    {
+      "id": "9",
+      "prompt": "What is the most recent Social Security vintage you have?",
+      "answer": "The most recent Social Security vintage available is 2025-01, from the `socialsecurity` file type.",
+      "trace_tools": [
+        "list_vintages",
+        "list_vintages"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "10",
+      "prompt": "Do you have Social Security data for 2026-02?",
+      "answer": "No, I do not have Social Security data for the 2026-02 vintage. The latest vintage available for `socialsecurity` is 2025-01, and for `social_security` it is 2019-05.",
+      "trace_tools": [],
+      "passed": false,
+      "failures": [
+        "primary tool 'list_vintages' not present in trace []"
+      ]
+    },
+    {
+      "id": "11",
+      "prompt": "Which Medicaid categories are reported in millions of people?",
+      "answer": "For the Medicaid file type (vintage 2026-02), the categories reported in 'Millions of people' are:\n\n*   Adults Made Eligible by the ACA\n*   Adults in Traditional Eligibility Categories\n*   Aged\n*   Blind and Disabled\n*   Children\n*   Total\n*   Total Enrolled Within a Fiscal Year",
+      "trace_tools": [],
+      "passed": false,
+      "failures": [
+        "primary tool 'summarize_file_type' not present in trace []"
+      ]
+    },
+    {
+      "id": "12",
+      "prompt": "How many people are projected to be enrolled in Medicaid in 2029 according to the latest projection?",
+      "answer": "According to the latest CBO projection (vintage 2026-02) for the 'medicaid' file type, 91 Million people are projected to be enrolled in Medicaid in 2029. This figure refers to the 'Total Enrolled Within a Fiscal Year' category.",
+      "trace_tools": [
+        "get_projection"
+      ],
+      "passed": false,
+      "failures": [
+        "missing answer_contains fragment 'Millions of people'",
+        "tool trace did not contain expected subsequence ['list_vintages', 'summarize_file_type', 'get_projection']; saw ['get_projection']"
+      ]
+    },
+    {
+      "id": "13",
+      "prompt": "What is the growth rate of Medicaid enrollment from 2025 to 2034 in the latest projection?",
+      "answer": "From 2025 to 2034, the CBO's latest 2026-02 projection for Medicaid enrollment (Total Enrolled Within a Fiscal Year, in Millions of people) shows a growth rate with:\n\n*   An absolute change of -10 Million people.\n*   A percentage change of -10.20%.\n*   A Compound Annual Growth Rate (CAGR) of -1.19%.",
+      "trace_tools": [
+        "growth_rate"
+      ],
+      "passed": false,
+      "failures": [
+        "tool trace did not contain expected subsequence ['list_vintages', 'summarize_file_type', 'growth_rate']; saw ['growth_rate']"
+      ]
+    },
+    {
+      "id": "14",
+      "prompt": "What is the latest healthinsurance vintage you have?",
+      "answer": "The latest healthinsurance vintage available is 2024-06.",
+      "trace_tools": [
+        "list_vintages"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "15",
+      "prompt": "Aim: chart Medicare spending from 2025 through 2034 using the latest projection. Output: identify the vintage, category, and unit used.",
+      "answer": "The chart illustrating Medicare spending projections from 2025 to 2034, based on the CBO's 'medicare' file type and the latest 2026-02 vintage, is displayed below. The category used is 'Outlays' and the unit is 'Billions of dollars'.\n\nMedicare spending is projected to be:\n*   **2025**: 5,543 Billion dollars\n*   **2026**: 6,011 Billion dollars\n*   **2027**: 6,428 Billion dollars\n*   **2028**: 7,195 Billion dollars\n*   **2029**: 6,848 Billion dollars\n*   **2030**: 7,689 Billion dollars\n*   **2031**: 8,163 Billion dollars\n*   **2032**: 8,685 Billion dollars\n*   **2033**: 9,912 Billion dollars\n*   **2034**: 10,012 Billion dollars",
+      "trace_tools": [
+        "list_vintages",
+        "summarize_file_type",
+        "chart_projection"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "16",
+      "prompt": "Aim: compare SNAP outlay projections between the 2024-06 and 2026-02 baselines. Output: state the unit and whether the later baseline is higher or lower in the overlapping years.",
+      "answer": "The unit for SNAP outlay projections differs between the 2024-06 and 2026-02 baselines.\n\n*   In the **2024-06 baseline**, 'Estimated Outlays' are reported in **Millions of dollars**.\n*   In the **2026-02 baseline**, 'Estimated Outlays' are reported in **Billions of dollars**.\n\nDue to this unit inconsistency, I cannot directly compare them using the `compare_vintages` tool. To provide a comparison, I would need to convert one of the series to match the unit of the other. Would you like me to do that? For instance, I can list both projections for 'Estimated Outlays' and note the unit for each.",
+      "trace_tools": [
+        "summarize_file_type",
+        "compare_vintages",
+        "summarize_file_type"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "17",
+      "prompt": "medicaid cbo file enrollment category unit",
+      "answer": "The Medicaid categories reported in 'Millions of people' for enrollment are:\n\n*   Total Enrolled Within a Fiscal Year\n*   Adults Made Eligible by the ACA\n*   Adults in Traditional Eligibility Categories\n*   Adults\u2014Made eligible by the ACA\n*   Adults\u2014Traditional eligibility categories\n*   Aged\n*   Blind and Disabled\n*   Children\n*   Total",
+      "trace_tools": [
+        "summarize_file_type"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "18",
+      "prompt": "Plot Medicaid enrollment and include separate lines for each vintage you have since 2023.",
+      "answer": "I am sorry, but I cannot plot Medicaid enrollment with separate lines for each vintage (2023-05, 2024-06, and 2026-02) on a single chart. My charting tool is limited to displaying data from one vintage at a time.\n\nHowever, I can provide separate charts for each of these vintages showing Medicaid enrollment (Total Enrolled Within a Fiscal Year, in Millions of people). Would you like me to do that?",
+      "trace_tools": [],
+      "passed": false,
+      "failures": [
+        "tool trace did not contain expected subsequence ['summarize_file_type', 'chart_projection']; saw []"
+      ]
+    }
+  ],
+  "question_count": 18,
+  "passed": 6,
+  "failed": 12
+}
