@@ -1,7 +1,7 @@
 # CBO-data_mcp - Project Overview
 
-Date: 2026-05-12
-Status: Closeout complete for task_04; next up is Build for task_05
+Date: 2026-05-13
+Status: Closeout complete for task_05; next up is Build for task_06
 
 ## Purpose
 
@@ -31,9 +31,9 @@ https://github.com/adkf37/Gemini_Homicide_Bot
 
 ## Current Handoff Snapshot
 
-- **Completed in this loop:** `task_04` Gemini integration is implemented and revalidated; `src/llm_agent.py` compiles cleanly, `python -m pytest tests/test_llm_agent.py -v` passes 10 offline tests with 3 expected integration skips, and `python -m pytest -q` passes 38 regression tests with the same 3 skips.
-- **Current repo state:** closeout is complete for the Gemini agent slice, and the repo is ready to return to Build.
-- **What is now available:** `CBOAgent` can read `GEMINI_API_KEY`, register Gemini function declarations from `src/tool_registry.py`, dispatch tool calls dynamically through the MCP tool registry, and return cited natural-language answers while capping tool-call iterations at 10.
-- **Known gaps before project completion:** `task_05` through `task_08` remain open, including the interactive CLI, full CSV-export hardening, broader test/coverage gates, and the final end-user docs (`README.md`, `QUICK_START.md`, `.env.example`).
-- **Known environment limitations:** Live Gemini benchmark execution still requires `GEMINI_API_KEY`, so the 3 integration tests in `tests/test_llm_agent.py` currently skip in offline review environments. The upstream `google.generativeai` deprecation warning is tracked as a non-blocking future migration item.
-- **Next explicit task:** `task_05` — build the interactive CLI entry point that routes natural-language questions through `CBOAgent.ask()` and supports the required built-in commands.
+- **Completed in this loop:** `task_05` interactive CLI closeout is complete. Independent review reran `python -m py_compile main.py`, `printf '/quit\n' | python main.py`, `python -m pytest tests/test_cli.py -q`, and `python -m pytest -q`; the CLI started cleanly, exited cleanly on `/quit`, task-specific tests passed (2/2), and the full suite passed with 40 tests green and 3 expected integration skips.
+- **Current repo state:** the CLI slice is implemented, validated, and closed out, and the repo is ready to return to Build.
+- **What is now available:** `main.py` provides a REPL with `/help`, `/types`, `/vintages <file_type>`, `/export [filename]`, and `/quit`/`/exit`; natural-language questions route through `CBOAgent.ask()` when `GEMINI_API_KEY` is configured; the CLI also preserves session state so `/export` can use the last query result without rerunning it.
+- **Known gaps before project completion:** `task_06` through `task_08` remain open, including full CSV-export naming/metadata/directory handling, the broader test-and-coverage deliverables, and the final end-user docs (`README.md`, `QUICK_START.md`, `.env.example`).
+- **Known environment limitations:** Live Gemini-backed querying still requires `GEMINI_API_KEY`, so the 3 integration tests in `tests/test_llm_agent.py` continue to skip in offline review environments. The upstream `google.generativeai` deprecation warning remains a non-blocking future migration item.
+- **Next explicit task:** `task_06` — replace the current `export_csv` stub with the full CSV export implementation and wire the CLI `/export` output to the finalized path/metadata behavior.
