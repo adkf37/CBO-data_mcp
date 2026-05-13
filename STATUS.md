@@ -2,7 +2,7 @@
 
 | Field | Value |
 |---|---|
-| Phase | closeout |
+| Phase | build |
 | Last Updated | 2026-05-13 |
 | Squad Template | web_app |
 | Priority | low |
@@ -12,9 +12,9 @@
 
 ## Current Objective
 
-**Task ID:** `task_06`
+**Task ID:** `task_07`
 
-Closeout review for `task_06` (CSV Export Capability) is complete. Independent review in this fresh clone confirmed `task_06` satisfies the sprint Definition of Done after aligning the task checklist to the validated implementation and rerunning the existing repository checks: `python -m pytest -q` passed (42 passed, 3 skipped) and `python -m pytest tests/ -m "not integration" --cov=src --cov-report=term` passed with 78% total `src/` coverage. The project is not eligible for `Complete` because `.squad/sprint.md` still has unfinished work: `task_07` must finish the testing contract (`tests/conftest.py` fixtures plus fuller `pytest.ini` defaults), and `task_08` must deliver the root-level handoff docs. The next explicit build slice is `task_07`.
+Build work for `task_07` (Tests and Validation) is complete. The Tester-owned slice added the required shared fixtures in `tests/conftest.py` (`sample_catalog`, `sample_df`, `mock_agent`), expanded `pytest.ini` with `testpaths`, default non-integration coverage settings, and a 70% fail-under threshold, and aligned the task checklist with the implemented testing contract. Validation commands passed after the change: `python -m pytest tests/test_cli.py tests/test_csv_export.py tests/test_mcp_tools.py -q --no-cov` (11 passed), `python -m pytest tests/ -m "not integration" --cov=src --cov-report=term` (42 passed, 3 deselected, 78% total `src/` coverage), and `python -m pytest -q` (42 passed, 3 deselected). The project is not eligible for `Complete` because `.squad/sprint.md` still has unfinished work (`task_08` documentation). The next explicit build slice is `task_08`.
 
 ## Recent Activity
 
@@ -40,6 +40,7 @@ Closeout review for `task_06` (CSV Export Capability) is complete. Independent r
 - 2026-05-13: task_06 Build completed — `src/mcp_tools.py` now performs full CSV export naming/metadata/directory handling, `tests/test_csv_export.py` added, export-related test expectations updated, and targeted/full pytest checks passed
 - 2026-05-13: Validate completed for task_06 — dependency install, syntax validation, targeted export/CLI/MCP tests, full pytest regression, and non-integration coverage checks all passed; Next Action set to Closeout
 - 2026-05-13: Closeout completed for task_06 — review artifacts refreshed, task_06 checklist aligned to evidence, and the repo returned to Build for `task_07`
+- 2026-05-13: task_07 Build completed — `tests/conftest.py` added with shared fixtures (`sample_catalog`, `sample_df`, `mock_agent`), `pytest.ini` now sets `testpaths` plus default `--cov=src --cov-fail-under=70 -m "not integration"` options, task_07 checklist aligned, and targeted/acceptance/full pytest commands passed
 
 ## Artifacts
 
@@ -48,10 +49,10 @@ Closeout review for `task_06` (CSV Export Capability) is complete. Independent r
 | STATUS.md | `./STATUS.md` | updated |
 | FEEDBACK.md | `./FEEDBACK.md` | existing |
 | Backlog README | `./backlog/README.md` | existing |
-| Backlog Tasks | `./backlog/tasks/` | reviewed & updated (`task_06` checklist aligned) |
+| Backlog Tasks | `./backlog/tasks/` | reviewed & updated (`task_07` checklist aligned) |
 | Squad Team | `./.squad/team.md` | existing |
 | Squad Routing | `./.squad/routing.md` | existing |
-| Squad Decisions | `./.squad/decisions.md` | updated (D-020 added) |
+| Squad Decisions | `./.squad/decisions.md` | updated (D-021 added) |
 | Validation Report | `./.squad/validation_report.md` | updated (task_06 validation) |
 | Review Report | `./.squad/review_report.md` | updated (task_06 closeout return-to-build decision) |
 | Project Overview | `./project_overview.md` | updated (task_06 handoff) |
@@ -66,10 +67,11 @@ Closeout review for `task_06` (CSV Export Capability) is complete. Independent r
 | LLM Agent | `./src/llm_agent.py` | created (task_04) |
 | LLM Agent Tests | `./tests/test_llm_agent.py` | created (task_04) |
 | Pytest Config | `./pytest.ini` | created (task_04) |
+| Pytest Fixtures | `./tests/conftest.py` | created (task_07) |
 | CLI Entry Point | `./main.py` | created (task_05) |
 | CLI Tests | `./tests/test_cli.py` | created (task_05) |
 | CSV Export Tests | `./tests/test_csv_export.py` | created (task_06) |
 
 ## Needs Human Input
 
-- None. The next action is automated Build work for `task_07`.
+- None. The next action is automated Build work for `task_08`.
