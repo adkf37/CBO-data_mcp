@@ -39,7 +39,7 @@
       --font-display: 'Cormorant Garamond', Georgia, serif;
       --font-body:    'Jost', system-ui, sans-serif;
       --font-mono:    'JetBrains Mono', 'Fira Code', Consolas, monospace;
-      --max-width:    1120px;
+      --max-width:    1440px;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -392,8 +392,16 @@
       border-radius: var(--radius);
       padding: 1rem 1rem 0.6rem;
     }
-    .chart-wrap canvas { max-height: 340px; }
-    /* CBO style: y-label as subtitle below title */
+    .chart-wrap canvas { min-height: 260px; }
+    /* CBO style: DOM title + y-label as subtitle below title */
+    .chart-title {
+      font-family: var(--font-body);
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin: 0 0 0.1rem;
+      line-height: 1.3;
+    }
     .chart-subtitle {
       font-family: var(--font-body);
       font-size: 0.72rem;
@@ -655,7 +663,7 @@
     <div class="hero__meta">
       <span class="hero__stat"><strong>50+</strong> datasets</span>
       <span class="hero__stat-dot"></span>
-      <span class="hero__stat">vintages <strong>2019-05</strong> → <strong>2026-02</strong></span>
+      <span class="hero__stat">projections <strong>2019-05</strong> → <strong>2026-02</strong></span>
       <span class="hero__stat-dot"></span>
       <span class="hero__stat">Medicaid · Medicare · SNAP · SSDI · Social Security + more</span>
     </div>
@@ -697,9 +705,9 @@
     <div class="prog-group">
       <p class="prog-group__name">Health</p>
       <div class="prog-tags">
-        <span class="prog-tag prog-tag--new">Medicaid</span>
-        <span class="prog-tag prog-tag--new">Medicare</span>
-        <span class="prog-tag prog-tag--new">CHIP</span>
+        <span class="prog-tag">Medicaid</span>
+        <span class="prog-tag">Medicare</span>
+        <span class="prog-tag">CHIP</span>
         <span class="prog-tag">Health Insurance</span>
         <span class="prog-tag">DoD Medicare</span>
         <span class="prog-tag">Premium Tax Credit</span>
@@ -708,12 +716,12 @@
     <div class="prog-group">
       <p class="prog-group__name">Income &amp; Benefits</p>
       <div class="prog-tags">
-        <span class="prog-tag prog-tag--new">SNAP</span>
-        <span class="prog-tag prog-tag--new">SSDI</span>
+        <span class="prog-tag">SNAP</span>
+        <span class="prog-tag">SSDI</span>
         <span class="prog-tag">SSI</span>
         <span class="prog-tag">Social Security</span>
-        <span class="prog-tag prog-tag--new">TANF</span>
-        <span class="prog-tag prog-tag--new">Unemployment</span>
+        <span class="prog-tag">TANF</span>
+        <span class="prog-tag">Unemployment</span>
       </div>
     </div>
     <div class="prog-group">
@@ -735,7 +743,7 @@
     <div class="prog-group">
       <p class="prog-group__name">Other</p>
       <div class="prog-tags">
-        <span class="prog-tag prog-tag--new">Foster Care</span>
+        <span class="prog-tag">Foster Care</span>
         <span class="prog-tag">Child Nutrition</span>
         <span class="prog-tag">PBGC</span>
         <span class="prog-tag">Trust Funds</span>
@@ -747,7 +755,7 @@
   </div>
 
   <div class="sidebar__section">
-    <p class="sidebar__label">Latest vintage: 2026-02</p>
+    <p class="sidebar__label">Latest projection: 2026-02</p>
     <div class="vintage-row"><span class="vintage-name">Medicaid</span><span class="vintage-badge">2026-02</span></div>
     <div class="vintage-row"><span class="vintage-name">Medicare</span><span class="vintage-badge">2026-02</span></div>
     <div class="vintage-row"><span class="vintage-name">SNAP</span><span class="vintage-badge">2026-02</span></div>
@@ -765,7 +773,7 @@
     <button class="ask-chip" onclick="sendSuggestion(this)"><span class="ask-chip__arrow">↗</span>Chart Medicaid enrollment from 2025 to 2034 in the latest projection</button>
     <button class="ask-chip" onclick="sendSuggestion(this)"><span class="ask-chip__arrow">↗</span>How did Medicare spending projections change between the 2024-06 and 2026-02 baselines?</button>
     <button class="ask-chip" onclick="sendSuggestion(this)"><span class="ask-chip__arrow">↗</span>What are SNAP's projected outlays over the next 10 years?</button>
-    <button class="ask-chip" onclick="sendSuggestion(this)"><span class="ask-chip__arrow">↗</span>Compare SSDI beneficiary counts across all vintages since 2021</button>
+    <button class="ask-chip" onclick="sendSuggestion(this)"><span class="ask-chip__arrow">↗</span>Compare SSDI beneficiary counts across all projections since 2021</button>
     <button class="ask-chip" onclick="sendSuggestion(this)"><span class="ask-chip__arrow">↗</span>Show Unemployment Insurance outlays from the 2026-02 projection</button>
   </div>
 
@@ -855,14 +863,10 @@
       options: {
         responsive: true,
         maintainAspectRatio: true,
+        aspectRatio: 1.4,
         plugins: {
           title: {
-            display: !!cd.title,
-            text: cd.title,
-            align: 'start',
-            font: { size: 13, weight: '700', family: "'Jost', system-ui, sans-serif" },
-            color: '#0d1c13',
-            padding: { bottom: 4 },
+            display: false,   // rendered as DOM element in renderCharts
           },
           legend: {
             display: datasets.length > 1,
@@ -907,7 +911,15 @@
       const wrap = document.createElement('div');
       wrap.className = 'chart-wrap';
 
-      // CBO convention: y-label shown as chart subtitle, not on axis
+      // Chart title as DOM element (Chart.js title plugin is disabled)
+      if (cd.title) {
+        const titleEl = document.createElement('p');
+        titleEl.className = 'chart-title';
+        titleEl.textContent = cd.title;
+        wrap.appendChild(titleEl);
+      }
+
+      // CBO convention: y-label shown as subtitle below title, not on axis
       if (cd.y_label) {
         const sub = document.createElement('p');
         sub.className = 'chart-subtitle';

@@ -989,7 +989,10 @@ def chart_projection(
             points = [{"year": yr, "value": float(v)} for yr, v in zip(labels, summed.values)]
 
         x_label = year_col or "year"
-        y_label = f"{metric} ({resolved_unit})" if resolved_unit else metric
+        if metric.strip().lower() in ("value", "values", "_val"):
+            y_label = resolved_unit or ""
+        else:
+            y_label = f"{metric} ({resolved_unit})" if resolved_unit else metric
 
     elif kind_lower == "bar":
         bar_group = group_by or _select_first_column(list(df.columns), _PROGRAM_COLUMNS)
@@ -1000,9 +1003,10 @@ def chart_projection(
         datasets = [{"label": f"sum({metric})", "data": [float(v) for v in grouped.values]}]
         points = [{"group": lbl, "value": float(v)} for lbl, v in zip(labels, grouped.values)]
         x_label = bar_group
-        y_label = (
-            f"sum({metric}) ({resolved_unit})" if resolved_unit else f"sum({metric})"
-        )
+        if metric.strip().lower() in ("value", "values", "_val"):
+            y_label = resolved_unit or ""
+        else:
+            y_label = f"{metric} ({resolved_unit})" if resolved_unit else metric
 
     else:  # stacked_bar
         if not year_col:
@@ -1042,7 +1046,10 @@ def chart_projection(
             points = [{"year": yr, "value": float(v)} for yr, v in zip(labels, summed.values)]
 
         x_label = year_col or "year"
-        y_label = f"{metric} ({resolved_unit})" if resolved_unit else metric
+        if metric.strip().lower() in ("value", "values", "_val"):
+            y_label = resolved_unit or ""
+        else:
+            y_label = f"{metric} ({resolved_unit})" if resolved_unit else metric
 
     chart_data: dict[str, Any] = {
         "type": kind_lower,
