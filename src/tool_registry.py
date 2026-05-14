@@ -227,11 +227,13 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
     {
         "name": "chart_projection",
         "description": (
-            "Build an interactive chart (line or bar) of a metric and return "
-            "Chart.js-compatible JSON so the web UI can render it with zoom, "
-            "hover tooltips, and a download-as-PNG button. Supports multi-vintage "
-            "line charts: omit `vintage`, set `group_by='vintage'`, and pass "
-            "`vintages=[...]` for explicit vintages or `vintage_start='YYYY'` "
+            "Build an interactive chart of a metric and return Chart.js-compatible "
+            "JSON so the web UI can render it. Supported kinds: "
+            "'line' (default, for time series and vintage comparisons), "
+            "'bar' (single-year program rankings), "
+            "'stacked_bar' (composition over time — stack programs/categories by year). "
+            "For multi-vintage line charts omit `vintage`, set `group_by='vintage'`, "
+            "and pass `vintages=[...]` for explicit vintages or `vintage_start='YYYY'` "
             "for all vintages since a year. "
             "The response includes chart_data (rendered in the browser) and "
             "points (raw numbers you can cite in the answer). "
@@ -245,7 +247,7 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
             "unit='Millions of people'. Call `summarize_file_type` first if "
             "you do not yet know which category/unit to pick. "
             "Do NOT include a file path in the answer — tell the user the chart "
-            "is displayed below and they can download it with the button."
+            "is displayed alongside the response."
         ),
         "parameters": {
             "type": "object",
@@ -258,7 +260,15 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "vintage_start": {"type": "string"},
                 "year_start": {"type": "integer"},
                 "year_end": {"type": "integer"},
-                "kind": {"type": "string"},
+                "kind": {
+                    "type": "string",
+                    "enum": ["line", "bar", "stacked_bar"],
+                    "description": (
+                        "line=time series/vintage comparison, "
+                        "bar=single-year ranking, "
+                        "stacked_bar=composition over time"
+                    ),
+                },
                 "group_by": {"type": "string"},
                 "title": {"type": "string"},
                 "category": {"type": "string"},

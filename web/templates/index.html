@@ -387,16 +387,32 @@
 
     /* interactive charts */
     .chart-wrap {
-      margin-top: 0.85rem;
       background: var(--card);
       border: 1px solid var(--rule);
       border-radius: var(--radius);
-      padding: 0.75rem 0.75rem 0.5rem;
+      padding: 1rem 1rem 0.6rem;
     }
     .chart-wrap canvas { max-height: 340px; }
+    /* CBO style: y-label as subtitle below title */
+    .chart-subtitle {
+      font-family: var(--font-body);
+      font-size: 0.72rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      font-style: italic;
+      margin: 0 0 0.5rem;
+      line-height: 1.3;
+    }
+    .chart-source {
+      font-family: var(--font-mono);
+      font-size: 0.58rem;
+      color: var(--text-light);
+      margin-top: 0.45rem;
+      letter-spacing: 0.02em;
+    }
     .chart-dl-btn {
       display: inline-flex; align-items: center; gap: 0.3rem;
-      margin-top: 0.45rem;
+      margin-top: 0.35rem;
       background: none;
       border: 1px solid var(--rule);
       border-radius: 9999px;
@@ -406,6 +422,37 @@
       cursor: pointer; transition: border-color .15s, color .15s;
     }
     .chart-dl-btn:hover { border-color: var(--green); color: var(--green); }
+
+    /* side-by-side: chart left, text right */
+    .response-card {
+      display: flex;
+      gap: 1rem;
+      flex: 1;
+      min-width: 0;
+      align-items: flex-start;
+    }
+    .response-chart-panel {
+      flex: 0 0 56%;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+    .response-text-panel {
+      flex: 1;
+      min-width: 0;
+    }
+    /* override bubble max-width for chart-card rows */
+    .msg-row--with-chart {
+      align-items: flex-start;
+    }
+    .msg-row--with-chart .response-text-panel {
+      max-width: 100%;
+    }
+    @media (max-width: 900px) {
+      .response-card { flex-direction: column; }
+      .response-chart-panel { flex: none; width: 100%; }
+    }
 
     /* typing indicator */
     .typing-dots { display: flex; gap: 4px; align-items: center; height: 18px; }
@@ -768,30 +815,42 @@
   }
 
   // â”€â”€â”€ Chart colours (CBO palette) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  const _CHART_COLORS = [
-    '#2d6a4f', '#c9a227', '#40916c', '#e9c46a',
-    '#1b4332', '#d4a017', '#52b788', '#b5830e',
-    '#74c69d', '#a37700',
+  // CBO official colour palette
+  const _CBO_COLORS = [
+    '#003F72',  // CBO dark blue (primary)
+    '#0071BC',  // CBO medium blue
+    '#1DC2A0',  // CBO teal
+    '#F7941D',  // CBO orange
+    '#A7A9AC',  // CBO gray
+    '#E31837',  // CBO red
+    '#6CBF67',  // CBO green
+    '#8064A2',  // CBO purple
+    '#4BACC6',  // CBO light blue
+    '#C0504D',  // CBO dark red
   ];
 
   function _buildChartConfig(cd) {
-    const isBar = cd.type === 'bar';
+    const isStackedBar = cd.type === 'stacked_bar';
+    const isBar = cd.type === 'bar' || isStackedBar;
+    const chartType = isBar ? 'bar' : 'line';
+
     const datasets = (cd.datasets || []).map((ds, i) => {
-      const color = _CHART_COLORS[i % _CHART_COLORS.length];
+      const color = _CBO_COLORS[i % _CBO_COLORS.length];
       return {
         label: ds.label,
         data: ds.data,
         borderColor: color,
-        backgroundColor: isBar ? color + 'cc' : color + '22',
-        borderWidth: isBar ? 0 : 2,
+        backgroundColor: isBar ? color : color + '22',
+        borderWidth: isBar ? 0 : 2.5,
         fill: false,
-        tension: 0.35,
-        pointRadius: isBar ? 0 : 4,
-        pointHoverRadius: isBar ? 0 : 6,
+        tension: 0.1,
+        pointRadius: isBar ? 0 : 3.5,
+        pointHoverRadius: isBar ? 0 : 5,
       };
     });
+
     return {
-      type: cd.type,
+      type: chartType,
       data: { labels: cd.labels, datasets },
       options: {
         responsive: true,
@@ -800,35 +859,70 @@
           title: {
             display: !!cd.title,
             text: cd.title,
-            font: { size: 13, weight: '600' },
-            color: '#1a1a1a',
-            padding: { bottom: 10 },
+            align: 'start',
+            font: { size: 13, weight: '700', family: "'Jost', system-ui, sans-serif" },
+            color: '#0d1c13',
+            padding: { bottom: 4 },
           },
-          legend: { display: datasets.length > 1, position: 'bottom' },
+          legend: {
+            display: datasets.length > 1,
+            position: 'bottom',
+            align: 'start',
+            labels: {
+              boxWidth: isBar ? 14 : 24,
+              boxHeight: isBar ? 12 : 3,
+              padding: 12,
+              font: { size: 10, family: "'Jost', system-ui, sans-serif" },
+              color: '#555',
+            },
+          },
           tooltip: { mode: 'index', intersect: false },
         },
         scales: {
           x: {
-            title: { display: !!cd.x_label, text: cd.x_label, font: { size: 11 } },
-            ticks: { maxRotation: isBar ? 45 : 0, font: { size: 11 } },
+            grid: { display: false },
+            border: { display: false },
+            ticks: {
+              maxRotation: (isBar && !isStackedBar) ? 45 : 0,
+              font: { size: 11 },
+              color: '#666',
+            },
+            stacked: isStackedBar,
           },
           y: {
-            title: { display: !!cd.y_label, text: cd.y_label, font: { size: 11 } },
-            ticks: { font: { size: 11 } },
-            beginAtZero: false,
+            title: { display: false },   // y-label shown as DOM subtitle
+            grid: { color: '#e5e5e5', lineWidth: 1 },
+            border: { display: false },
+            ticks: { font: { size: 11 }, color: '#666' },
+            beginAtZero: true,            // CBO: y-axis always goes to zero
+            stacked: isStackedBar,
           },
         },
       },
     };
   }
 
-  function renderCharts(bubble, charts) {
+  function renderCharts(container, charts) {
     (charts || []).forEach(cd => {
       const wrap = document.createElement('div');
       wrap.className = 'chart-wrap';
 
+      // CBO convention: y-label shown as chart subtitle, not on axis
+      if (cd.y_label) {
+        const sub = document.createElement('p');
+        sub.className = 'chart-subtitle';
+        sub.textContent = cd.y_label;
+        wrap.appendChild(sub);
+      }
+
       const canvas = document.createElement('canvas');
       wrap.appendChild(canvas);
+
+      // CBO convention: source note below chart
+      const source = document.createElement('p');
+      source.className = 'chart-source';
+      source.textContent = 'Source: Congressional Budget Office';
+      wrap.appendChild(source);
 
       const btn = document.createElement('button');
       btn.className = 'chart-dl-btn';
@@ -839,9 +933,9 @@
         <line x1="12" y1="15" x2="12" y2="3"/>
       </svg> Download PNG`;
       wrap.appendChild(btn);
-      bubble.appendChild(wrap);
+      container.appendChild(wrap);
 
-      const chart = new Chart(canvas, _buildChartConfig(cd));
+      new Chart(canvas, _buildChartConfig(cd));
       btn.addEventListener('click', () => {
         const a = document.createElement('a');
         a.download = (cd.title || 'cbo-chart').replace(/[^a-z0-9]+/gi, '_') + '.png';
@@ -851,40 +945,65 @@
     });
   }
 
+  const _TOOL_ICON = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+    stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
+  </svg>`;
+
+  function _buildToolBar(toolCalls) {
+    if (!toolCalls || !toolCalls.length) return null;
+    const bar = document.createElement('div');
+    bar.className = 'tool-bar';
+    toolCalls.forEach(tc => {
+      const badge = document.createElement('span');
+      badge.className = 'tool-badge';
+      badge.innerHTML = `${_TOOL_ICON} ${tc.name}`;
+      bar.appendChild(badge);
+    });
+    return bar;
+  }
+
   function appendMessage(role, html, toolCalls, charts) {
     const row = document.createElement('div');
-    row.className = 'msg-row msg-row--' + role;
+    const hasCharts = role === 'bot' && charts && charts.length > 0;
+    row.className = 'msg-row msg-row--' + role + (hasCharts ? ' msg-row--with-chart' : '');
 
     const av = document.createElement('div');
     av.className = 'avatar avatar--' + role;
     av.textContent = role === 'bot' ? 'CBO' : 'You';
+    row.appendChild(av);
 
-    const bubble = document.createElement('div');
-    bubble.className = 'bubble bubble--' + role;
+    if (hasCharts) {
+      // Side-by-side layout: chart panel left, text panel right
+      const card = document.createElement('div');
+      card.className = 'response-card';
 
-    if (role === 'bot') {
-      bubble.innerHTML = DOMPurify.sanitize(marked.parse(html));
-      renderCharts(bubble, charts);
-      if (toolCalls && toolCalls.length) {
-        const bar = document.createElement('div');
-        bar.className = 'tool-bar';
-        toolCalls.forEach(tc => {
-          const badge = document.createElement('span');
-          badge.className = 'tool-badge';
-          badge.innerHTML = `<svg width="10" height="10" viewBox="0 0 24 24" fill="none"
-            stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/>
-          </svg> ${tc.name}`;
-          bar.appendChild(badge);
-        });
-        bubble.appendChild(bar);
-      }
+      const chartPanel = document.createElement('div');
+      chartPanel.className = 'response-chart-panel';
+      renderCharts(chartPanel, charts);
+
+      const textPanel = document.createElement('div');
+      textPanel.className = 'bubble bubble--bot response-text-panel';
+      textPanel.innerHTML = DOMPurify.sanitize(marked.parse(html));
+      const toolBar = _buildToolBar(toolCalls);
+      if (toolBar) textPanel.appendChild(toolBar);
+
+      card.appendChild(chartPanel);
+      card.appendChild(textPanel);
+      row.appendChild(card);
     } else {
-      bubble.textContent = html;
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble bubble--' + role;
+      if (role === 'bot') {
+        bubble.innerHTML = DOMPurify.sanitize(marked.parse(html));
+        const toolBar = _buildToolBar(toolCalls);
+        if (toolBar) bubble.appendChild(toolBar);
+      } else {
+        bubble.textContent = html;
+      }
+      row.appendChild(bubble);
     }
 
-    row.appendChild(av);
-    row.appendChild(bubble);
     messagesEl.appendChild(row);
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }

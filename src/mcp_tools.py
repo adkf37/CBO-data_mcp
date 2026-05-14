@@ -20,7 +20,7 @@ _PROGRAM_COLUMNS = ("program", "program_name", "category", "name")
 _YEAR_COLUMNS = ("fiscal_year", "year", "calendar_year", "projection_year")
 _SAFE_TOKEN_RE = re.compile(r"[^a-zA-Z0-9_-]+")
 _AGG_FUNCS = {"sum", "mean", "min", "max", "count", "median"}
-_CHART_KINDS = {"line", "bar"}
+_CHART_KINDS = {"line", "bar", "stacked_bar"}
 
 
 def _select_first_column(columns: list[str], candidates: tuple[str, ...]) -> Optional[str]:
@@ -991,7 +991,7 @@ def chart_projection(
         x_label = year_col or "year"
         y_label = f"{metric} ({resolved_unit})" if resolved_unit else metric
 
-    else:  # bar
+    elif kind_lower == "bar":
         bar_group = group_by or _select_first_column(list(df.columns), _PROGRAM_COLUMNS)
         if not bar_group:
             return {"error": "No group_by column provided and no program column found for bar chart."}
@@ -1003,6 +1003,46 @@ def chart_projection(
         y_label = (
             f"sum({metric}) ({resolved_unit})" if resolved_unit else f"sum({metric})"
         )
+
+    else:  # stacked_bar
+        if not year_col:
+            return {"error": "No year column available; stacked bar charts need one."}
+        # Default: stack by program/category to show composition over time.
+        # If group_by is explicitly supplied (e.g. 'vintage'), honour it.
+        stack_group = group_by or _select_first_column(
+            list(df.columns), _PROGRAM_COLUMNS
+        ) or ("vintage" if "vintage" in df.columns else None)
+        df_plot = df.assign(
+            _year=pd.to_numeric(df[year_col], errors="coerce"),
+            _val=series,
+        ).dropna(subset=["_year", "_val"])
+
+        if stack_group and stack_group in df_plot.columns:
+            all_years_sb: set[int] = set()
+            grouped_series_sb: list[tuple[str, "pd.Series"]] = []
+            for lbl, grp in df_plot.groupby(stack_group):
+                summed = grp.groupby("_year")["_val"].sum().sort_index()
+                grouped_series_sb.append((str(lbl), summed))
+                all_years_sb.update(int(float(str(y))) for y in summed.index)
+            labels = sorted(all_years_sb)
+            for lbl, summed in grouped_series_sb:
+                year_map = {int(float(str(y))): float(v) for y, v in summed.items()}
+                datasets.append({
+                    "label": lbl,
+                    "data": [year_map.get(yr, 0) for yr in labels],
+                })
+                points.extend(
+                    {"group": lbl, "year": yr, "value": year_map[yr]}
+                    for yr in labels if yr in year_map
+                )
+        else:
+            summed = df_plot.groupby("_year")["_val"].sum().sort_index()
+            labels = [int(float(str(y))) for y in summed.index]
+            datasets = [{"label": metric, "data": [float(v) for v in summed.values]}]
+            points = [{"year": yr, "value": float(v)} for yr, v in zip(labels, summed.values)]
+
+        x_label = year_col or "year"
+        y_label = f"{metric} ({resolved_unit})" if resolved_unit else metric
 
     chart_data: dict[str, Any] = {
         "type": kind_lower,
