@@ -265,6 +265,86 @@ class TestCBOAgentAskToolCalling:
         assert agent.last_trace[0]["tool"] == "list_file_types"
 
 
+# ── unit tests — planner skeleton ────────────────────────────────────────────
+
+
+class TestCBOAgentPlanner:
+    def test_planner_disabled_by_default(self, agent, patched_genai):
+        """Without enable_planner, ask() does not call models.generate_content."""
+        chat = _chat_mock(patched_genai)
+        chat.send_message.return_value = _make_text_response("ok")
+        agent.ask("hello")
+        client = patched_genai.Client.return_value
+        client.models.generate_content.assert_not_called()
+        assert agent.last_plan is None
+
+    def test_parse_plan_text_extracts_json_fence(self):
+        text = (
+            "Here is the plan:\n"
+            "```json\n"
+            "{\"file_type\": \"medicare\", \"intent\": \"comparison\", "
+            "\"steps\": [{\"tool\": \"summarize_file_type\"}]}\n"
+            "```"
+        )
+        parsed = CBOAgent._parse_plan_text(text)
+        assert parsed["file_type"] == "medicare"
+        assert parsed["intent"] == "comparison"
+        assert parsed["steps"][0]["tool"] == "summarize_file_type"
+        assert parsed["raw"] == text
+
+    def test_parse_plan_text_returns_raw_on_invalid_json(self):
+        parsed = CBOAgent._parse_plan_text("not a plan at all")
+        assert parsed == {"raw": "not a plan at all", "steps": []}
+
+    def test_enabled_planner_calls_generate_content_and_prefixes_prompt(
+        self, monkeypatch, patched_genai
+    ):
+        monkeypatch.setattr("src.llm_agent.load_dotenv", lambda: None)
+        monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+        client = patched_genai.Client.return_value
+
+        # Planner response — return a JSON-fenced plan.
+        plan_text = (
+            "```json\n"
+            "{\"file_type\": \"medicaid\", \"intent\": \"chart\", \"steps\": []}\n"
+            "```"
+        )
+        client.models.generate_content.return_value = _make_text_response(plan_text)
+
+        chat = _chat_mock(patched_genai)
+        chat.send_message.return_value = _make_text_response("done")
+
+        a = CBOAgent(enable_planner=True)
+        a.ask("chart medicaid enrollment")
+
+        # Planner call happened
+        client.models.generate_content.assert_called_once()
+        assert a.last_plan is not None
+        assert a.last_plan["file_type"] == "medicaid"
+
+        # The executor saw a prompt that begins with the plan block
+        sent = chat.send_message.call_args_list[0].args[0]
+        assert "PLAN (advisory" in sent
+        assert "USER QUESTION: chart medicaid enrollment" in sent
+
+    def test_planner_failure_returns_error_dict_but_ask_still_works(
+        self, monkeypatch, patched_genai
+    ):
+        monkeypatch.setattr("src.llm_agent.load_dotenv", lambda: None)
+        monkeypatch.setenv("GEMINI_API_KEY", "test-key")
+        client = patched_genai.Client.return_value
+        client.models.generate_content.side_effect = RuntimeError("transport down")
+
+        chat = _chat_mock(patched_genai)
+        chat.send_message.return_value = _make_text_response("answer anyway")
+
+        a = CBOAgent(enable_planner=True)
+        answer = a.ask("any question")
+
+        assert answer == "answer anyway"
+        assert a.last_plan == {"error": "transport down", "raw": None}
+
+
 # ── integration tests (skipped when GEMINI_API_KEY is absent) ─────────────────
 
 

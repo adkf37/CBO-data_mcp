@@ -22,6 +22,64 @@ _SAFE_TOKEN_RE = re.compile(r"[^a-zA-Z0-9_-]+")
 _AGG_FUNCS = {"sum", "mean", "min", "max", "count", "median"}
 _CHART_KINDS = {"line", "bar", "stacked_bar"}
 
+# CBO publishes its baseline workbooks under product IDs (e.g. 51301 = Medicaid,
+# 51302 = Medicare, 51316 = Unemployment Insurance, etc.). Filenames in the
+# upstream repo follow the pattern "<product_id>-YYYY-MM-<program>.xlsx".  We
+# best-effort link back to the canonical CBO product page so analysts can
+# verify each cited number against the original PDF/XLSX.
+_CBO_PRODUCT_URL_TEMPLATE = "https://www.cbo.gov/about/products/baseline-projections-selected-programs"
+_CBO_PRODUCT_ID_RE = re.compile(r"^(\d{4,6})-")
+
+
+def _build_source_citation(
+    source_file: Any,
+    source_sheet: Any = None,
+    vintage: Any = None,
+) -> dict[str, Any]:
+    """Return a citation dict for a (source_file, source_sheet, vintage) tuple.
+
+    Always includes ``source_file``; populates ``source_sheet``, ``vintage`` and
+    a best-effort ``cbo_product_id`` parsed from the filename. The product URL
+    points at CBO's baseline-projections landing page (the canonical entry
+    point); we deliberately do not fabricate a per-file PDF URL.
+    """
+    citation: dict[str, Any] = {
+        "source_file": str(source_file) if source_file is not None else None,
+    }
+    if source_sheet is not None:
+        citation["source_sheet"] = str(source_sheet)
+    if vintage is not None:
+        citation["vintage"] = str(vintage)
+    if source_file:
+        match = _CBO_PRODUCT_ID_RE.match(str(source_file))
+        if match:
+            citation["cbo_product_id"] = match.group(1)
+    citation["cbo_baseline_url"] = _CBO_PRODUCT_URL_TEMPLATE
+    return citation
+
+
+def _collect_sources(df: pd.DataFrame) -> list[dict[str, Any]]:
+    """Return deduped source citations for a filtered DataFrame slice."""
+    if df is None or df.empty:
+        return []
+    keep = [c for c in ("source_file", "source_sheet", "vintage") if c in df.columns]
+    if not keep:
+        return []
+    sub = df[keep].dropna(subset=["source_file"]) if "source_file" in keep else df[keep]
+    if sub.empty:
+        return []
+    sub = sub.drop_duplicates()
+    citations: list[dict[str, Any]] = []
+    for row in sub.to_dict(orient="records"):
+        citations.append(
+            _build_source_citation(
+                row.get("source_file"),
+                row.get("source_sheet"),
+                row.get("vintage"),
+            )
+        )
+    return citations
+
 
 def _select_first_column(columns: list[str], candidates: tuple[str, ...]) -> Optional[str]:
     lowered = {col.lower(): col for col in columns}
@@ -183,7 +241,11 @@ def get_projection(
         return err
     assert df is not None
     rows = _json_records(df)
-    return {"rows": rows, "row_count": len(rows)}
+    return {
+        "rows": rows,
+        "row_count": len(rows),
+        "sources": _collect_sources(df),
+    }
 
 
 def compare_vintages(
@@ -303,7 +365,17 @@ def compare_vintages(
     merged["vintage_a"] = vintage_a
     merged["vintage_b"] = vintage_b
     rows = _json_records(merged)
-    return {"rows": rows, "row_count": len(rows)}
+    sources = (first.get("sources") or []) + (second.get("sources") or [])
+    # Dedup
+    seen: set[tuple] = set()
+    deduped: list[dict[str, Any]] = []
+    for c in sources:
+        key = (c.get("source_file"), c.get("source_sheet"), c.get("vintage"))
+        if key in seen:
+            continue
+        seen.add(key)
+        deduped.append(c)
+    return {"rows": rows, "row_count": len(rows), "sources": deduped}
 
 
 def search_programs(
@@ -370,6 +442,9 @@ def export_csv(
     file_type: Optional[str] = None,
     vintage: Optional[str] = None,
     query_params: Optional[dict[str, Any]] = None,
+    source_question: Optional[str] = None,
+    tool_calls: Optional[list[dict[str, Any]]] = None,
+    sources: Optional[list[dict[str, Any]]] = None,
 ) -> dict[str, Any]:
     """Export query rows to CSV.
 
@@ -388,6 +463,17 @@ def export_csv(
         Optional vintage label used for metadata headers and auto filenames.
     query_params:
         Optional query-parameter mapping used for auto filenames.
+    source_question:
+        Optional natural-language question that produced this export. Recorded
+        in the CSV header as a provenance trail.
+    tool_calls:
+        Optional list of ``{"tool": str, "args": dict}`` entries describing the
+        tool calls the LLM made to produce ``rows``. Recorded in the CSV header
+        so reviewers can reproduce the slice.
+    sources:
+        Optional list of source-citation dicts (from ``_collect_sources``)
+        recorded in the CSV header so each export carries the originating CBO
+        workbook(s) and sheet name(s).
 
     Returns
     -------
@@ -396,6 +482,9 @@ def export_csv(
         On failure, ``{"error": "...message..."}``.
     """
     if isinstance(rows, dict):
+        # Allow callers to pipe a full tool result; pull provenance fields from
+        # the wrapper if not supplied explicitly.
+        sources = sources if sources is not None else rows.get("sources")
         rows = rows.get("rows", [])
     if not isinstance(rows, list):
         return {"error": "rows must be a list of dictionaries."}
@@ -427,6 +516,31 @@ def export_csv(
         with out_path.open("w", encoding="utf-8", newline="") as handle:
             for key, value in metadata.items():
                 handle.write(f"# {key}: {value}\n")
+            if source_question:
+                # Strip newlines so the CSV header stays single-line per field.
+                cleaned = " ".join(str(source_question).split())
+                handle.write(f"# source_question: {cleaned}\n")
+            if tool_calls:
+                for idx, call in enumerate(tool_calls, start=1):
+                    name = call.get("tool") or call.get("name") or "?"
+                    args = call.get("args") or {}
+                    # Keep arg dump compact and one-line.
+                    args_str = ", ".join(
+                        f"{k}={v!r}" for k, v in args.items() if v is not None
+                    )
+                    handle.write(f"# tool_call_{idx}: {name}({args_str})\n")
+            if sources:
+                for idx, citation in enumerate(sources, start=1):
+                    parts = [
+                        f"source_file={citation.get('source_file')}",
+                    ]
+                    if citation.get("source_sheet"):
+                        parts.append(f"sheet={citation.get('source_sheet')}")
+                    if citation.get("vintage"):
+                        parts.append(f"vintage={citation.get('vintage')}")
+                    if citation.get("cbo_product_id"):
+                        parts.append(f"cbo_product_id={citation.get('cbo_product_id')}")
+                    handle.write(f"# source_{idx}: {' '.join(parts)}\n")
             frame.to_csv(handle, index=False)
         return {"file_path": str(out_path.resolve()), "row_count": len(rows)}
     except Exception as exc:  # noqa: BLE001
@@ -653,6 +767,7 @@ def aggregate_metric(
             "agg": agg_lower,
             "group_by": group_by,
             "metric": metric,
+            "sources": _collect_sources(df),
         }
 
     if agg_lower == "count":
@@ -665,6 +780,7 @@ def aggregate_metric(
         "agg": agg_lower,
         "metric": metric,
         "row_count": int(series.notna().sum()),
+        "sources": _collect_sources(df),
     }
 
 
@@ -739,6 +855,7 @@ def top_n(
         "agg": agg.lower(),
         "group_by": effective_group,
         "ascending": ascending,
+        "sources": aggregated.get("sources", []),
     }
 
 
@@ -813,6 +930,7 @@ def growth_rate(
         "cagr": cagr,
         "vintage": vintage,
         "program": program,
+        "sources": _collect_sources(df),
     }
 
 
@@ -890,6 +1008,7 @@ def summarize_file_type(
         "categories": categories,
         "units": units,
         "categories_by_unit": categories_by_unit,
+        "sources": _collect_sources(df),
     }
 
 

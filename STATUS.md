@@ -3,7 +3,7 @@
 | Field | Value |
 |---|---|
 | Phase | build |
-| Last Updated | 2026-05-13 |
+| Last Updated | 2026-05-14 |
 | Squad Template | web_app |
 | Priority | medium |
 | Blocking | None |
@@ -14,23 +14,37 @@
 
 **Task ID:** `feedback-2026-05-13`
 
-Human feedback (2026-05-13) requested stronger support for complicated
-questions and chart generation. Implemented 5 new MCP tools
-(`aggregate_metric`, `top_n`, `growth_rate`, `summarize_file_type`,
-`chart_projection`), persistent chat session + tool tracing on `CBOAgent`,
-and `/chart`, `/reset`, `/trace` CLI commands. `matplotlib>=3.8.0` added.
-Follow-up improvements for the same feedback slice added a prompt-based eval
-suite (`evals/cbo_qa.xml`), a live eval runner (`scripts/run_eval_suite.py` +
-`src/eval_runner.py`), and stronger vintage-comparison behavior so
-`compare_vintages` now accepts `category` / `unit` filters and merges on a
-series-aware key instead of comparing broad program rows. The eval runner now
-handles a missing `GEMINI_API_KEY`, supports `--validate-only`, supports
-`--base-url`, and records per-question agent/API failures instead of crashing.
-A fix pass on `eval_suite_run_051326.json` added per-question eval session
-resets, JSON-safe tool records, explicit multi-vintage chart filters, and
-stronger routing guidance for SNAP, SSDI, UI, Social Security, and
-multi-vintage chart prompts. Full regression now passes with 80 passed, 3
-deselected, and 77% coverage. Awaiting Validate/redeploy/live re-eval.
+Building out Tier 2 + Tier 4 differentiation work on top of the totals/subcomponents
+fix. This pass landed four shippable slices:
+- **Source citations (#16):** every aggregating tool (`get_projection`,
+    `aggregate_metric`, `top_n`, `growth_rate`, `compare_vintages`,
+    `summarize_file_type`) now returns a deduped `sources` block with
+    `source_file`, `source_sheet`, `vintage`, parsed CBO `cbo_product_id`, and
+    a canonical CBO baseline URL. `_build_source_citation` /
+    `_collect_sources` helpers added in `src/mcp_tools.py`. System prompt item
+    12 now requires the agent to cite `source_file` per answer. The web
+    `/api/chat` response surfaces a deduped `sources` list and the index
+    template renders a "Sources" bar beneath each bot reply.
+- **CSV provenance (#8):** `export_csv` accepts `source_question`,
+    `tool_calls`, and `sources` and embeds them as `# source_question:`,
+    `# tool_call_N:`, and `# source_N:` header lines. The tool registry schema
+    advertises these so the LLM can pipe `agent.last_trace` straight through.
+- **Adversarial evals (#15):** added 6 prompts to `evals/cbo_qa.xml` (ids
+    19–24) covering the totals-trap regression, mixed-unit refusal,
+    vintage-naming traps, the inverse "I want the published total" lookup,
+    citation regression, and an audit-style structured prompt.
+- **Planner skeleton (#14):** `CBOAgent` gains an opt-in `enable_planner`
+    constructor flag, a `plan(question)` method that runs a separate Gemini
+    call against a planner system prompt, and `_parse_plan_text` to extract
+    fenced JSON. When enabled, `ask()` prepends the plan to the executor
+    prompt and exposes it on `last_plan`; web `/api/chat` returns it as
+    `plan`. Off by default, so live behavior is unchanged unless the flag is
+    flipped.
+
+Tests: 98 passed / 3 deselected (full suite, no-cov). New coverage:
+provenance headers + auto-inherit from result dict, source-citation
+plumbing for four tools, planner enable/disable/fallback paths and JSON
+fence parsing.
 
 ## Recent Activity
 

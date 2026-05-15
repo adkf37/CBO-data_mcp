@@ -116,6 +116,26 @@ def chat() -> tuple[Any, int]:
             and isinstance(tc.get("result"), dict)
             and "chart_data" in tc["result"]
         ]
+
+        # Collect deduped citations across every tool call result so the UI
+        # can render a "Sources" block alongside the answer.
+        sources: list[dict[str, Any]] = []
+        seen: set[tuple[str, str, str]] = set()
+        for tc in agent.last_trace:
+            result = tc.get("result")
+            if not isinstance(result, dict):
+                continue
+            for citation in result.get("sources", []) or []:
+                key = (
+                    str(citation.get("source_file") or ""),
+                    str(citation.get("source_sheet") or ""),
+                    str(citation.get("vintage") or ""),
+                )
+                if key in seen:
+                    continue
+                seen.add(key)
+                sources.append(citation)
+
         return (
             jsonify(
                 {
@@ -123,6 +143,8 @@ def chat() -> tuple[Any, int]:
                     "session_id": session_id,
                     "tool_calls": tool_calls,
                     "charts": charts,
+                    "sources": sources,
+                    "plan": getattr(agent, "last_plan", None),
                 }
             ),
             200,

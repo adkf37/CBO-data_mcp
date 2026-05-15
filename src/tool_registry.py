@@ -132,7 +132,13 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
     },
     {
         "name": "export_csv",
-        "description": "Exports query result rows to a CSV file and returns the file path.",
+        "description": (
+            "Exports query result rows to a CSV file with a provenance header. "
+            "When exporting, pass `source_question` (the user's original question), "
+            "`tool_calls` (list of {tool, args} entries describing how you got "
+            "the rows), and `sources` (the citation list from the tool result) "
+            "so the CSV is self-documenting and reproducible."
+        ),
         "parameters": {
             "type": "object",
             "properties": {
@@ -142,6 +148,26 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "file_type": {"type": "string"},
                 "vintage": {"type": "string"},
                 "query_params": {"type": "object"},
+                "source_question": {
+                    "type": "string",
+                    "description": "The user question that produced these rows.",
+                },
+                "tool_calls": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": (
+                        "Trace of tool calls used to produce the rows; each "
+                        "entry should look like {\"tool\": name, \"args\": {...}}."
+                    ),
+                },
+                "sources": {
+                    "type": "array",
+                    "items": {"type": "object"},
+                    "description": (
+                        "Source citations (source_file/source_sheet/vintage) "
+                        "from the tool result that produced these rows."
+                    ),
+                },
             },
             "required": ["rows"],
         },

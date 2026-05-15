@@ -534,3 +534,73 @@ def test_compare_vintages_can_exclude_totals():
     cats = {row["category"] for row in result["rows"]}
     assert cats == {"Part A"}
 
+
+# ── Source citations ─────────────────────────────────────────────────────────
+
+
+def _sourced_loader() -> FakeLoader:
+    df = pd.DataFrame(
+        [
+            {
+                "program": "Medicare", "category": "Part A", "fiscal_year": 2030,
+                "value": 500.0, "unit": "Billions of dollars",
+                "vintage": "2026-02",
+                "source_file": "51302-2026-02-medicare.xlsx",
+                "source_sheet": "Medicare_02-2026", "is_total": False,
+            },
+            {
+                "program": "Medicare", "category": "Part B", "fiscal_year": 2030,
+                "value": 600.0, "unit": "Billions of dollars",
+                "vintage": "2026-02",
+                "source_file": "51302-2026-02-medicare.xlsx",
+                "source_sheet": "Medicare_02-2026", "is_total": False,
+            },
+        ]
+    )
+    return FakeLoader(df)
+
+
+def test_get_projection_returns_sources():
+    result = get_projection("medicaid", loader=_sourced_loader())
+    assert "sources" in result
+    assert len(result["sources"]) == 1  # deduped
+    s = result["sources"][0]
+    assert s["source_file"] == "51302-2026-02-medicare.xlsx"
+    assert s["source_sheet"] == "Medicare_02-2026"
+    assert s["vintage"] == "2026-02"
+    assert s["cbo_product_id"] == "51302"
+    assert "cbo_baseline_url" in s
+
+
+def test_aggregate_metric_returns_sources():
+    result = aggregate_metric(
+        "medicaid", metric="value", agg="sum", loader=_sourced_loader()
+    )
+    assert "error" not in result
+    assert result["aggregate"] == pytest.approx(1100.0)
+    assert result["sources"] and result["sources"][0]["cbo_product_id"] == "51302"
+
+
+def test_summarize_file_type_returns_sources():
+    result = summarize_file_type("medicaid", loader=_sourced_loader())
+    assert "error" not in result
+    assert result["sources"] and result["sources"][0]["source_file"].endswith(".xlsx")
+
+
+def test_growth_rate_returns_sources():
+    df = pd.DataFrame(
+        [
+            {"program": "Medicare", "fiscal_year": 2024, "value": 100.0,
+             "unit": "Billions of dollars", "vintage": "2024-06", "is_total": False,
+             "source_file": "51302-2024-06-medicare.xlsx"},
+            {"program": "Medicare", "fiscal_year": 2030, "value": 200.0,
+             "unit": "Billions of dollars", "vintage": "2024-06", "is_total": False,
+             "source_file": "51302-2024-06-medicare.xlsx"},
+        ]
+    )
+    result = growth_rate(
+        "medicaid", metric="value", year_start=2024, year_end=2030,
+        loader=FakeLoader(df),
+    )
+    assert "error" not in result
+    assert result["sources"] and result["sources"][0]["cbo_product_id"] == "51302"

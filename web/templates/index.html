@@ -975,7 +975,30 @@
     return bar;
   }
 
-  function appendMessage(role, html, toolCalls, charts) {
+  function _buildSourcesBar(sources) {
+    if (!sources || !sources.length) return null;
+    const wrap = document.createElement('div');
+    wrap.className = 'tool-bar sources-bar';
+    const label = document.createElement('span');
+    label.className = 'tool-badge';
+    label.style.background = 'transparent';
+    label.style.opacity = '0.7';
+    label.textContent = 'Sources:';
+    wrap.appendChild(label);
+    sources.forEach(s => {
+      const badge = document.createElement('span');
+      badge.className = 'tool-badge';
+      const parts = [s.source_file || '(unknown)'];
+      if (s.source_sheet) parts.push(`/ ${s.source_sheet}`);
+      if (s.vintage) parts.push(`(${s.vintage})`);
+      badge.textContent = parts.join(' ');
+      badge.title = `CBO source: ${parts.join(' ')}`;
+      wrap.appendChild(badge);
+    });
+    return wrap;
+  }
+
+  function appendMessage(role, html, toolCalls, charts, sources) {
     const row = document.createElement('div');
     const hasCharts = role === 'bot' && charts && charts.length > 0;
     row.className = 'msg-row msg-row--' + role + (hasCharts ? ' msg-row--with-chart' : '');
@@ -999,6 +1022,8 @@
       textPanel.innerHTML = DOMPurify.sanitize(marked.parse(html));
       const toolBar = _buildToolBar(toolCalls);
       if (toolBar) textPanel.appendChild(toolBar);
+      const sourcesBar = _buildSourcesBar(sources);
+      if (sourcesBar) textPanel.appendChild(sourcesBar);
 
       card.appendChild(chartPanel);
       card.appendChild(textPanel);
@@ -1010,6 +1035,8 @@
         bubble.innerHTML = DOMPurify.sanitize(marked.parse(html));
         const toolBar = _buildToolBar(toolCalls);
         if (toolBar) bubble.appendChild(toolBar);
+        const sourcesBar = _buildSourcesBar(sources);
+        if (sourcesBar) bubble.appendChild(sourcesBar);
       } else {
         bubble.textContent = html;
       }
@@ -1074,7 +1101,7 @@
       if (!res.ok) {
         appendError(data.error || `Server error (HTTP ${res.status}).`);
       } else {
-        appendMessage('bot', data.answer || '(no answer)', data.tool_calls || [], data.charts || []);
+        appendMessage('bot', data.answer || '(no answer)', data.tool_calls || [], data.charts || [], data.sources || []);
       }
     } catch (err) {
       hideTyping();

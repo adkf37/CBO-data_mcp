@@ -8,8 +8,10 @@ appropriate tools and returning a coherent, cited answer.
 
 from __future__ import annotations
 
+import json
 import logging
 import os
+import re
 from typing import Any
 
 from dotenv import load_dotenv
@@ -21,6 +23,26 @@ from src.tool_registry import get_gemini_tool_declarations, get_tool
 log = logging.getLogger(__name__)
 
 _MAX_TOOL_ITERATIONS = 10
+
+_PLANNER_SYSTEM_PROMPT = (
+    "You are the PLANNER stage for a CBO baseline data agent. You DO NOT call "
+    "any tools yourself. Given a user question, emit a short structured plan "
+    "describing how the EXECUTOR stage should answer it.\n\n"
+    "Return a single JSON object inside ```json fences with these keys:\n"
+    "  - file_type: best guess at the dataset (e.g. 'medicaid', 'medicare', "
+    "'snap', 'ssdi', 'unemployment', 'socialsecurity', 'healthinsurance', or "
+    "null if uncertain).\n"
+    "  - intent: one of 'discovery', 'lookup', 'chart', 'comparison', "
+    "'aggregation', 'growth', 'availability', 'citation', 'other'.\n"
+    "  - steps: ordered list of {tool, why} entries naming MCP tools to call "
+    "(list_file_types, list_vintages, summarize_file_type, get_projection, "
+    "aggregate_metric, top_n, growth_rate, compare_vintages, chart_projection, "
+    "search_programs, export_csv).\n"
+    "  - ambiguity_notes: free text flagging unit/category/vintage traps the "
+    "executor must resolve (e.g. mixed units in Medicaid, missing vintage, "
+    "totals-vs-subcomponents).\n"
+    "Keep the plan under 200 words. Do NOT answer the question, just plan."
+)
 
 _SYSTEM_PROMPT = (
     "You are a careful analyst of U.S. Congressional Budget Office (CBO) baseline "
@@ -102,6 +124,11 @@ _SYSTEM_PROMPT = (
     "sum of subcomponents stand in for the total. Never mix the two — if "
     "you find yourself summing 'Part A' + 'Part B' + 'Part D' + 'Total "
     "Medicare benefits' in the same call you are double counting."
+    "\n12. SOURCE CITATIONS: tool results now include a `sources` list with "
+    "`source_file` (the originating CBO workbook, e.g. "
+    "`51302-2026-02-medicare.xlsx`), `source_sheet`, and `vintage`. When you "
+    "report a figure, name the source_file at least once per answer so the "
+    "user can verify against the published CBO baseline."
 )
 
 
@@ -116,7 +143,7 @@ class CBOAgent:
         file via python-dotenv.  The key is **never** hardcoded or logged.
     """
 
-    def __init__(self, api_key: str | None = None) -> None:
+    def __init__(self, api_key: str | None = None, *, enable_planner: bool = False) -> None:
         load_dotenv()
         resolved_key = api_key or os.environ.get("GEMINI_API_KEY", "")
         if not resolved_key:
@@ -129,11 +156,14 @@ class CBOAgent:
         self._tool = types.Tool(function_declarations=get_gemini_tool_declarations())
         self._chat: Any = None
         self.last_trace: list[dict[str, Any]] = []
+        self.last_plan: dict[str, Any] | None = None
+        self._enable_planner = enable_planner
 
     def reset(self) -> None:
         """Clear conversation history so the next ``ask`` starts fresh."""
         self._chat = None
         self.last_trace = []
+        self.last_plan = None
 
     def _ensure_chat(self) -> Any:
         if self._chat is None:
@@ -146,6 +176,46 @@ class CBOAgent:
             )
         return self._chat
 
+    def plan(self, question: str) -> dict[str, Any]:
+        """Produce a lightweight structured plan for ``question``.
+
+        Performs a stateless Gemini call with the planner system prompt and
+        returns the parsed plan dict. On any parsing/transport failure a
+        minimal plan with the raw model text is returned so the executor can
+        still proceed. This is a deliberately small skeleton — it does not
+        execute tools; it only suggests them.
+        """
+        try:
+            response = self._client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=question,
+                config=types.GenerateContentConfig(
+                    system_instruction=_PLANNER_SYSTEM_PROMPT,
+                ),
+            )
+            text = self._extract_text(response)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Planner call failed: %s", exc)
+            return {"error": str(exc), "raw": None}
+
+        return self._parse_plan_text(text)
+
+    @staticmethod
+    def _parse_plan_text(text: str) -> dict[str, Any]:
+        """Extract a JSON plan from ``text`` (allowing ```json fences)."""
+        if not text:
+            return {"raw": "", "steps": []}
+        match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, flags=re.DOTALL)
+        candidate = match.group(1) if match else text.strip()
+        try:
+            parsed = json.loads(candidate)
+            if isinstance(parsed, dict):
+                parsed.setdefault("raw", text)
+                return parsed
+        except (ValueError, json.JSONDecodeError):
+            pass
+        return {"raw": text, "steps": []}
+
     def ask(self, question: str) -> str:
         """Resolve a natural-language question about CBO data.
 
@@ -153,9 +223,22 @@ class CBOAgent:
         through the tool registry and feeding the results back to the model
         until it produces a final text answer or the iteration cap is reached.
         Conversation state persists across calls; use :meth:`reset` to clear it.
+
+        When the agent was constructed with ``enable_planner=True``, a separate
+        planning call is made first to produce a structured plan (stored on
+        :attr:`last_plan`) that is prepended to the executor's first message.
         """
+        prompt = question
+        if self._enable_planner:
+            self.last_plan = self.plan(question)
+            plan_blob = json.dumps(self.last_plan, indent=2, default=str)
+            prompt = (
+                f"PLAN (advisory, produced by planner stage):\n```json\n{plan_blob}\n```\n\n"
+                f"USER QUESTION: {question}"
+            )
+
         chat = self._ensure_chat()
-        response = chat.send_message(question)
+        response = chat.send_message(prompt)
         self.last_trace = []
 
         for _ in range(_MAX_TOOL_ITERATIONS):

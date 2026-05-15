@@ -144,4 +144,49 @@
     <notes>Open-ended multi-vintage charting prompt should still stay on one enrollment series.</notes>
   </question>
 
+  <question id="19" tool="multi_step" type="aggregation" question_type="factual" prompt_complexity="simple" audience="general" data_source="medicare">
+    <prompt>Sum the Medicare Part A, Part B, and Part D outlays in 2030 from the 2026-02 baseline. Do not include the published Total Medicare line.</prompt>
+    <expected_tools>summarize_file_type,aggregate_metric</expected_tools>
+    <answer_contains>Billions of dollars</answer_contains>
+    <answer_contains>2030</answer_contains>
+    <notes>Totals-trap regression: subcomponent sum must not equal a value that already includes the Total line. The agent should set include_totals=false (the default) and call out is_total exclusion.</notes>
+  </question>
+
+  <question id="20" tool="multi_step" type="aggregation" question_type="factual" prompt_complexity="structured" audience="general" data_source="medicaid">
+    <prompt>What is total Medicaid value in 2030?</prompt>
+    <expected_tools>summarize_file_type</expected_tools>
+    <answer_contains>unit</answer_contains>
+    <notes>Mixed-unit refusal: the Medicaid file mixes enrollment (Millions of people), outlays (Billions of dollars), and per-enrollee dollars. The agent must ask which unit/category the user wants instead of summing across them.</notes>
+  </question>
+
+  <question id="21" tool="multi_step" type="availability" question_type="factual" prompt_complexity="simple" audience="general" data_source="medicare">
+    <prompt>Get me the 2026-01 Medicare baseline.</prompt>
+    <expected_tools>list_vintages</expected_tools>
+    <answer_contains>2026-02</answer_contains>
+    <notes>Vintage-naming trap: 2026-01 does not exist. Agent should list available vintages and offer the closest one (2026-02 or 2025-01) instead of silently picking.</notes>
+  </question>
+
+  <question id="22" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="medicare">
+    <prompt>What is the published total Medicare outlay in 2030 in the 2026-02 baseline?</prompt>
+    <expected_tools>summarize_file_type,get_projection</expected_tools>
+    <answer_contains>Billions of dollars</answer_contains>
+    <answer_contains>2030</answer_contains>
+    <notes>Inverse of #19: the user explicitly wants the published Total row. The agent should narrow to is_total=true (include_totals=true with a narrow category filter) and not add subcomponents to it.</notes>
+  </question>
+
+  <question id="23" tool="multi_step" type="citation" question_type="factual" prompt_complexity="simple" audience="general" data_source="medicare">
+    <prompt>What CBO workbook is the 2026-02 Medicare baseline sourced from?</prompt>
+    <expected_tools>summarize_file_type</expected_tools>
+    <answer_contains>51302-2026-02-medicare.xlsx</answer_contains>
+    <notes>Citation regression: tool outputs now carry a `sources` block. The agent should cite the originating workbook filename rather than paraphrasing.</notes>
+  </question>
+
+  <question id="24" tool="multi_step" type="aggregation" question_type="factual" prompt_complexity="structured" audience="general" data_source="medicare">
+    <prompt>Aim: report total Medicare benefit outlays in 2030 from the 2026-02 baseline. Output: confirm whether you are summing subcomponents or reading the published total line, and cite the source file.</prompt>
+    <expected_tools>summarize_file_type,get_projection</expected_tools>
+    <answer_contains>2030</answer_contains>
+    <answer_contains>Billions of dollars</answer_contains>
+    <notes>Forces the agent to be explicit about whether it is using the Total row or summing parts — the two should match if executed correctly, and the disclosure makes the choice auditable.</notes>
+  </question>
+
 </eval_suite>
