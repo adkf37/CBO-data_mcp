@@ -134,6 +134,7 @@ def get_projection(
     vintage: Optional[str] = None,
     category: Optional[str] = None,
     unit: Optional[str] = None,
+    include_totals: bool = True,
     loader: Optional[DataLoader] = None,
 ) -> dict[str, Any]:
     """Get projection rows filtered by file type, program, year range, vintage,
@@ -175,6 +176,7 @@ def get_projection(
         vintage=vintage,
         category=category,
         unit=unit,
+        include_totals=include_totals,
         loader=loader,
     )
     if err is not None:
@@ -194,6 +196,7 @@ def compare_vintages(
     year: Optional[int] = None,
     category: Optional[str] = None,
     unit: Optional[str] = None,
+    include_totals: bool = True,
     loader: Optional[DataLoader] = None,
 ) -> dict[str, Any]:
     """Compare one metric side-by-side for two vintages.
@@ -243,6 +246,7 @@ def compare_vintages(
         vintage=vintage_a,
         category=category,
         unit=unit,
+        include_totals=include_totals,
         loader=loader,
     )
     second = get_projection(
@@ -253,6 +257,7 @@ def compare_vintages(
         vintage=vintage_b,
         category=category,
         unit=unit,
+        include_totals=include_totals,
         loader=loader,
     )
 
@@ -442,6 +447,7 @@ def _filtered_frame(
     vintage: Optional[str] = None,
     category: Optional[str] = None,
     unit: Optional[str] = None,
+    include_totals: bool = True,
     loader: Optional[DataLoader] = None,
 ) -> tuple[Optional[pd.DataFrame], Optional[str], Optional[dict[str, Any]]]:
     """Shared filtering pipeline used by aggregation/charting tools.
@@ -454,6 +460,11 @@ def _filtered_frame(
     specifically (so callers can filter the slice of a program — e.g. only
     enrollment rows of Medicaid).  ``unit`` does an exact case-insensitive
     match against the ``unit`` column to guarantee unit-consistent slices.
+
+    When ``include_totals=False`` and the dataset has an ``is_total`` boolean
+    column, rows marked as totals are dropped. Aggregation/charting tools pass
+    ``include_totals=False`` by default to prevent double counting subtotals
+    alongside their subcomponents.
     """
     if not file_type:
         return None, None, {"error": "file_type is required."}
@@ -498,6 +509,12 @@ def _filtered_frame(
         if "unit" not in df.columns:
             return None, None, {"error": "Dataset does not include a 'unit' column."}
         df = df[df["unit"].astype(str).str.lower() == unit.lower()]
+
+    if not include_totals and "is_total" in df.columns:
+        # Drop subtotal/total rows so sums and charts don't double-count
+        # the same dollars (e.g. "Total Mandatory Outlays" + its components).
+        totals_mask = df["is_total"].astype("boolean").fillna(False)
+        df = df[~totals_mask.astype(bool)]
 
     year_col = _select_first_column(list(df.columns), _YEAR_COLUMNS)
     if (year_start is not None or year_end is not None) and not year_col:
@@ -559,6 +576,7 @@ def aggregate_metric(
     vintage: Optional[str] = None,
     category: Optional[str] = None,
     unit: Optional[str] = None,
+    include_totals: bool = False,
     loader: Optional[DataLoader] = None,
 ) -> dict[str, Any]:
     """Aggregate a numeric metric across rows, optionally grouped.
@@ -603,6 +621,7 @@ def aggregate_metric(
         vintage=vintage,
         category=category,
         unit=unit,
+        include_totals=include_totals,
         loader=loader,
     )
     if err is not None:
@@ -663,6 +682,7 @@ def top_n(
     vintage: Optional[str] = None,
     category: Optional[str] = None,
     unit: Optional[str] = None,
+    include_totals: bool = False,
     loader: Optional[DataLoader] = None,
 ) -> dict[str, Any]:
     """Return the top (or bottom) N groups ranked by an aggregated metric.
@@ -681,6 +701,7 @@ def top_n(
         vintage=vintage,
         category=category,
         unit=unit,
+        include_totals=include_totals,
         loader=loader,
     )
     if err is not None:
@@ -702,6 +723,7 @@ def top_n(
         vintage=vintage,
         category=category,
         unit=unit,
+        include_totals=include_totals,
         loader=loader,
     )
     if "error" in aggregated:
@@ -730,13 +752,16 @@ def growth_rate(
     vintage: Optional[str] = None,
     category: Optional[str] = None,
     unit: Optional[str] = None,
+    include_totals: bool = False,
     loader: Optional[DataLoader] = None,
 ) -> dict[str, Any]:
     """Compute absolute change and CAGR for a metric between two years.
 
     Values for each endpoint year are summed across remaining rows after filters,
     so callers should narrow ``program`` / ``category`` / ``unit`` to a single
-    coherent series before calling.  Mixed-unit slices are rejected.
+    coherent series before calling.  Mixed-unit slices are rejected. By default,
+    rows flagged as subtotals (``is_total=True``) are excluded so the sum does
+    not double-count totals and their subcomponents.
     """
     if year_start >= year_end:
         return {"error": "year_start must be strictly less than year_end."}
@@ -749,6 +774,7 @@ def growth_rate(
         vintage=vintage,
         category=category,
         unit=unit,
+        include_totals=include_totals,
         loader=loader,
     )
     if err is not None:
@@ -882,6 +908,7 @@ def chart_projection(
     title: Optional[str] = None,
     category: Optional[str] = None,
     unit: Optional[str] = None,
+    include_totals: bool = False,
     loader: Optional[DataLoader] = None,
     # legacy params kept for backward-compat; no longer used
     output_dir: str = "./charts",
@@ -910,6 +937,7 @@ def chart_projection(
         vintage=vintage if not vintages and not vintage_start else None,
         category=category,
         unit=unit,
+        include_totals=include_totals,
         loader=loader,
     )
     if err is not None:

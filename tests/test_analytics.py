@@ -10,6 +10,8 @@ import pytest
 from src.mcp_tools import (
     aggregate_metric,
     chart_projection,
+    compare_vintages,
+    get_projection,
     growth_rate,
     summarize_file_type,
     top_n,
@@ -394,3 +396,141 @@ def test_chart_projection_missing_metric(tmp_path: Path):
         loader=FakeLoader(),
     )
     assert "error" in result
+
+
+# ── is_total handling (prevents double counting) ──────────────────────────────
+
+
+def _totals_loader() -> FakeLoader:
+    """Loader with subtotal rows + their subcomponents for the same year."""
+    df = pd.DataFrame(
+        [
+            # 2024 — Total + its three components (Total = sum of parts)
+            {"program": "Medicare", "category": "Total Medicare benefits",
+             "fiscal_year": 2024, "value": 900.0, "unit": "Billions of dollars",
+             "vintage": "2024-06", "is_total": True},
+            {"program": "Medicare", "category": "Part A",
+             "fiscal_year": 2024, "value": 400.0, "unit": "Billions of dollars",
+             "vintage": "2024-06", "is_total": False},
+            {"program": "Medicare", "category": "Part B",
+             "fiscal_year": 2024, "value": 350.0, "unit": "Billions of dollars",
+             "vintage": "2024-06", "is_total": False},
+            {"program": "Medicare", "category": "Part D",
+             "fiscal_year": 2024, "value": 150.0, "unit": "Billions of dollars",
+             "vintage": "2024-06", "is_total": False},
+            # 2029 — same shape, larger numbers
+            {"program": "Medicare", "category": "Total Medicare benefits",
+             "fiscal_year": 2029, "value": 1200.0, "unit": "Billions of dollars",
+             "vintage": "2024-06", "is_total": True},
+            {"program": "Medicare", "category": "Part A",
+             "fiscal_year": 2029, "value": 500.0, "unit": "Billions of dollars",
+             "vintage": "2024-06", "is_total": False},
+            {"program": "Medicare", "category": "Part B",
+             "fiscal_year": 2029, "value": 500.0, "unit": "Billions of dollars",
+             "vintage": "2024-06", "is_total": False},
+            {"program": "Medicare", "category": "Part D",
+             "fiscal_year": 2029, "value": 200.0, "unit": "Billions of dollars",
+             "vintage": "2024-06", "is_total": False},
+        ]
+    )
+    return FakeLoader(df)
+
+
+def test_aggregate_metric_excludes_totals_by_default():
+    # Subcomponents only: 400 + 350 + 150 + 500 + 500 + 200 = 2100
+    result = aggregate_metric(
+        "medicaid", metric="value", agg="sum", loader=_totals_loader()
+    )
+    assert "error" not in result
+    assert result["aggregate"] == pytest.approx(2100.0)
+
+
+def test_aggregate_metric_include_totals_keeps_totals():
+    # Subcomponents + totals: 2100 + 900 + 1200 = 4200 (double counted on purpose)
+    result = aggregate_metric(
+        "medicaid",
+        metric="value",
+        agg="sum",
+        include_totals=True,
+        loader=_totals_loader(),
+    )
+    assert result["aggregate"] == pytest.approx(4200.0)
+
+
+def test_top_n_excludes_totals_by_default():
+    result = top_n(
+        "medicaid",
+        metric="value",
+        n=5,
+        group_by="category",
+        loader=_totals_loader(),
+    )
+    groups = [row["group"] for row in result["rows"]]
+    assert "Total Medicare benefits" not in groups
+    assert {"Part A", "Part B", "Part D"}.issubset(set(groups))
+
+
+def test_growth_rate_excludes_totals_by_default():
+    # 2024 components sum to 900, 2029 components sum to 1200
+    result = growth_rate(
+        "medicaid",
+        metric="value",
+        year_start=2024,
+        year_end=2029,
+        loader=_totals_loader(),
+    )
+    assert "error" not in result
+    assert result["start_value"] == pytest.approx(900.0)
+    assert result["end_value"] == pytest.approx(1200.0)
+
+
+def test_get_projection_includes_totals_by_default():
+    result = get_projection("medicaid", year_start=2024, year_end=2024,
+                             loader=_totals_loader())
+    cats = {row["category"] for row in result["rows"]}
+    assert "Total Medicare benefits" in cats
+
+
+def test_get_projection_can_exclude_totals():
+    result = get_projection(
+        "medicaid",
+        year_start=2024,
+        year_end=2024,
+        include_totals=False,
+        loader=_totals_loader(),
+    )
+    cats = {row["category"] for row in result["rows"]}
+    assert "Total Medicare benefits" not in cats
+
+
+def test_compare_vintages_can_exclude_totals():
+    # Two vintages with totals + parts. Excluding totals should yield only Part rows.
+    df = pd.DataFrame(
+        [
+            {"program": "Medicare", "category": "Total Medicare benefits",
+             "fiscal_year": 2029, "value": 1200.0, "unit": "Billions of dollars",
+             "vintage": "2024-06", "is_total": True},
+            {"program": "Medicare", "category": "Part A",
+             "fiscal_year": 2029, "value": 500.0, "unit": "Billions of dollars",
+             "vintage": "2024-06", "is_total": False},
+            {"program": "Medicare", "category": "Total Medicare benefits",
+             "fiscal_year": 2029, "value": 1300.0, "unit": "Billions of dollars",
+             "vintage": "2026-02", "is_total": True},
+            {"program": "Medicare", "category": "Part A",
+             "fiscal_year": 2029, "value": 550.0, "unit": "Billions of dollars",
+             "vintage": "2026-02", "is_total": False},
+        ]
+    )
+    result = compare_vintages(
+        "medicaid",
+        metric="value",
+        vintage_a="2024-06",
+        vintage_b="2026-02",
+        year=2029,
+        include_totals=False,
+        loader=FakeLoader(df),
+    )
+    assert "error" not in result
+    cats = {row["category"] for row in result["rows"]}
+    assert cats == {"Part A"}
+

@@ -58,7 +58,10 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
             "Returns filtered projection rows by file type, program, year range, "
             "vintage, category, and unit. Use `category` to isolate one series "
             "within a program (e.g. only the 'Total Enrolled Within a Fiscal "
-            "Year' rows of Medicaid) and `unit` to guarantee unit consistency."
+            "Year' rows of Medicaid) and `unit` to guarantee unit consistency. "
+            "Rows include an `is_total` flag indicating whether the row is a "
+            "subtotal/total of the rows beneath it; set `include_totals=false` "
+            "to drop those rows before returning."
         ),
         "parameters": {
             "type": "object",
@@ -70,6 +73,13 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "vintage": {"type": "string"},
                 "category": {"type": "string"},
                 "unit": {"type": "string"},
+                "include_totals": {
+                    "type": "boolean",
+                    "description": (
+                        "Whether rows flagged `is_total=true` (subtotals/totals) "
+                        "are kept. Defaults to true for this tool."
+                    ),
+                },
             },
             "required": ["file_type"],
         },
@@ -80,7 +90,8 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
             "Compares a metric side-by-side across two vintages. When the user "
             "means a specific series within a file (for example Medicaid "
             "enrollment vs Medicaid outlays), pass `category=` and/or `unit=` "
-            "so the comparison stays within one coherent measure."
+            "so the comparison stays within one coherent measure. Set "
+            "`include_totals=false` to drop subtotal rows from both sides."
         ),
         "parameters": {
             "type": "object",
@@ -93,6 +104,15 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "year": {"type": "integer"},
                 "category": {"type": "string"},
                 "unit": {"type": "string"},
+                "include_totals": {
+                    "type": "boolean",
+                    "description": (
+                        "Whether subtotal/total rows are kept on both sides. "
+                        "Defaults to true so callers can directly compare the "
+                        "published total lines; set false to compare only the "
+                        "subcomponents."
+                    ),
+                },
             },
             "required": ["file_type", "metric", "vintage_a", "vintage_b"],
         },
@@ -137,7 +157,12 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
             "per-enrollee dollars into the same file under different `unit` "
             "values. The tool refuses to aggregate across mixed units — pass "
             "`unit=` (e.g. 'Millions of people') or `category=` to pick one "
-            "unit-consistent series before aggregating."
+            "unit-consistent series before aggregating. "
+            "BY DEFAULT, rows flagged `is_total=true` (subtotals like 'Total "
+            "Medicare Benefits') are EXCLUDED so the sum does not double-count "
+            "a total alongside its subcomponents. To sum only the published "
+            "total lines instead, set `include_totals=true` AND narrow the "
+            "slice (e.g. with `category=`) to just those total rows."
         ),
         "parameters": {
             "type": "object",
@@ -152,6 +177,13 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "vintage": {"type": "string"},
                 "category": {"type": "string"},
                 "unit": {"type": "string"},
+                "include_totals": {
+                    "type": "boolean",
+                    "description": (
+                        "Keep `is_total=true` rows in the aggregation. "
+                        "Defaults to false to prevent double counting."
+                    ),
+                },
             },
             "required": ["file_type", "metric"],
         },
@@ -162,7 +194,8 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
             "Return the top (or bottom) N groups ranked by an aggregated metric. "
             "Defaults to grouping by the program/category column. Set ascending=true "
             "for the bottom N. Supply `unit=` / `category=` to keep the ranking "
-            "unit-consistent."
+            "unit-consistent. By default `is_total=true` rows are excluded so "
+            "a 'Total' line does not crowd out the actual subcomponents."
         ),
         "parameters": {
             "type": "object",
@@ -179,6 +212,7 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "vintage": {"type": "string"},
                 "category": {"type": "string"},
                 "unit": {"type": "string"},
+                "include_totals": {"type": "boolean"},
             },
             "required": ["file_type", "metric"],
         },
@@ -188,7 +222,9 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
         "description": (
             "Compute absolute change, percentage change, and CAGR for a metric "
             "between two years. Narrow with program / category / unit to ensure "
-            "a single coherent series; mixed-unit slices are rejected."
+            "a single coherent series; mixed-unit slices are rejected. By "
+            "default `is_total=true` rows are excluded so the start/end sums "
+            "don't double-count subtotals."
         ),
         "parameters": {
             "type": "object",
@@ -201,6 +237,7 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "vintage": {"type": "string"},
                 "category": {"type": "string"},
                 "unit": {"type": "string"},
+                "include_totals": {"type": "boolean"},
             },
             "required": ["file_type", "metric", "year_start", "year_end"],
         },
@@ -273,6 +310,16 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 "title": {"type": "string"},
                 "category": {"type": "string"},
                 "unit": {"type": "string"},
+                "include_totals": {
+                    "type": "boolean",
+                    "description": (
+                        "Whether `is_total=true` rows are kept. Defaults to "
+                        "false so stacked bars and summed lines don't double-"
+                        "count a subtotal with its components. Set true when "
+                        "you specifically want to chart the published total "
+                        "line (and narrow with `category=` to just that line)."
+                    ),
+                },
             },
             "required": ["file_type", "metric"],
         },

@@ -90,7 +90,18 @@ _SYSTEM_PROMPT = (
     "9. If a tool returns an error, read the message, adjust parameters, and "
     "try again before giving up.\n"
     "10. Treat the conversation as multi-turn: follow-up questions may reuse "
-    "the previously identified file type, category, or vintage."
+    "the previously identified file type, category, or vintage.\n"
+    "11. TOTALS vs SUBCOMPONENTS: rows in the data carry an `is_total` flag. "
+    "Most aggregation tools (`aggregate_metric`, `top_n`, `growth_rate`, "
+    "`chart_projection`) already EXCLUDE `is_total=true` rows by default to "
+    "prevent double counting a 'Total Medicare benefits' line on top of its "
+    "Part A / Part B / Part D components. When the user explicitly wants the "
+    "published total line (e.g. 'show me the bottom-line total'), either "
+    "(a) pass `category=` to narrow to just that total row and set "
+    "`include_totals=true`, or (b) leave `include_totals=false` and let the "
+    "sum of subcomponents stand in for the total. Never mix the two — if "
+    "you find yourself summing 'Part A' + 'Part B' + 'Part D' + 'Total "
+    "Medicare benefits' in the same call you are double counting."
 )
 
 
