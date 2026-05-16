@@ -384,6 +384,15 @@
       font-size: 0.66rem; font-family: var(--font-mono);
       color: var(--text-muted); font-weight: 400;
     }
+    a.tool-badge {
+      text-decoration: none;
+      transition: border-color .15s, color .15s, background .15s;
+    }
+    a.tool-badge:hover {
+      border-color: var(--green);
+      color: var(--green);
+      background: rgba(45,106,79,0.05);
+    }
 
     /* interactive charts */
     .chart-wrap {
@@ -1042,8 +1051,14 @@
     label.textContent = 'Sources:';
     wrap.appendChild(label);
     sources.forEach(s => {
-      const badge = document.createElement('span');
+      const badge = document.createElement(s.cbo_baseline_url ? 'a' : 'span');
       badge.className = 'tool-badge';
+      if (s.cbo_baseline_url) {
+        badge.href = s.cbo_baseline_url;
+        badge.target = '_blank';
+        badge.rel = 'noopener';
+        badge.style.cursor = 'pointer';
+      }
       const parts = [s.source_file || '(unknown)'];
       if (s.source_sheet) parts.push(`/ ${s.source_sheet}`);
       if (s.vintage) parts.push(`(${s.vintage})`);
