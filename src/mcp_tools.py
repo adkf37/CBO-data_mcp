@@ -25,9 +25,10 @@ _CHART_KINDS = {"line", "bar", "stacked_bar"}
 # CBO publishes its baseline workbooks under product IDs (e.g. 51301 = Medicaid,
 # 51302 = Medicare, 51316 = Unemployment Insurance, etc.). Filenames in the
 # upstream repo follow the pattern "<product_id>-YYYY-MM-<program>.xlsx".  We
-# best-effort link back to the canonical CBO product page so analysts can
-# verify each cited number against the original PDF/XLSX.
-_CBO_PRODUCT_URL_TEMPLATE = "https://www.cbo.gov/about/products/baseline-projections-selected-programs"
+# Link back to the specific CBO xlsx on the CBO file server when we have
+# enough info, falling back to the canonical landing page.
+_CBO_BASELINE_LANDING = "https://www.cbo.gov/about/products/baseline-projections-selected-programs"
+_CBO_FILE_BASE = "https://www.cbo.gov/system/files"
 _CBO_PRODUCT_ID_RE = re.compile(r"^(\d{4,6})-")
 
 
@@ -39,9 +40,10 @@ def _build_source_citation(
     """Return a citation dict for a (source_file, source_sheet, vintage) tuple.
 
     Always includes ``source_file``; populates ``source_sheet``, ``vintage`` and
-    a best-effort ``cbo_product_id`` parsed from the filename. The product URL
-    points at CBO's baseline-projections landing page (the canonical entry
-    point); we deliberately do not fabricate a per-file PDF URL.
+    a best-effort ``cbo_product_id`` parsed from the filename. When both
+    ``vintage`` and ``source_file`` are present, ``cbo_baseline_url`` points
+    directly at the xlsx on the CBO file server; otherwise it falls back to
+    the canonical landing page.
     """
     citation: dict[str, Any] = {
         "source_file": str(source_file) if source_file is not None else None,
@@ -54,7 +56,15 @@ def _build_source_citation(
         match = _CBO_PRODUCT_ID_RE.match(str(source_file))
         if match:
             citation["cbo_product_id"] = match.group(1)
-    citation["cbo_baseline_url"] = _CBO_PRODUCT_URL_TEMPLATE
+    # Build a direct xlsx URL when we have vintage + filename, e.g.
+    # https://www.cbo.gov/system/files/2024-02/51293-2024-02-childnutrition_0.xlsx
+    if source_file and vintage:
+        fname = str(source_file)
+        if not fname.lower().endswith(".xlsx"):
+            fname = fname + ".xlsx"
+        citation["cbo_baseline_url"] = f"{_CBO_FILE_BASE}/{vintage}/{fname}"
+    else:
+        citation["cbo_baseline_url"] = _CBO_BASELINE_LANDING
     return citation
 
 
