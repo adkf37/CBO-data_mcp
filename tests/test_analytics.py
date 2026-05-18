@@ -604,3 +604,14 @@ def test_growth_rate_returns_sources():
     )
     assert "error" not in result
     assert result["sources"] and result["sources"][0]["cbo_product_id"] == "51302"
+
+
+def test_chart_projection_returns_sources():
+    result = chart_projection(
+        "medicaid",
+        metric="value",
+        unit="Billions of dollars",
+        loader=_sourced_loader(),
+    )
+    assert "error" not in result
+    assert result["sources"] and result["sources"][0]["source_file"] == "51302-2026-02-medicare.xlsx"

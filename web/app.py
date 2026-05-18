@@ -6,6 +6,7 @@ import os
 import threading
 import time
 import uuid
+import json
 from typing import Any
 
 from flask import Flask, jsonify, render_template, request
@@ -80,6 +81,75 @@ def _get_agent(session: dict[str, Any]) -> CBOAgent:
     return session["agent"]  # type: ignore[return-value]
 
 
+def _allows_multiple_charts(question: str) -> bool:
+    """Return True when the user explicitly asked for multiple chart panels."""
+    q = (question or "").lower()
+    return any(
+        pattern in q
+        for pattern in (
+            "multiple charts",
+            "separate charts",
+            "one chart for each",
+            "chart for each",
+            "small multiples",
+            "side-by-side charts",
+        )
+    )
+
+
+def _select_response_charts(
+    trace: list[dict[str, Any]],
+    question: str,
+) -> list[dict[str, Any]]:
+    """Pick chart payloads for the UI, deduping noisy model retries.
+
+    Most assistant answers should show one chart. If the model tried several
+    chart calls while converging, keep the first successful unique chart unless
+    the user explicitly requested multiple chart panels.
+    """
+    charts: list[dict[str, Any]] = []
+    seen: set[str] = set()
+    for tc in trace:
+        result = tc.get("result")
+        if (
+            tc.get("tool") != "chart_projection"
+            or not isinstance(result, dict)
+            or not isinstance(result.get("chart_data"), dict)
+        ):
+            continue
+        chart_data = result["chart_data"]
+        signature = json.dumps(chart_data, sort_keys=True, default=str)
+        if signature in seen:
+            continue
+        seen.add(signature)
+        charts.append(chart_data)
+
+    if _allows_multiple_charts(question):
+        return charts
+    return charts[:1]
+
+
+def _collect_response_sources(trace: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Collect deduped citations across every tool result."""
+    sources: list[dict[str, Any]] = []
+    seen: set[tuple[str, str, str]] = set()
+    for tc in trace:
+        result = tc.get("result")
+        if not isinstance(result, dict):
+            continue
+        for citation in result.get("sources", []) or []:
+            key = (
+                str(citation.get("source_file") or ""),
+                str(citation.get("source_sheet") or ""),
+                str(citation.get("vintage") or ""),
+            )
+            if key in seen:
+                continue
+            seen.add(key)
+            sources.append(citation)
+    return sources
+
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -109,32 +179,8 @@ def chat() -> tuple[Any, int]:
             {"name": tc["tool"], "args": tc.get("args", {})}
             for tc in agent.last_trace
         ]
-        charts = [
-            tc["result"]["chart_data"]
-            for tc in agent.last_trace
-            if tc["tool"] == "chart_projection"
-            and isinstance(tc.get("result"), dict)
-            and "chart_data" in tc["result"]
-        ]
-
-        # Collect deduped citations across every tool call result so the UI
-        # can render a "Sources" block alongside the answer.
-        sources: list[dict[str, Any]] = []
-        seen: set[tuple[str, str, str]] = set()
-        for tc in agent.last_trace:
-            result = tc.get("result")
-            if not isinstance(result, dict):
-                continue
-            for citation in result.get("sources", []) or []:
-                key = (
-                    str(citation.get("source_file") or ""),
-                    str(citation.get("source_sheet") or ""),
-                    str(citation.get("vintage") or ""),
-                )
-                if key in seen:
-                    continue
-                seen.add(key)
-                sources.append(citation)
+        charts = _select_response_charts(agent.last_trace, question)
+        sources = _collect_response_sources(agent.last_trace)
 
         return (
             jsonify(

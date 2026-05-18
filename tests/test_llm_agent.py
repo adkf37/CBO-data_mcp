@@ -264,6 +264,59 @@ class TestCBOAgentAskToolCalling:
         assert len(agent.last_trace) == 1
         assert agent.last_trace[0]["tool"] == "list_file_types"
 
+    def test_single_chart_question_stops_real_tools_after_chart(
+        self, agent, patched_genai, monkeypatch
+    ):
+        chat = _chat_mock(patched_genai)
+        chat.send_message.side_effect = [
+            _make_fn_call_response("summarize_file_type", {"file_type": "ssdi"}),
+            _make_fn_call_response(
+                "chart_projection",
+                {
+                    "file_type": "ssdi",
+                    "metric": "value",
+                    "category": "Total Beneficiaries",
+                    "unit": "Thousands of people",
+                    "group_by": "vintage",
+                    "vintage_start": "2021",
+                },
+            ),
+            _make_fn_call_response("get_projection", {"file_type": "ssdi"}),
+            _make_text_response("The chart below illustrates these trends over time."),
+        ]
+
+        calls: list[str] = []
+
+        def fake_get_tool(name: str):
+            def _tool(**kwargs):
+                calls.append(name)
+                if name == "chart_projection":
+                    return {
+                        "chart_data": {
+                            "type": "line",
+                            "title": "SSDI beneficiary counts",
+                            "labels": [2026],
+                            "datasets": [{"label": "2026-02", "data": [7000]}],
+                        },
+                        "points": [{"group": "2026-02", "year": 2026, "value": 7000}],
+                    }
+                return {"ok": True}
+
+            return _tool
+
+        monkeypatch.setattr("src.llm_agent.get_tool", fake_get_tool)
+
+        result = agent.ask(
+            "Compare SSDI beneficiary counts across all projections since 2021."
+        )
+
+        assert result == "The chart below illustrates these trends over time."
+        assert calls == ["summarize_file_type", "chart_projection"]
+        assert [tc["tool"] for tc in agent.last_trace] == [
+            "summarize_file_type",
+            "chart_projection",
+        ]
+
 
 # ── unit tests — planner skeleton ────────────────────────────────────────────
 

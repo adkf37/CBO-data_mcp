@@ -1227,6 +1227,7 @@ def chart_projection(
         "category": category,
         "point_count": len(points),
         "points": points,
+        "sources": _collect_sources(df),
     }
 
 

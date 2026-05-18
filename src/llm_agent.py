@@ -24,6 +24,26 @@ log = logging.getLogger(__name__)
 
 _MAX_TOOL_ITERATIONS = 10
 
+_MULTI_CHART_PATTERNS = (
+    "multiple charts",
+    "separate charts",
+    "one chart for each",
+    "chart for each",
+    "small multiples",
+    "side-by-side charts",
+)
+
+_SINGLE_CHART_PATTERNS = (
+    "chart",
+    "plot",
+    "trend",
+    "over time",
+    "across",
+    "since",
+    "baselines",
+    "vintages",
+)
+
 _PLANNER_SYSTEM_PROMPT = (
     "You are the PLANNER stage for a CBO baseline data agent. You DO NOT call "
     "any tools yourself. Given a user question, emit a short structured plan "
@@ -66,7 +86,7 @@ _SYSTEM_PROMPT = (
     "Medicare spending/outlays -> category='Outlays', unit='Billions of dollars'; "
     "SNAP outlays -> category='Outlays' when present, prefer unit='Billions of dollars' "
     "for recent vintages; SSDI beneficiary counts -> category='Total Beneficiaries', "
-    "unit='Thousands of people'; Unemployment Insurance outlays -> use the total "
+    "unit='Thousands of people', include_totals=true; Unemployment Insurance outlays -> use the total "
     "benefit/outlay category discovered by `summarize_file_type` and cite the native unit.\n\n"
     "Tool-use playbook:\n"
     "1. Do not answer data-availability, category/unit, latest-vintage, chart, "
@@ -101,7 +121,13 @@ _SYSTEM_PROMPT = (
     "kind='stacked_bar' for composition questions — e.g. when the user asks "
     "to see how spending breaks down across programs or categories over time "
     "(stack by program or category, x-axis = year). DO NOT mention any file "
-    "path in your answer — the chart renders in the browser with a download button.\n"
+    "path in your answer — the chart renders in the browser with a download button. "
+    "Use at most ONE `chart_projection` call per user question unless the user "
+    "explicitly asks for multiple or separate charts. Once `chart_projection` "
+    "returns `chart_data`, answer from its `points`, `category`, `unit`, "
+    "`vintage`/`vintages`, and `sources`; do not call `get_projection`, "
+    "`list_vintages`, or another `chart_projection` just to restate the same "
+    "chart.\n"
     "7. For multi-vintage chart requests such as 'compare baselines in one "
     "chart' or 'separate lines for each vintage', use `chart_projection` with "
     "`group_by='vintage'`. For explicit vintages, pass `vintages=[...]` and do "
@@ -240,6 +266,8 @@ class CBOAgent:
         chat = self._ensure_chat()
         response = chat.send_message(prompt)
         self.last_trace = []
+        chart_complete = False
+        sent_chart_stop = False
 
         for _ in range(_MAX_TOOL_ITERATIONS):
             candidates = getattr(response, "candidates", [])
@@ -255,16 +283,40 @@ class CBOAgent:
             if not fn_calls:
                 return self._extract_text(response)
 
+            if chart_complete:
+                if sent_chart_stop:
+                    log.warning("Model continued requesting tools after a completed chart.")
+                    return self._chart_fallback_answer(question)
+                sent_chart_stop = True
+                response = chat.send_message(
+                    [
+                        self._tool_stop_part(fc.name)
+                        for fc in fn_calls
+                        if getattr(fc, "name", None)
+                    ]
+                )
+                continue
+
             fn_response_parts: list[types.Part] = []
             for fc in fn_calls:
                 name = fc.name
                 args = dict(fc.args) if fc.args else {}
+                if chart_complete:
+                    sent_chart_stop = True
+                    fn_response_parts.append(self._tool_stop_part(name))
+                    continue
                 log.debug("Tool call: %s(%s)", name, args)
                 try:
                     result = get_tool(name)(**args)
                 except Exception as exc:  # noqa: BLE001
                     result = {"error": str(exc)}
                 self.last_trace.append({"tool": name, "args": args, "result": result})
+                if (
+                    name == "chart_projection"
+                    and self._is_successful_chart_result(result)
+                    and self._prefers_single_chart(question)
+                ):
+                    chart_complete = True
                 fn_response_parts.append(
                     types.Part(
                         function_response=types.FunctionResponse(
@@ -278,6 +330,46 @@ class CBOAgent:
 
         log.warning("Reached maximum tool-call iterations (%d).", _MAX_TOOL_ITERATIONS)
         return self._extract_text(response)
+
+    @staticmethod
+    def _prefers_single_chart(question: str) -> bool:
+        """Return True when a question should converge after one good chart."""
+        q = question.lower()
+        if any(pattern in q for pattern in _MULTI_CHART_PATTERNS):
+            return False
+        return any(pattern in q for pattern in _SINGLE_CHART_PATTERNS)
+
+    @staticmethod
+    def _is_successful_chart_result(result: Any) -> bool:
+        return isinstance(result, dict) and isinstance(result.get("chart_data"), dict)
+
+    @staticmethod
+    def _tool_stop_part(name: str) -> types.Part:
+        return types.Part(
+            function_response=types.FunctionResponse(
+                name=name,
+                response={
+                    "result": {
+                        "error": (
+                            "A suitable chart has already been generated for this "
+                            "question. Do not call more tools; answer using the "
+                            "prior chart_projection result's chart_data, points, "
+                            "category, unit, vintages, and sources."
+                        )
+                    }
+                },
+            )
+        )
+
+    @staticmethod
+    def _chart_fallback_answer(question: str) -> str:
+        since_match = re.search(r"\bsince\s+(\d{4}(?:-\d{2})?)", question, flags=re.I)
+        suffix = f" since {since_match.group(1)}" if since_match else ""
+        return (
+            f"The chart below shows the requested comparison{suffix}. "
+            "I used the first successful chart result and stopped additional "
+            "tool calls to avoid duplicating the same analysis."
+        )
 
     @staticmethod
     def _extract_text(response: Any) -> str:
