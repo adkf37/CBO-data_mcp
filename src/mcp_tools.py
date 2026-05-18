@@ -22,6 +22,28 @@ _SAFE_TOKEN_RE = re.compile(r"[^a-zA-Z0-9_-]+")
 _AGG_FUNCS = {"sum", "mean", "min", "max", "count", "median"}
 _CHART_KINDS = {"line", "bar", "stacked_bar"}
 
+_FILE_TYPE_ALIASES = {
+    "foodstamps": "snap",
+    "gi": "post911gibill",
+    "gibill": "post911gibill",
+    "healthinsurance": "healthinsurance",
+    "highwaytrust": "highwaytrustfund",
+    "medicaid": "medicaid",
+    "medicare": "medicare",
+    "militaryretirement": "militaryretirement",
+    "post911gibill": "post911gibill",
+    "socialsecurity": "socialsecurity",
+    "ssdi": "ssdi",
+    "supplementalsecurityincome": "ssi",
+    "ui": "unemployment",
+    "unemploymentinsurance": "unemployment",
+    "vabenefits": "veteransbenefit",
+    "veteranbenefit": "veteransbenefit",
+    "veteranbenefits": "veteransbenefit",
+    "veteransbenefit": "veteransbenefit",
+    "veteransbenefits": "veteransbenefit",
+}
+
 # CBO publishes its baseline workbooks under product IDs (e.g. 51301 = Medicaid,
 # 51302 = Medicare, 51316 = Unemployment Insurance, etc.). Filenames in the
 # upstream repo follow the pattern "<product_id>-YYYY-MM-<program>.xlsx".  We
@@ -101,6 +123,36 @@ def _select_first_column(columns: list[str], candidates: tuple[str, ...]) -> Opt
 
 def _resolve_loader(loader: Optional[DataLoader]) -> DataLoader:
     return loader if loader is not None else DataLoader()
+
+
+def _normalize_file_type_token(value: Any) -> str:
+    return re.sub(r"[^a-z0-9]+", "", str(value).lower())
+
+
+def _resolve_file_type(file_type: str, loader: DataLoader) -> str:
+    """Resolve common human-facing program names to catalog file_type slugs."""
+    available = loader.list_file_types()
+    if file_type in available:
+        return file_type
+
+    normalized = _normalize_file_type_token(file_type)
+    normalized_index = {
+        _normalize_file_type_token(candidate): candidate
+        for candidate in available
+    }
+    if normalized in normalized_index:
+        return normalized_index[normalized]
+
+    alias = _FILE_TYPE_ALIASES.get(normalized)
+    if alias in available:
+        return alias
+
+    # Handle simple pluralization differences such as veteransbenefits ->
+    # veteransbenefit for catalogs that do not have an explicit alias entry.
+    if normalized.endswith("s") and normalized[:-1] in normalized_index:
+        return normalized_index[normalized[:-1]]
+
+    return file_type
 
 
 def _sanitize_filename_component(value: Any) -> str:
@@ -188,7 +240,12 @@ def list_vintages(
         return {"error": "file_type is required."}
     try:
         dl = _resolve_loader(loader)
-        return {"file_type": file_type, "vintages": dl.list_vintages(file_type)}
+        resolved_file_type = _resolve_file_type(file_type, dl)
+        return {
+            "file_type": resolved_file_type,
+            "requested_file_type": file_type,
+            "vintages": dl.list_vintages(resolved_file_type),
+        }
     except Exception as exc:  # noqa: BLE001
         return {"error": f"Failed to list vintages for '{file_type}': {exc}"}
 
@@ -423,7 +480,8 @@ def search_programs(
 
     try:
         dl = _resolve_loader(loader)
-        df = dl.load_file_type(file_type)
+        resolved_file_type = _resolve_file_type(file_type, dl)
+        df = dl.load_file_type(resolved_file_type)
         program_col = _select_first_column(list(df.columns), _PROGRAM_COLUMNS)
         if not program_col:
             return {"error": "No program/category column found for search."}
@@ -596,7 +654,8 @@ def _filtered_frame(
         return None, None, {"error": "year_start must be less than or equal to year_end."}
     try:
         dl = _resolve_loader(loader)
-        df = dl.load_file_type(file_type).copy()
+        resolved_file_type = _resolve_file_type(file_type, dl)
+        df = dl.load_file_type(resolved_file_type).copy()
     except Exception as exc:  # noqa: BLE001
         return None, None, {"error": f"Failed to load '{file_type}': {exc}"}
 

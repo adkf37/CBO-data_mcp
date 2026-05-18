@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.mcp_tools import compare_vintages, export_csv, get_projection, list_file_types
+from src.mcp_tools import compare_vintages, export_csv, get_projection, list_file_types, list_vintages
 from src.tool_registry import get_gemini_tool_declarations, list_tool_names
 
 
@@ -14,6 +14,10 @@ class FakeLoader:
             "medicaid": {
                 "description": "Medicaid projections.",
                 "vintages": ["2023-01", "2024-01"],
+            },
+            "veteransbenefit": {
+                "description": "Veterans Benefits projections.",
+                "vintages": ["2025-01"],
             }
         }
         self._df = pd.DataFrame(
@@ -52,6 +56,19 @@ class FakeLoader:
                 },
             ]
         )
+        self._veterans_df = pd.DataFrame(
+            [
+                {
+                    "program": "Veteransbenefit",
+                    "category": "Total Outlays for Disability Compensation",
+                    "unit": "Millions of dollars",
+                    "fiscal_year": 2030,
+                    "value": 247904.0,
+                    "vintage": "2025-01",
+                    "is_total": True,
+                }
+            ]
+        )
 
     def list_file_types(self):
         return sorted(self._index.keys())
@@ -62,6 +79,8 @@ class FakeLoader:
     def load_file_type(self, file_type: str):
         if file_type not in self._index:
             raise KeyError(file_type)
+        if file_type == "veteransbenefit":
+            return self._veterans_df
         return self._df
 
 
@@ -70,6 +89,23 @@ def test_list_file_types_returns_non_empty_list():
     assert isinstance(result, list)
     assert result
     assert result[0]["file_type"] == "medicaid"
+
+
+def test_file_type_alias_resolves_veterans_benefits():
+    vintages = list_vintages("Veterans Benefits", loader=FakeLoader())
+    assert vintages["file_type"] == "veteransbenefit"
+    assert vintages["requested_file_type"] == "Veterans Benefits"
+    assert vintages["vintages"] == ["2025-01"]
+
+    projection = get_projection(
+        "veteransbenefits",
+        category="Total Outlays",
+        unit="Millions of dollars",
+        include_totals=True,
+        loader=FakeLoader(),
+    )
+    assert "error" not in projection
+    assert projection["rows"][0]["program"] == "Veteransbenefit"
 
 
 def test_get_projection_filters_known_program_and_year():

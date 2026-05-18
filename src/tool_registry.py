@@ -59,6 +59,9 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
             "vintage, category, and unit. Use `category` to isolate one series "
             "within a program (e.g. only the 'Total Enrolled Within a Fiscal "
             "Year' rows of Medicaid) and `unit` to guarantee unit consistency. "
+            "Common human-facing aliases are accepted, including Veterans "
+            "Benefits -> veteransbenefit, GI Bill -> post911gibill, and "
+            "Military Retirement -> militaryretirement. "
             "Rows include an `is_total` flag indicating whether the row is a "
             "subtotal/total of the rows beneath it; set `include_totals=false` "
             "to drop those rows before returning."
@@ -276,7 +279,9 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
             "list of `categories`, `units`, and a `categories_by_unit` mapping "
             "that shows which categories report in which unit. Call this FIRST "
             "whenever you are about to chart or aggregate, so you can pick the "
-            "correct unit-consistent category for the user's question."
+            "correct unit-consistent category for the user's question. Common "
+            "human-facing aliases are accepted, including Veterans Benefits -> "
+            "veteransbenefit."
         ),
         "parameters": {
             "type": "object",
@@ -300,6 +305,10 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
             "for all vintages since a year. "
             "The response includes chart_data (rendered in the browser) and "
             "points (raw numbers you can cite in the answer). "
+            "Common human-facing aliases are accepted, including Veterans "
+            "Benefits -> veteransbenefit; for Veterans Benefits spending, use "
+            "category='Total Outlays', unit='Millions of dollars', and "
+            "include_totals=true. "
             "Use at most one chart_projection call per user question unless "
             "the user explicitly asks for multiple or separate charts; after "
             "a successful chart, answer from its points/category/unit/vintages "
