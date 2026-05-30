@@ -189,4 +189,49 @@
     <notes>Forces the agent to be explicit about whether it is using the Total row or summing parts — the two should match if executed correctly, and the disclosure makes the choice auditable.</notes>
   </question>
 
+  <!-- Official US-CBO/cbo-data routing cases: macro, budget totals, spending, demographics -->
+
+  <question id="25" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="economic_projections">
+    <prompt>What is CBO's projected unemployment rate for 2026?</prompt>
+    <expected_tools>search_official_variables,get_official_series</expected_tools>
+    <answer_contains>2026</answer_contains>
+    <notes>Macro-indicator routing: should use the official economic tools, not the program-detail unemployment-insurance file.</notes>
+  </question>
+
+  <question id="26" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="ten_year_budget">
+    <prompt>How large is the federal deficit projected to be in FY2026?</prompt>
+    <expected_tools>get_official_series</expected_tools>
+    <answer_contains>FY2026</answer_contains>
+    <notes>Budget-total routing: deficit comes from the official ten_year_budget dataset, not any single program file.</notes>
+  </question>
+
+  <question id="27" tool="multi_step" type="aggregation" question_type="factual" prompt_complexity="simple" audience="general" data_source="spending_detail">
+    <prompt>Which federal agencies have the largest projected outlays?</prompt>
+    <expected_tools>query_budget_accounts</expected_tools>
+    <answer_contains>Health and Human Services</answer_contains>
+    <notes>Whole-of-government ranking: should call query_budget_accounts with group_by=agency, not sum program-detail files.</notes>
+  </question>
+
+  <question id="28" tool="multi_step" type="comparison" question_type="comparison" prompt_complexity="structured" audience="general" data_source="economic_projections">
+    <prompt>How did CBO's projected unemployment rate change between the 2025-01 and 2026-02 economic projections?</prompt>
+    <expected_tools>compare_official_vintages</expected_tools>
+    <answer_contains>2025-01</answer_contains>
+    <answer_contains>2026-02</answer_contains>
+    <notes>Official vintage-revision comparison via compare_official_vintages.</notes>
+  </question>
+
+  <question id="29" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="demographic">
+    <prompt>What is CBO's projected U.S. population for people age 30 in 2030?</prompt>
+    <expected_tools>query_demographic</expected_tools>
+    <answer_contains>2030</answer_contains>
+    <notes>Demographic routing: should use query_demographic on the population family.</notes>
+  </question>
+
+  <question id="30" tool="multi_step" type="chart" question_type="factual" prompt_complexity="simple" audience="general" data_source="economic_projections">
+    <prompt>Chart CBO's projected real GDP over the next several years.</prompt>
+    <expected_tools>search_official_variables,chart_official_series</expected_tools>
+    <answer_contains>GDP</answer_contains>
+    <notes>Official charting: should produce chart_data via chart_official_series for a macro series.</notes>
+  </question>
+
 </eval_suite>

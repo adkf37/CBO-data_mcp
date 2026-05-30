@@ -219,6 +219,16 @@ def test_tool_registry_contains_all_registered_tools():
         "growth_rate",
         "summarize_file_type",
         "chart_projection",
+        # Official US-CBO/cbo-data tools
+        "list_official_datasets",
+        "summarize_official_dataset",
+        "search_official_variables",
+        "get_official_series",
+        "compare_official_vintages",
+        "official_growth_rate",
+        "chart_official_series",
+        "query_budget_accounts",
+        "query_demographic",
     }
 
 

@@ -20,6 +20,17 @@ from src.mcp_tools import (
     summarize_file_type,
     top_n,
 )
+from src.official_tools import (
+    chart_series,
+    compare_official_vintages,
+    get_series,
+    list_official_datasets,
+    query_budget_accounts,
+    query_demographic,
+    search_variables,
+    series_growth_rate,
+    summarize_official_dataset,
+)
 
 ToolFn = Callable[..., Any]
 
@@ -35,6 +46,16 @@ TOOL_FUNCTIONS: dict[str, ToolFn] = {
     "growth_rate": growth_rate,
     "summarize_file_type": summarize_file_type,
     "chart_projection": chart_projection,
+    # --- Official US-CBO/cbo-data tools (economic / budget / demographic) ---
+    "list_official_datasets": list_official_datasets,
+    "summarize_official_dataset": summarize_official_dataset,
+    "search_official_variables": search_variables,
+    "get_official_series": get_series,
+    "compare_official_vintages": compare_official_vintages,
+    "official_growth_rate": series_growth_rate,
+    "chart_official_series": chart_series,
+    "query_budget_accounts": query_budget_accounts,
+    "query_demographic": query_demographic,
 }
 
 _TOOL_DECLARATIONS: list[dict[str, Any]] = [
@@ -361,6 +382,221 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
                 },
             },
             "required": ["file_type", "metric"],
+        },
+    },
+    # ------------------------------------------------------------------
+    # Official US-CBO/cbo-data tools (economic / budget / demographic)
+    # ------------------------------------------------------------------
+    {
+        "name": "list_official_datasets",
+        "description": (
+            "List the official CBO datasets sourced from the US-CBO/cbo-data "
+            "GitHub repo: economic projections, budget projections, and "
+            "demographic data. Optional `domain` filter is 'economic' or "
+            "'budget'. Use this to discover dataset names for the other "
+            "official tools (GDP, unemployment, inflation, interest rates, "
+            "deficit, debt, revenues, tax parameters, population, etc.)."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "domain": {"type": "string", "enum": ["economic", "budget"]},
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "summarize_official_dataset",
+        "description": (
+            "Discovery tool for the official datasets: returns a dataset's "
+            "format (long / spending_detail / demographic), frequency, date "
+            "format (calendar/fiscal/quarterly), available vintages, and a "
+            "sample of variable names. Call this FIRST when unsure which "
+            "variable name, vintage, or file_type to pass to get_official_series."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "dataset": {"type": "string"},
+                "vintage": {"type": "string"},
+            },
+            "required": ["dataset"],
+        },
+    },
+    {
+        "name": "search_official_variables",
+        "description": (
+            "Search variable names and descriptions across the official long "
+            "datasets (economic + budget). E.g. query 'unemployment', "
+            "'real gdp', 'deficit', '10-year treasury'. Returns the dataset + "
+            "exact variable name to use with get_official_series."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "query": {"type": "string"},
+                "dataset": {"type": "string"},
+                "limit": {"type": "integer"},
+            },
+            "required": ["query"],
+        },
+    },
+    {
+        "name": "get_official_series",
+        "description": (
+            "Retrieve one or more long-format time series (date, value) from an "
+            "official economic or budget dataset — e.g. GDP, unemployment rate, "
+            "CPI inflation, interest rates, deficit, debt, revenues. "
+            "`variables` is one name or a list. `date_start`/`date_end` are "
+            "4-digit years. `file_type` selects frequency ('quarterly', "
+            "'fiscal', 'calendar', 'annual_fy', 'annual_cy'); omit it for an "
+            "annual view. `estimate_type` may be 'actual' or 'projected'. "
+            "Call summarize_official_dataset or search_official_variables first "
+            "if you do not know the exact variable name."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "dataset": {"type": "string"},
+                "variables": {
+                    "oneOf": [
+                        {"type": "string"},
+                        {"type": "array", "items": {"type": "string"}},
+                    ]
+                },
+                "date_start": {"type": "integer"},
+                "date_end": {"type": "integer"},
+                "vintage": {"type": "string"},
+                "estimate_type": {"type": "string", "enum": ["actual", "projected"]},
+                "file_type": {"type": "string"},
+            },
+            "required": ["dataset", "variables"],
+        },
+    },
+    {
+        "name": "compare_official_vintages",
+        "description": (
+            "Compare one official variable across two release vintages to show "
+            "how CBO's projection changed (e.g. how the FY2026 deficit forecast "
+            "moved between two baseline releases). Returns aligned rows with a "
+            "per-period delta."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "dataset": {"type": "string"},
+                "variable": {"type": "string"},
+                "vintage_a": {"type": "string"},
+                "vintage_b": {"type": "string"},
+                "date_start": {"type": "integer"},
+                "date_end": {"type": "integer"},
+                "file_type": {"type": "string"},
+            },
+            "required": ["dataset", "variable", "vintage_a", "vintage_b"],
+        },
+    },
+    {
+        "name": "official_growth_rate",
+        "description": (
+            "Compute absolute change, percent change, and CAGR for an official "
+            "long-format variable between two years (e.g. real GDP growth "
+            "2025->2035). Uses an annual view by default."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "dataset": {"type": "string"},
+                "variable": {"type": "string"},
+                "date_start": {"type": "integer"},
+                "date_end": {"type": "integer"},
+                "vintage": {"type": "string"},
+                "file_type": {"type": "string"},
+            },
+            "required": ["dataset", "variable", "date_start", "date_end"],
+        },
+    },
+    {
+        "name": "chart_official_series",
+        "description": (
+            "Build an interactive Chart.js chart for an official economic/budget "
+            "variable and return chart_data for the web UI plus raw points to "
+            "cite. Pass `vintages=[...]` to overlay multiple releases of the "
+            "same variable. Defaults to a line chart. Tell the user the chart "
+            "is displayed alongside the response; do not include a file path."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "dataset": {"type": "string"},
+                "variable": {"type": "string"},
+                "vintage": {"type": "string"},
+                "vintages": {"type": "array", "items": {"type": "string"}},
+                "date_start": {"type": "integer"},
+                "date_end": {"type": "integer"},
+                "kind": {"type": "string", "enum": ["line", "bar"]},
+                "file_type": {"type": "string"},
+                "title": {"type": "string"},
+            },
+            "required": ["dataset", "variable"],
+        },
+    },
+    {
+        "name": "query_budget_accounts",
+        "description": (
+            "Query CBO's detailed spending_detail dataset (~2,000 federal "
+            "budget accounts with budget authority and outlays). Two modes: "
+            "(1) Lookup — filter by `tin`, `title_query`, `agency`, "
+            "`function_code`, or `disc_or_mand` to read specific accounts; "
+            "(2) Ranking — set `group_by` (agency|bureau|function_code|title|"
+            "category) and `top_n` with `metric` (outlays|budget_authority) to "
+            "rank the largest accounts/agencies. `date` is a fiscal-year label "
+            "like 'FY2026'. Values are in millions of dollars. Prefer this over "
+            "the program-detail tools for whole-of-government spending rankings."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "metric": {"type": "string", "enum": ["outlays", "budget_authority"]},
+                "tin": {"type": "string"},
+                "title_query": {"type": "string"},
+                "agency": {"type": "string"},
+                "function_code": {"type": "string"},
+                "disc_or_mand": {"type": "string", "enum": ["disc", "mand"]},
+                "group_by": {
+                    "type": "string",
+                    "enum": ["agency", "bureau", "function_code", "title", "category"],
+                },
+                "top_n": {"type": "integer"},
+                "date": {"type": "string"},
+                "vintage": {"type": "string"},
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "query_demographic",
+        "description": (
+            "Look up CBO demographic projections by cohort. `measure` is the "
+            "data family: 'population_bls', 'population_census', 'fertility', "
+            "'mortality', 'migration', 'ss_area_population', or 'lfp_rates'. "
+            "Filter with `year_start`/`year_end` and dimensions like `age`, "
+            "`sex`, `place_of_birth`, `immigration_status`, `migration_flow`. "
+            "Returns the measure value (e.g. number_of_people, births_per_1000)."
+        ),
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "measure": {"type": "string"},
+                "year_start": {"type": "integer"},
+                "year_end": {"type": "integer"},
+                "age": {"type": "string"},
+                "sex": {"type": "string"},
+                "place_of_birth": {"type": "string"},
+                "immigration_status": {"type": "string"},
+                "migration_flow": {"type": "string"},
+                "vintage": {"type": "string"},
+            },
+            "required": ["measure"],
         },
     },
 ]

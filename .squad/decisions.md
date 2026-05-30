@@ -2,6 +2,27 @@
 
 ## Active Decisions
 
+### 2026-05-14 — Decision D-031 (Initiative: official-data)
+- **Parallel, format-aware layer chosen.** Rather than reshaping the official
+  US-CBO/cbo-data datasets into the existing per-program schema (lossy — they
+  are long, wide spending-detail, and multi-dimensional demographic formats),
+  added a *separate* tool surface in `src/official_tools.py` (9 tools) backed by
+  `src/official_data/`. Existing program-detail tools are untouched, eliminating
+  regression risk. The agent routes between the two families via expanded
+  `_SYSTEM_PROMPT` rules and `docs/data_crosswalk.md`.
+- **DuckDB for "speed of processing."** Vendored CSVs are ingested into a single
+  `data/cbo_official.duckdb` (5 tables, indexed) by `src/official_data/build.py`.
+  Read-only access via `OfficialDataLoader`, which auto-builds on first use. DB
+  and vendored repo are git-ignored (rebuildable); `data/official_catalog.json`
+  is tracked.
+- **Overlap handling.** `historical_economic` vs `economic_projections` overlap
+  is exposed through `estimate_type` (actual/projected) on one series rather than
+  duplicate tools. Program-detail outlays vs `spending_detail` are kept distinct
+  (different granularity) with explicit "never double-count" guidance.
+- **Offline-testable.** Tests build a tiny synthetic catalog+CSV tree into a temp
+  DuckDB (no network), giving 84–90% coverage on the new modules; full suite 131
+  passed / 83% coverage.
+
 ### 2026-05-13 — Decision D-030 (Task ID: feedback-2026-05-13)
 - **Attached eval run triaged.** The 6/18 live pass rate in
   `evals/eval_suite_run_051326.json` grouped into four repair classes:

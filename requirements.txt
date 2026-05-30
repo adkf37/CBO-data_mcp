@@ -10,6 +10,9 @@ mcp>=1.0.0
 pandas>=2.0.0
 pyarrow>=14.0.0
 
+# Official US-CBO/cbo-data store (DuckDB-backed query layer)
+duckdb>=1.0.0
+
 # Charting
 matplotlib>=3.8.0
 

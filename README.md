@@ -70,6 +70,26 @@ Cloning/updating CBO data repo into data/raw/ …
 Catalogued 51 file type(s).  Catalog written to data/catalog.json.
 ```
 
+### Official CBO datasets (economic, budget, demographic)
+
+In addition to the per-program baseline workbooks above, the assistant can
+query the official [US-CBO/cbo-data](https://github.com/US-CBO/cbo-data)
+repository — macroeconomic projections (GDP, unemployment, inflation, interest
+rates), government-wide budget totals (deficit, debt, revenues), detailed
+spending by budget account, and demographic projections. This data is stored in
+a DuckDB database for fast querying. Build it once with:
+
+```bash
+python scripts/fetch_cbo_official.py   # clone/update the official repo into data/cbo_official/
+python scripts/catalog_official.py     # write data/official_catalog.json (13 datasets)
+python scripts/build_official_db.py    # build data/cbo_official.duckdb
+```
+
+`data/official_catalog.json` is tracked; `data/cbo_official/` and the DuckDB file
+are git-ignored (rebuildable). The loader auto-builds the database on first use
+if it is missing. See [docs/data_crosswalk.md](docs/data_crosswalk.md) for how
+the agent routes a question to the program-detail vs. official tools.
+
 ---
 
 ## Run the CLI
@@ -130,6 +150,20 @@ cbo> /export medicaid_2029.csv
 | `growth_rate` | Absolute change, percentage change, and CAGR between two years. |
 | `chart_projection` | Render a PNG line/bar chart to `./charts/`. |
 | `export_csv` | Persist any tool's rows to `./exports/` with metadata header. |
+
+**Official US-CBO/cbo-data tools** (macro / budget totals / spending / demographics):
+
+| Tool | Purpose |
+|---|---|
+| `list_official_datasets` | List the 13 official datasets (economic / budget). |
+| `summarize_official_dataset` | Format, frequency, vintages, and variable sample for one dataset. |
+| `search_official_variables` | Search variable names/descriptions (e.g. 'unemployment', 'deficit'). |
+| `get_official_series` | Retrieve long-format series (GDP, unemployment, inflation, rates, deficit, debt, revenues). |
+| `compare_official_vintages` | Compare one variable across two release vintages. |
+| `official_growth_rate` | Absolute/percent change and CAGR for an official variable. |
+| `chart_official_series` | Chart.js payload for an official series (with multi-vintage overlay). |
+| `query_budget_accounts` | Look up or rank ~2,000 federal budget accounts (`spending_detail`). |
+| `query_demographic` | Population, fertility, mortality, migration, and labor-force cohorts. |
 
 Expected answer format (natural language, tool-cited):
 

@@ -1,3 +1,55 @@
+# Validation Report — 2026-05-14 (official US-CBO/cbo-data integration)
+
+## Scope
+
+- **Initiative:** `official-data` — parallel format-aware layer over the official
+  [US-CBO/cbo-data](https://github.com/US-CBO/cbo-data) repository.
+- **Phase:** Validate
+- **Recommendation:** Pass → advance to Closeout
+
+## Checks Run
+
+1. **New unit suites (offline synthetic DuckDB fixture)**
+   - Command: `python -m pytest tests/test_build_official_db.py tests/test_official_loader.py tests/test_official_tools.py -q`
+   - Result: Passed — 27 passed.
+   - Evidence: build creates all 5 tables; loader query/rank/demographic paths
+     return expected rows; the 9 official tools return rows + a `sources` block;
+     tool registration matches Gemini declarations 1:1. No network access — a
+     tiny synthetic catalog + CSV tree is built into a temp DuckDB.
+
+2. **Full repository pytest contract**
+   - Command: `python -m pytest -q`
+   - Result: Passed — 131 passed, 3 deselected (integration).
+   - Evidence: `pytest.ini` defaults applied (`--cov=src --cov-fail-under=70 -m "not integration"`).
+     Total `src/` coverage 82.92% (gate 70%). New-module coverage:
+     `src/official_data/build.py` 90%, `dates.py` 90%, `loader.py` 86%,
+     `src/official_tools.py` 84%, `src/tool_registry.py` 81%.
+
+3. **End-to-end smoke against the real built database**
+   - Command: ad-hoc `python -c` driving `src/official_tools.py` against
+     `data/cbo_official.duckdb` (219k economic / 41k budget / 66k spending /
+     652k demographic / 1,178 variable-catalog rows).
+   - Result: Passed — `get_series` (unemployment_rate), `series_growth_rate`
+     (real_gdp CAGR), `chart_series`, `query_budget_accounts` (top agencies =
+     HHS, SSA, Treasury), and `query_demographic` all returned correct data.
+
+4. **Registration regression**
+   - `tests/test_mcp_tools.py::test_tool_registry_contains_all_registered_tools`
+     updated to the new 20-tool set; passes.
+
+## Notes / Limitations
+
+- The DuckDB file and vendored repo are git-ignored; CI rebuilds via
+  `scripts/fetch_cbo_official.py` → `scripts/catalog_official.py` →
+  `scripts/build_official_db.py`. `data/official_catalog.json` is tracked.
+- Existing program-detail tools are unchanged; the two families are documented
+  in `docs/data_crosswalk.md` and routed by `_SYSTEM_PROMPT`.
+- Live Gemini routing (does the model pick the official tools for macro/budget
+  questions?) is covered by 6 new prompts (ids 25–30) in `evals/cbo_qa.xml` but
+  requires `GEMINI_API_KEY` to score; not run in this offline pass.
+
+---
+
 # Validation Report — 2026-05-13
 
 ## Scope

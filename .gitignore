@@ -18,5 +18,8 @@ data/raw/
 data/catalog.json
 # Data: consolidated parquet cache (task_02)
 data/consolidated/
+# Official CBO data: vendored clone + generated DuckDB (rebuildable; catalog is tracked)
+data/cbo_official/
+data/cbo_official.duckdb
 # Exports: runtime CSV output (task_06)
 exports/
