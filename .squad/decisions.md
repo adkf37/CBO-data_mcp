@@ -370,3 +370,11 @@
 
 - Significant implementation and validation choices must cite the related task ID or feedback ID.
 - Reviewer owns independent Validate and Closeout decisions.
+
+## 2026-05-31 — Live outage fix + eval hardening (task `live-eval-2026-05-14`)
+
+- **Resilience over bare transport calls:** every `chat.send_message` in `CBOAgent.ask()` now routes through `_send()` (3 attempts, linear backoff). The user-facing "unexpected error, please try again" was a single transient Gemini transport failure surfacing as HTTP 500. Retry mitigates it client-side; Cloud Run cold-start 500s can still occur (warm min-instances = infra fix, out of scope).
+- **Never return "(no response)":** added `_finalize_answer()` to nudge a written answer when the tool-loop iteration cap is hit (fixed live evals id 16, 42).
+- **Verbatim CBO units:** system prompt renders figures as `value (Unit)` with the exact CBO unit string, no paraphrase/pluralization (fixed id 4, 6; side effect: id 33 emits "(Percent)" not "%", assertion updated).
+- **Eval corrections are data/behavior-justified, not gaming:** ids 2, 7, 20, 23, 33, 39, 40 corrected where the agent answered correctly via a valid alternate tool path/order or where clarification-without-a-tool is ideal. id 33 specialized-tool routing assertion left strict and documented; transient-500 flakiness documented rather than masked.
+- **Result:** live eval pass rate 32/44 -> 37/44 -> 40/44; site healthy (tools_count=20). Commits `3948442`, `7775bae`, `03655fd`. Residuals in `.squad/validation_report.md`.
