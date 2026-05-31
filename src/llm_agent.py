@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import time
 import os
 import re
 from typing import Any
@@ -23,6 +24,17 @@ from src.tool_registry import get_gemini_tool_declarations, get_tool
 log = logging.getLogger(__name__)
 
 _MAX_TOOL_ITERATIONS = 10
+
+# Resilience for transient Gemini transport/availability errors. A single
+# hiccup (cold start, 429/503, momentary network drop) should not surface to
+# the user as an "unexpected error"; retry a couple of times with backoff.
+_SEND_MAX_ATTEMPTS = 3
+_SEND_BACKOFF_SECONDS = 1.5
+_FINAL_ANSWER_NUDGE = (
+    "You have gathered enough information from the tool results above. "
+    "Provide your final written answer now using those results. Do NOT call "
+    "any more tools. State the figures, the vintage, and the unit explicitly."
+)
 
 _MULTI_CHART_PATTERNS = (
     "multiple charts",
@@ -139,7 +151,11 @@ _SYSTEM_PROMPT = (
     "not claim charting is limited to one vintage. For 'since 2023', pass "
     "`vintage_start='2023'`.\n"
     "8. Always cite the file_type, vintage, category, and unit behind each "
-    "figure in your answer.\n"
+    "figure in your answer. State the unit using the EXACT `unit` string "
+    "returned by the tool, verbatim (e.g. write 'Millions of people', "
+    "'Billions of dollars', 'Millions of dollars', or 'Percent') — do not "
+    "paraphrase it into '97 million people' or '$43 billion'. Likewise state "
+    "the resolved vintage as the exact YYYY-MM token (e.g. '2026-02').\n"
     "9. If a tool returns an error, read the message, adjust parameters, and "
     "try again before giving up.\n"
     "10. Treat the conversation as multi-turn: follow-up questions may reuse "
@@ -324,7 +340,7 @@ class CBOAgent:
             )
 
         chat = self._ensure_chat()
-        response = chat.send_message(prompt)
+        response = self._send(chat, prompt)
         self.last_trace = []
         chart_complete = False
         sent_chart_stop = False
@@ -348,12 +364,13 @@ class CBOAgent:
                     log.warning("Model continued requesting tools after a completed chart.")
                     return self._chart_fallback_answer(question)
                 sent_chart_stop = True
-                response = chat.send_message(
+                response = self._send(
+                    chat,
                     [
                         self._tool_stop_part(fc.name)
                         for fc in fn_calls
                         if getattr(fc, "name", None)
-                    ]
+                    ],
                 )
                 continue
 
@@ -386,10 +403,10 @@ class CBOAgent:
                     )
                 )
 
-            response = chat.send_message(fn_response_parts)
+            response = self._send(chat, fn_response_parts)
 
         log.warning("Reached maximum tool-call iterations (%d).", _MAX_TOOL_ITERATIONS)
-        return self._extract_text(response)
+        return self._finalize_answer(chat, response)
 
     @staticmethod
     def _prefers_single_chart(question: str) -> bool:
@@ -420,6 +437,51 @@ class CBOAgent:
                 },
             )
         )
+
+    def _send(self, chat: Any, message: Any) -> Any:
+        """Send a message to the chat session, retrying transient failures.
+
+        A single transient Gemini transport error (cold start, rate limit,
+        momentary 5xx/network drop) should not surface to the user as an
+        ``unexpected error``. Retry a few times with linear backoff before
+        re-raising the final exception.
+        """
+        last_exc: Exception | None = None
+        for attempt in range(1, _SEND_MAX_ATTEMPTS + 1):
+            try:
+                return chat.send_message(message)
+            except Exception as exc:  # noqa: BLE001
+                last_exc = exc
+                if attempt == _SEND_MAX_ATTEMPTS:
+                    break
+                log.warning(
+                    "Gemini send_message failed (attempt %d/%d): %s",
+                    attempt,
+                    _SEND_MAX_ATTEMPTS,
+                    exc,
+                )
+                time.sleep(_SEND_BACKOFF_SECONDS * attempt)
+        assert last_exc is not None
+        raise last_exc
+
+    def _finalize_answer(self, chat: Any, response: Any) -> str:
+        """Return a final text answer, nudging the model if it stalled.
+
+        When the tool-calling loop ends on a function-call-only turn (no text),
+        the raw extraction yields ``(no response)``. Make one final attempt to
+        coax a written answer out of the model using the data already gathered,
+        rather than returning an empty reply to the user.
+        """
+        text = self._extract_text(response)
+        if text and text != "(no response)":
+            return text
+        try:
+            final = self._send(chat, _FINAL_ANSWER_NUDGE)
+        except Exception as exc:  # noqa: BLE001
+            log.warning("Final-answer nudge failed: %s", exc)
+            return text
+        nudged = self._extract_text(final)
+        return nudged if nudged and nudged != "(no response)" else text
 
     @staticmethod
     def _chart_fallback_answer(question: str) -> str:

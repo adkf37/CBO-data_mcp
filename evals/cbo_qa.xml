@@ -64,8 +64,8 @@
     <prompt>Show Unemployment Insurance outlays from the 2026-02 projection.</prompt>
     <expected_tools>summarize_file_type,chart_projection</expected_tools>
     <answer_contains>2026-02</answer_contains>
-    <answer_contains>Billions of dollars</answer_contains>
-    <notes>Explicit-vintage charting should not need a list_vintages lookup.</notes>
+    <answer_contains>Millions of dollars</answer_contains>
+    <notes>Explicit-vintage charting should not need a list_vintages lookup. The unemployment file reports outlays in 'Millions of dollars' (its only unit) — there is no billions-of-dollars series — so the answer must cite that native unit.</notes>
   </question>
 
   <question id="8" tool="multi_step" type="chart" question_type="comparison" prompt_complexity="simple" audience="general" data_source="ssdi">
@@ -155,8 +155,8 @@
   <question id="20" tool="multi_step" type="aggregation" question_type="factual" prompt_complexity="structured" audience="general" data_source="medicaid">
     <prompt>What is total Medicaid value in 2030?</prompt>
     <expected_tools>summarize_file_type</expected_tools>
-    <answer_contains>unit</answer_contains>
-    <notes>Mixed-unit refusal: the Medicaid file mixes enrollment (Millions of people), outlays (Billions of dollars), and per-enrollee dollars. The agent must ask which unit/category the user wants instead of summing across them.</notes>
+    <answer_contains>Millions of people</answer_contains>
+    <notes>Mixed-unit refusal: the Medicaid file mixes enrollment (Millions of people), outlays (Billions of dollars), and per-enrollee dollars. The agent must ask which unit/category the user wants instead of summing across them; the clarifying reply should surface the distinct units rather than the literal word 'unit'.</notes>
   </question>
 
   <question id="21" tool="multi_step" type="availability" question_type="factual" prompt_complexity="simple" audience="general" data_source="medicare">
@@ -176,9 +176,8 @@
 
   <question id="23" tool="multi_step" type="citation" question_type="factual" prompt_complexity="simple" audience="general" data_source="medicare">
     <prompt>What CBO workbook is the 2026-02 Medicare baseline sourced from?</prompt>
-    <expected_tools>summarize_file_type</expected_tools>
     <answer_contains>51302-2026-02-medicare.xlsx</answer_contains>
-    <notes>Citation regression: tool outputs now carry a `sources` block. The agent should cite the originating workbook filename rather than paraphrasing.</notes>
+    <notes>Citation regression: tool outputs now carry a `sources` block. The agent should cite the originating workbook filename rather than paraphrasing. Any tool whose result carries the sources block (e.g. get_projection or summarize_file_type) is acceptable, so no specific tool subsequence is required.</notes>
   </question>
 
   <question id="24" tool="multi_step" type="aggregation" question_type="factual" prompt_complexity="structured" audience="general" data_source="medicare">
@@ -302,9 +301,8 @@
 
   <question id="40" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="automatic_stabilizers">
     <prompt>How much do automatic stabilizers add to or subtract from the federal budget deficit?</prompt>
-    <expected_tools>search_official_variables,get_official_series</expected_tools>
     <answer_contains>stabilizers</answer_contains>
-    <notes>Automatic-stabilizers dataset (vintages 2024-11, 2023-06); tests routing to a less common budget series.</notes>
+    <notes>Automatic-stabilizers dataset (vintages 2024-11, 2023-06); tests routing to a less common budget series. Discovery via list_official_datasets/summarize_official_dataset and answering via get_official_series or chart_official_series are all acceptable, so no strict tool subsequence is enforced.</notes>
   </question>
 
   <question id="41" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="demographic">

@@ -1,0 +1,213 @@
+﻿C:/Users/aaron/AppData/Local/Microsoft/WindowsApps/python3.11.exe : C:\Users\aa
+ron\AppData\Local\Packages\PythonSoftwareFoundation.Python.3.11_qbz5n2kfra8p0\L
+ocalCache\local-packages\Python311\site-packages\requests\__init__.py:109: 
+RequestsDependencyWarning: urllib3 (2.4.0) or chardet 
+(6.0.0.post1)/charset_normalizer (3.4.2) doesn't match a supported version!
+At line:1 char:32
++ ... NG="utf-8"; C:/Users/aaron/AppData/Local/Microsoft/WindowsApps/python ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (C:\Users\aaron\...ported version! 
+   :String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+  warnings.warn(
+{
+  "suite": {
+    "name": "cbo_data_mcp",
+    "version": "1.1",
+    "source_basis": "feedback-2026-05-13+official-datasets"
+  },
+  "results": [
+    {
+      "id": "4",
+      "prompt": "Compare Medicaid enrollment in 2030 between the 2023-05 and 2026-02 baselines.",
+      "answer": "In 2030, the CBO projected Medicaid enrollment to be:\n\n*   **97 million people** in the 2023-05 baseline (source: `51301-2023-05-medicaid.xlsx`)\n*   **89 million people** in the 2026-02 baseline (source: `51301-2026-02-medicaid.xlsx`)\n\nBoth figures are from the 'Total Enrolled Within a Fiscal Year' category in the 'medicaid' file type.",
+      "trace_tools": [
+        "summarize_file_type",
+        "compare_vintages"
+      ],
+      "passed": false,
+      "failures": [
+        "missing answer_contains fragment 'Millions of people'"
+      ]
+    },
+    {
+      "id": "6",
+      "prompt": "What are SNAP's projected outlays over the next 10 years?",
+      "answer": "The Congressional Budget Office (CBO) projects SNAP outlays to be:\n\n*   **2026**: $100,053 billion\n*   **2027**: $97,418 billion\n*   **2028**: $93,684 billion\n*   **2029**: $94,641 billion\n*   **2030**: $96,032 billion\n*   **2031**: $97,521 billion\n*   **2032**: $99,193 billion\n*   **2033**: $100,251 billion\n*   **2034**: $101,212 billion\n*   **2035**: $102,240 billion\n*   **2036**: $103,187 billion\n\nThese figures are from the CBO's February 2026 baseline projection (source file: `51312-2026-02-snap.xlsx`). A line chart showing these projections is displayed alongside this response.",
+      "trace_tools": [
+        "list_file_types",
+        "summarize_file_type",
+        "chart_projection"
+      ],
+      "passed": false,
+      "failures": [
+        "missing answer_contains fragment 'Billions of dollars'",
+        "tool trace did not contain expected subsequence ['list_vintages', 'summarize_file_type', 'chart_projection']; saw ['list_file_types', 'summarize_file_type', 'chart_projection']"
+      ]
+    },
+    {
+      "id": "7",
+      "prompt": "Show Unemployment Insurance outlays from the 2026-02 projection.",
+      "answer": "The CBO's 2026-02 projection for Unemployment Insurance outlays (category: 'Total', unit: 'Millions of dollars') are projected to be:\n\n*   **2026**: $43,530 million\n*   **2027**: $46,151 million\n*   **2028**: $47,350 million\n*   **2029**: $48,085 million\n*   **2030**: $48,710 million\n*   **2031**: $50,005 million\n*   **2032**: $51,455 million\n*   **2033**: $52,925 million\n*   **2034**: $54,415 million\n*   **2035**: $55,920 million\n*   **2036**: $57,450 million\n\nThis data is from the `unemployment` file type, vintage `2026-02`, source file `51316-2026-02-unemployment.xlsx`.\n\nThe chart illustrating these projections is displayed above.",
+      "trace_tools": [
+        "summarize_file_type",
+        "chart_projection",
+        "chart_projection",
+        "chart_projection",
+        "chart_projection",
+        "chart_projection",
+        "get_projection",
+        "chart_projection"
+      ],
+      "passed": false,
+      "failures": [
+        "missing answer_contains fragment 'Billions of dollars'"
+      ]
+    },
+    {
+      "id": "12",
+      "prompt": "How many people are projected to be enrolled in Medicaid in 2029 according to the latest projection?",
+      "answer": "According to the latest CBO projection (2026-02 vintage) from the file `51301-2026-02-medicaid.xlsx`, 91 million people are projected to be enrolled in Medicaid in fiscal year 2029. This figure represents the 'Total Enrolled Within a Fiscal Year' category.",
+      "trace_tools": [
+        "list_vintages",
+        "summarize_file_type",
+        "get_projection"
+      ],
+      "passed": false,
+      "failures": [
+        "missing answer_contains fragment 'Millions of people'"
+      ]
+    },
+    {
+      "id": "16",
+      "prompt": "Aim: compare SNAP outlay projections between the 2024-06 and 2026-02 baselines. Output: state the unit and whether the later baseline is higher or lower in the overlapping years.",
+      "answer": "(no response)",
+      "trace_tools": [
+        "summarize_file_type",
+        "compare_vintages",
+        "compare_vintages",
+        "compare_vintages",
+        "get_projection",
+        "get_projection",
+        "get_projection",
+        "get_projection",
+        "get_projection",
+        "get_projection",
+        "get_projection",
+        "get_projection",
+        "get_projection",
+        "get_projection",
+        "compare_vintages"
+      ],
+      "passed": false,
+      "failures": [
+        "missing answer_contains fragment 'Billions of dollars'"
+      ]
+    },
+    {
+      "id": "19",
+      "prompt": "Sum the Medicare Part A, Part B, and Part D outlays in 2030 from the 2026-02 baseline. Do not include the published Total Medicare line.",
+      "answer": "In 2030, the sum of Medicare Part A, Part B, and Part D outlays from the 2026-02 baseline is an estimated $1,368 billion.\n\nThis is derived from the following breakdown:\n*   **Part A**: $575 billion\n*   **Part B**: $589 billion\n*   **Part D**: $204 billion\n\nAll figures are from the `medicare` file type, vintage `2026-02`, category `Part A`, `Part B`, `Part D` respectively, and unit `Billions of dollars`, as reported in the `51302-2026-02-medicare.xlsx` source file.",
+      "trace_tools": [
+        "summarize_file_type",
+        "aggregate_metric",
+        "aggregate_metric",
+        "aggregate_metric"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "20",
+      "prompt": "What is total Medicaid value in 2030?",
+      "answer": "Please clarify what \"total Medicaid value\" refers to. I found the following possible interpretations in the CBO data for Medicaid:\n\n*   **Outlays**: Measured in \"Billions of dollars\" (e.g., 'Total' or 'Estimated Outlaysa' categories).\n*   **Enrollment**: Measured in \"Millions of people\" (e.g., 'Total Enrolled Within a Fiscal Year' category).\n*   **Per enrollee spending**: Measured in \"Dollars per enrollee\".\n\nWhich of these would you like to know for 2030?",
+      "trace_tools": [
+        "summarize_file_type"
+      ],
+      "passed": false,
+      "failures": [
+        "missing answer_contains fragment 'unit'"
+      ]
+    },
+    {
+      "id": "23",
+      "prompt": "What CBO workbook is the 2026-02 Medicare baseline sourced from?",
+      "answer": "The 2026-02 Medicare baseline is sourced from the CBO workbook `51302-2026-02-medicare.xlsx`.",
+      "trace_tools": [
+        "get_projection"
+      ],
+      "passed": false,
+      "failures": [
+        "tool trace did not contain expected subsequence ['summarize_file_type']; saw ['get_projection']"
+      ]
+    },
+    {
+      "id": "33",
+      "prompt": "What is the projected average annual growth rate of real GDP over the next ten years?",
+      "answer": "Based on the CBO's February 2026 baseline projection (source: `51135-2026-02-economic.xlsx`), the projected average annual growth rate of real GDP from 2024 to 2033 is 1.89%. This is calculated from the 'real_gdp' variable in the `economic_projections` dataset.",
+      "trace_tools": [
+        "search_official_variables",
+        "search_official_variables",
+        "summarize_official_dataset",
+        "official_growth_rate"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "35",
+      "prompt": "What are CBO's projected tax parameters for calendar year 2030?",
+      "answer": "Here are some of CBO's projected tax parameters for calendar year 2030, based on the 2026-02 vintage of the `tax_parameters` dataset from CBO's Tax Parameters and Effective Marginal Tax Rates publication (https://www.cbo.gov/publication/53724):\n\n*   **Additional standard deduction for elderly/blind, married filing jointly and separately**: $1,800\n*   **Additional standard deduction for elderly/blind, single and head of household filers**: $2,250\n*   **AMT exemption amount, married filing jointly**: $153,200\n*   **Alternative minimum tax rate, bracket 1**: 26%\n*   **Taxable income threshold for bracket 1, single filers**: $0\n*   **Standard deduction, dependents**: $1,500\n*   **Standard deduction, head of household**: $26,400\n*   **Standard deduction, married filing jointly**: $35,200\n*   **Standard deduction, married filing separately**: $17,600\n*   **Standard deduction, single filers**: $17,600",
+      "trace_tools": [
+        "list_official_datasets",
+        "summarize_official_dataset",
+        "search_official_variables",
+        "get_official_series"
+      ],
+      "passed": true,
+      "failures": []
+    },
+    {
+      "id": "40",
+      "prompt": "How much do automatic stabilizers add to or subtract from the federal budget deficit?",
+      "answer": "The Congressional Budget Office's (CBO) 2024-11 vintage projection shows the estimated effect of automatic stabilizers on the federal budget deficit (in billions of dollars) as follows:\n\n*   **FY2025:** Add $110.9 billion\n*   **FY2026:** Add $81.9 billion\n*   **FY2027:** Add $38.6 billion\n*   **FY2028:** Subtract $4.7 billion\n*   **FY2029:** Subtract $35.2 billion\n*   **FY2030:** Subtract $53.2 billion\n*   **FY2031:** Subtract $64.0 billion\n*   **FY2032:** Subtract $71.4 billion\n*   **FY2033:** Subtract $77.4 billion\n*   **FY2034:** Subtract $82.9 billion\n\nA positive value indicates that automatic stabilizers add to the deficit, while a negative value indicates they subtract from it (i.e., contribute to a surplus or reduce the deficit).\n\nThis projection uses the `as_effect_deficit` variable from the CBO's `automatic_stabilizers` dataset (vintage 2024-11), as detailed in `data/budget/automatic_stabilizers/annual_fy_2024-11.csv`.\n\nThe chart \"Effect of Automatic Stabilizers on Federal Budget Deficit (2025-2034)\" displayed alongside this response visualizes these figures.",
+      "trace_tools": [
+        "list_official_datasets",
+        "summarize_official_dataset",
+        "chart_official_series"
+      ],
+      "passed": false,
+      "failures": [
+        "tool trace did not contain expected subsequence ['search_official_variables', 'get_official_series']; saw ['list_official_datasets', 'summarize_official_dataset', 'chart_official_series']"
+      ]
+    },
+    {
+      "id": "42",
+      "prompt": "What does CBO project for the economy over the long term, out to 2050?",
+      "answer": "(no response)",
+      "trace_tools": [
+        "list_official_datasets",
+        "summarize_official_dataset",
+        "search_official_variables",
+        "search_official_variables",
+        "search_official_variables",
+        "search_official_variables",
+        "search_official_variables",
+        "get_official_series",
+        "summarize_official_dataset",
+        "get_official_series",
+        "get_official_series",
+        "search_official_variables",
+        "get_official_series"
+      ],
+      "passed": false,
+      "failures": [
+        "missing answer_contains fragment '2050'"
+      ]
+    }
+  ],
+  "question_count": 12,
+  "passed": 3,
+  "failed": 9
+}
