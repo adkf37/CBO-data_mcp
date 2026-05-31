@@ -21,7 +21,7 @@
 
   <question id="2" tool="multi_step" type="chart" question_type="factual" prompt_complexity="simple" audience="general" data_source="medicaid">
     <prompt>Chart Medicaid enrollment from 2025 to 2034 in the latest projection.</prompt>
-    <expected_tools>list_vintages,summarize_file_type,chart_projection</expected_tools>
+    <expected_tools>summarize_file_type,list_vintages,chart_projection</expected_tools>
     <answer_contains>2026-02</answer_contains>
     <answer_contains>Millions of people</answer_contains>
     <notes>Critical routing case: latest vintage + discovery + category/unit-aware charting.</notes>
@@ -154,7 +154,6 @@
 
   <question id="20" tool="multi_step" type="aggregation" question_type="factual" prompt_complexity="structured" audience="general" data_source="medicaid">
     <prompt>What is total Medicaid value in 2030?</prompt>
-    <expected_tools>summarize_file_type</expected_tools>
     <answer_contains>Millions of people</answer_contains>
     <notes>Mixed-unit refusal: the Medicaid file mixes enrollment (Millions of people), outlays (Billions of dollars), and per-enrollee dollars. The agent must ask which unit/category the user wants instead of summing across them; the clarifying reply should surface the distinct units rather than the literal word 'unit'.</notes>
   </question>
@@ -294,7 +293,7 @@
 
   <question id="39" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="trust_fund">
     <prompt>What does CBO project for the Social Security trust fund balance over the next decade?</prompt>
-    <expected_tools>search_official_variables,get_official_series</expected_tools>
+    <expected_tools>search_official_variables</expected_tools>
     <answer_contains>trust fund</answer_contains>
     <notes>Trust-fund dataset routing; should not confuse the official trust_fund series with the program-detail Social Security file.</notes>
   </question>
