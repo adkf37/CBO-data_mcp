@@ -1,4 +1,86 @@
-# Validation Report — 2026-05-14 (official US-CBO/cbo-data integration)
+# Validation Report — 2026-05-14 (live-site eval of official datasets)
+
+## Scope
+
+- **Initiative:** Upgrade the eval suite for the new official datasets, run it
+  against the **live** Cloud Run deployment
+  (`https://cbo-data-mcp-367018855220.us-central1.run.app`), document results,
+  and make tool/infra fixes driven by the findings.
+- **Phase:** Validate
+- **Recommendation:** Pass (root-caused + fixed in code) → **redeploy required**
+  before the production site recovers.
+
+## Eval suite upgrade (#1)
+
+- `evals/cbo_qa.xml` bumped to `version="1.1"`,
+  `source_basis="feedback-2026-05-13+official-datasets"`.
+- Added questions **31–44** (suite now 44 questions) covering every official
+  dataset and the previously under-tested tools/date formats:
+  - `list_official_datasets` (31), `summarize_official_dataset` (32),
+    `official_growth_rate` (33).
+  - All 13 datasets: revenue_detail (34), tax_parameters/CY (35),
+    long_term_budget (36), historical_budget actual (37), potential_gdp single
+    vintage (38), trust_fund (39), automatic_stabilizers (40), demographic (41),
+    long_term_economic (42), economic_projections quarterly (43),
+    historical_economic actual (44).
+- `python scripts/run_eval_suite.py --validate-only` → 44 questions parsed.
+
+## Live-site run (#2) — documented in `evals/live_eval_run_2026-05-14.json`
+
+- Representative subset (Q1 program, Q25/Q27 official, Q31 discovery) run via
+  `scripts/run_eval_suite.py --base-url <cloud-run-url>`.
+- **Result: 0/4 passed. Every `/api/chat` request returned HTTP 500**, including
+  a trivial `"hi"` probe. `/api/health` was healthy (`api_key_configured=true`,
+  `tools_count=20`).
+
+## Root cause (#4)
+
+- `get_official_series` declared its `variables` parameter with a JSON-schema
+  `oneOf` combinator. Gemini's function-declaration schema **does not support**
+  `oneOf`/`anyOf`/`allOf`/`not`, so `types.Tool(function_declarations=...)` —
+  built in `CBOAgent.__init__` — raised a pydantic `ValidationError`. Because the
+  tool set is attached to **every** chat, this took down all `/api/chat` traffic
+  with a 500, not just official-data questions.
+- Reproduced locally (no API key needed): `types.Tool(...)` raised on the old
+  declarations and builds cleanly after the fix.
+
+## Fixes landed
+
+1. **Schema fix** — `src/tool_registry.py`: `variables` is now a plain
+   `array<string>` (the underlying `get_series` already coerces a bare string).
+2. **Regression guard** — `tests/test_mcp_tools.py::test_tool_declarations_build_a_valid_gemini_tool`
+   scans all declarations for unsupported combinators and asserts
+   `types.Tool(...)` builds.
+3. **Official charts render** — `web/app.py` `_select_response_charts` now
+   includes `chart_official_series` results (`_CHART_TOOLS` set);
+   `tests/test_web_app.py` adds coverage.
+4. **Deployment fix** — `Dockerfile` now builds the official DuckDB store
+   (`fetch_cbo_official` → `catalog_official` → `build_official_db`, then prunes
+   the raw clone) so the `official_*` tools have data in production. Previously
+   the image shipped the tool **declarations** (hence `tools_count=20`) but no
+   official database, so official tools would have failed even once the 500 was
+   resolved.
+
+## Checks Run
+
+- `python -m pytest -q` → **132 passed, 3 deselected**, coverage **82.92%**
+  (gate 70%). (+1 vs prior: the new schema regression test.)
+- `python scripts/run_eval_suite.py --validate-only` → suite parses, 44 questions.
+- Tool-schema build check: `types.Tool(get_gemini_tool_declarations())` builds
+  20 declarations with no unsupported keywords.
+
+## Residual risk / follow-ups
+
+- **Redeploy required**: the live site keeps 500ing until a new image is built
+  and deployed. Recommend a post-deploy live eval rerun:
+  `python scripts/run_eval_suite.py --base-url <cloud-run-url>`.
+- `requirements.txt` pins `google-genai>=1.0.0` (unpinned). Consider pinning a
+  known-good version for reproducible production builds (not the cause of this
+  outage, but a related supply-chain risk).
+
+---
+
+
 
 ## Scope
 

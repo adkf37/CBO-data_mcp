@@ -10,7 +10,7 @@
   - multi-vintage comparison and charting
   - graceful handling of unavailable vintages
 -->
-<eval_suite name="cbo_data_mcp" version="1.0" source_basis="feedback-2026-05-13">
+<eval_suite name="cbo_data_mcp" version="1.1" source_basis="feedback-2026-05-13+official-datasets">
 
   <question id="1" tool="summarize_file_type" type="discovery" question_type="factual" prompt_complexity="simple" audience="general" data_source="medicaid">
     <prompt>What units and categories are available in the medicaid file?</prompt>
@@ -232,6 +232,107 @@
     <expected_tools>search_official_variables,chart_official_series</expected_tools>
     <answer_contains>GDP</answer_contains>
     <notes>Official charting: should produce chart_data via chart_official_series for a macro series.</notes>
+  </question>
+
+  <!-- Expanded official-dataset coverage: discovery, every domain, all date formats, actual-vs-projected -->
+
+  <question id="31" tool="list_official_datasets" type="discovery" question_type="summary" prompt_complexity="simple" audience="general" data_source="catalog">
+    <prompt>What official CBO datasets do you have access to?</prompt>
+    <expected_tools>list_official_datasets</expected_tools>
+    <answer_contains>economic</answer_contains>
+    <answer_contains>budget</answer_contains>
+    <notes>Top-level discovery: should enumerate the official catalog (economic and budget domains) before drilling in.</notes>
+  </question>
+
+  <question id="32" tool="summarize_official_dataset" type="discovery" question_type="summary" prompt_complexity="simple" audience="general" data_source="ten_year_budget">
+    <prompt>Summarize what is in the official ten-year budget projections dataset.</prompt>
+    <expected_tools>summarize_official_dataset</expected_tools>
+    <answer_contains>2026-02</answer_contains>
+    <notes>Dataset-level discovery should report the newest vintage and the kinds of variables available.</notes>
+  </question>
+
+  <question id="33" tool="multi_step" type="growth" question_type="factual" prompt_complexity="simple" audience="general" data_source="economic_projections">
+    <prompt>What is the projected average annual growth rate of real GDP over the next ten years?</prompt>
+    <expected_tools>search_official_variables,official_growth_rate</expected_tools>
+    <answer_contains>%</answer_contains>
+    <notes>Exercises official_growth_rate (CAGR) on a macro series rather than a raw level lookup.</notes>
+  </question>
+
+  <question id="34" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="revenue_detail">
+    <prompt>How much does CBO project the federal government will collect from individual income taxes in FY2030?</prompt>
+    <expected_tools>search_official_variables,get_official_series</expected_tools>
+    <answer_contains>FY2030</answer_contains>
+    <notes>Revenue-detail routing with fiscal-year date format; should not fall back to a program file.</notes>
+  </question>
+
+  <question id="35" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="tax_parameters">
+    <prompt>What are CBO's projected tax parameters for calendar year 2030?</prompt>
+    <expected_tools>search_official_variables,get_official_series</expected_tools>
+    <answer_contains>2030</answer_contains>
+    <notes>Calendar-year (CY) date-format dataset; the agent must use CY dates, not FY.</notes>
+  </question>
+
+  <question id="36" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="long_term_budget">
+    <prompt>What does CBO project for federal debt held by the public as a share of GDP in 2050?</prompt>
+    <expected_tools>search_official_variables,get_official_series</expected_tools>
+    <answer_contains>2050</answer_contains>
+    <notes>Long-horizon budget series; tests the long_term_budget dataset rather than the ten-year window.</notes>
+  </question>
+
+  <question id="37" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="structured" audience="general" data_source="historical_budget">
+    <prompt>What was the actual federal deficit in FY2020 according to CBO's historical budget data?</prompt>
+    <expected_tools>search_official_variables,get_official_series</expected_tools>
+    <answer_contains>FY2020</answer_contains>
+    <notes>Actual (not projected) values: should query historical_budget with estimate_type=actual.</notes>
+  </question>
+
+  <question id="38" tool="multi_step" type="availability" question_type="factual" prompt_complexity="simple" audience="general" data_source="potential_gdp">
+    <prompt>What is CBO's estimate of potential GDP?</prompt>
+    <expected_tools>search_official_variables</expected_tools>
+    <answer_contains>GDP</answer_contains>
+    <notes>Single-vintage dataset (only 2019-08). The agent should answer with that vintage rather than implying newer coverage exists.</notes>
+  </question>
+
+  <question id="39" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="trust_fund">
+    <prompt>What does CBO project for the Social Security trust fund balance over the next decade?</prompt>
+    <expected_tools>search_official_variables,get_official_series</expected_tools>
+    <answer_contains>trust fund</answer_contains>
+    <notes>Trust-fund dataset routing; should not confuse the official trust_fund series with the program-detail Social Security file.</notes>
+  </question>
+
+  <question id="40" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="automatic_stabilizers">
+    <prompt>How much do automatic stabilizers add to or subtract from the federal budget deficit?</prompt>
+    <expected_tools>search_official_variables,get_official_series</expected_tools>
+    <answer_contains>stabilizers</answer_contains>
+    <notes>Automatic-stabilizers dataset (vintages 2024-11, 2023-06); tests routing to a less common budget series.</notes>
+  </question>
+
+  <question id="41" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="demographic">
+    <prompt>What is CBO's projected total U.S. population in 2040?</prompt>
+    <expected_tools>query_demographic</expected_tools>
+    <answer_contains>2040</answer_contains>
+    <notes>Demographic total-population lookup using the newest demographic vintage (2026-01).</notes>
+  </question>
+
+  <question id="42" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="long_term_economic">
+    <prompt>What does CBO project for the economy over the long term, out to 2050?</prompt>
+    <expected_tools>search_official_variables,get_official_series</expected_tools>
+    <answer_contains>2050</answer_contains>
+    <notes>Long_term_economic (annual) routing distinct from the quarterly ten-year economic_projections file.</notes>
+  </question>
+
+  <question id="43" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="simple" audience="general" data_source="economic_projections">
+    <prompt>What is CBO's projected real GDP growth for 2027?</prompt>
+    <expected_tools>search_official_variables,get_official_series</expected_tools>
+    <answer_contains>2027</answer_contains>
+    <notes>Quarterly-format economic dataset; the agent should resolve an annual question against the YYYYqN series correctly.</notes>
+  </question>
+
+  <question id="44" tool="multi_step" type="lookup" question_type="factual" prompt_complexity="structured" audience="general" data_source="historical_economic">
+    <prompt>What was the actual U.S. unemployment rate in 2019 according to CBO's historical economic data?</prompt>
+    <expected_tools>search_official_variables,get_official_series</expected_tools>
+    <answer_contains>2019</answer_contains>
+    <notes>Historical (actual) economic values; complements the projected unemployment-rate case in Q25.</notes>
   </question>
 
 </eval_suite>

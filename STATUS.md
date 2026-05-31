@@ -2,17 +2,31 @@
 
 | Field | Value |
 |---|---|
-| Phase | build |
+| Phase | validate |
 | Last Updated | 2026-05-14 |
 | Squad Template | web_app |
-| Priority | medium |
-| Blocking | None |
+| Priority | high |
+| Blocking | Live site down (HTTP 500 on all /api/chat) until redeploy of fixed image |
 | GitHub Repo | https://github.com/adkf37/CBO-data_mcp |
-| Next Action | Validate |
+| Next Action | Closeout |
 
 ## Current Objective
 
-**Task ID:** `feedback-2026-05-13`
+**Task ID:** `live-eval-2026-05-14`
+
+Upgraded the eval suite for the official datasets and ran it against the live
+Cloud Run site. The run surfaced a **total production outage**: every
+`/api/chat` request returned HTTP 500 (even `"hi"`) while `/api/health` was
+green. Root cause: `get_official_series` used a JSON-schema `oneOf` for its
+`variables` param, which Gemini rejects, so `types.Tool(...)` in
+`CBOAgent.__init__` raised for all traffic. Fixed the schema (now
+`array<string>`), added a regression test that builds every declaration into a
+valid `types.Tool`, made official charts render in the web UI, and updated the
+`Dockerfile` to bake the official DuckDB store. Suite green: **132 passed**,
+83% coverage. **A redeploy is required** to restore the live site; rerun
+`scripts/run_eval_suite.py --base-url <cloud-run-url>` afterward to confirm.
+
+### Prior objective (still in repo) — **Task ID:** `feedback-2026-05-13`
 
 Building out Tier 2 + Tier 4 differentiation work on top of the totals/subcomponents
 fix. This pass landed four shippable slices:
@@ -48,6 +62,7 @@ fence parsing.
 
 ## Recent Activity
 
+- 2026-05-14: Live-eval Validate — upgraded `evals/cbo_qa.xml` to v1.1 (44 questions, ids 31–44 cover all 13 official datasets + under-tested tools); live run found all `/api/chat` returning HTTP 500; root-caused to an unsupported `oneOf` in the `get_official_series` declaration; fixed schema + added regression test; official charts now render; `Dockerfile` bakes the official DuckDB. 132 passed, 82.92% coverage. Redeploy required. See `evals/live_eval_run_2026-05-14.json` and `.squad/validation_report.md`.
 - 2026-05-12: Project activated by Maestro — GitHub repo created, initial task dispatched
 - 2026-05-12: Planner phase completed — backlog artifacts created, repo ready for squad-init
 - 2026-05-12: Squad initialized with role-specific charters and routing aligned to backlog domains

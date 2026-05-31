@@ -2,6 +2,24 @@
 
 ## Active Decisions
 
+### 2026-05-14 — Decision D-032 (Initiative: live-eval / official-data hardening)
+- **Found and fixed a total production outage via the upgraded eval suite.**
+  Running the eval suite against the live Cloud Run site returned HTTP 500 for
+  every `/api/chat` request (even `"hi"`), while `/api/health` was green. Root
+  cause: `get_official_series` declared `variables` with a JSON-schema `oneOf`,
+  which Gemini's function-declaration schema rejects; `types.Tool(...)` in
+  `CBOAgent.__init__` raised for all traffic. Fix: `variables` is now a plain
+  `array<string>` (the function already coerces a bare string), plus a
+  regression test that asserts every declaration builds a valid `types.Tool`.
+- **Scope discipline.** Did not change `requirements.txt` genai pin (untestable
+  without a live key) — logged as a follow-up instead. Made two adjacent,
+  verified fixes that the eval result justified: official charts now render in
+  the web UI (`_select_response_charts` includes `chart_official_series`), and
+  the `Dockerfile` now bakes the official DuckDB store so the `official_*` tools
+  have data after redeploy (the live image had the 20 declarations but no DB).
+- **Redeploy is the gating action**: code is fixed and green (132 passed), but
+  the live site stays down until a new image is deployed.
+
 ### 2026-05-14 — Decision D-031 (Initiative: official-data)
 - **Parallel, format-aware layer chosen.** Rather than reshaping the official
   US-CBO/cbo-data datasets into the existing per-program schema (lossy — they

@@ -38,6 +38,27 @@ def test_select_response_charts_keeps_first_chart_by_default():
     assert charts[0]["title"] == "SSDI Total Beneficiaries"
 
 
+def test_select_response_charts_renders_official_series_charts():
+    trace = [
+        {
+            "tool": "chart_official_series",
+            "result": {
+                "chart_data": {
+                    "type": "line",
+                    "title": "Economic Projections: Real GDP",
+                    "labels": ["2026", "2027"],
+                    "datasets": [{"label": "real_gdp", "data": [100.0, 102.0]}],
+                }
+            },
+        },
+    ]
+
+    charts = _select_response_charts(trace, "Chart CBO's projected real GDP.")
+
+    assert len(charts) == 1
+    assert charts[0]["title"] == "Economic Projections: Real GDP"
+
+
 def test_select_response_charts_allows_explicit_multiple_charts():
     trace = [
         {

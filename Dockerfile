@@ -29,6 +29,15 @@ COPY main.py    .
 # Download CBO data at image-build time.
 RUN python scripts/catalog_data.py
 
+# Build the official US-CBO/cbo-data datasets (economic, budget, demographic)
+# into a baked DuckDB store so the official_* tools work in production. The
+# vendored raw clone is removed afterwards to keep the final image small; only
+# data/cbo_official.duckdb and data/official_catalog.json are needed at runtime.
+RUN python scripts/fetch_cbo_official.py \
+    && python scripts/catalog_official.py \
+    && python scripts/build_official_db.py \
+    && rm -rf data/cbo_official
+
 # Cloud Run injects PORT; gunicorn binds to it.
 ENV PORT=8080
 EXPOSE 8080

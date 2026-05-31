@@ -459,10 +459,9 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
             "properties": {
                 "dataset": {"type": "string"},
                 "variables": {
-                    "oneOf": [
-                        {"type": "string"},
-                        {"type": "array", "items": {"type": "string"}},
-                    ]
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "One or more exact variable names to retrieve.",
                 },
                 "date_start": {"type": "integer"},
                 "date_end": {"type": "integer"},

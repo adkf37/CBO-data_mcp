@@ -239,3 +239,34 @@ def test_tool_registry_exposes_gemini_declarations():
     properties = chart_decl["parameters"]["properties"]
     assert properties["vintages"]["type"] == "array"
     assert properties["vintage_start"]["type"] == "string"
+
+
+def test_tool_declarations_build_a_valid_gemini_tool():
+    """Every declaration must build into a Gemini Tool.
+
+    Gemini's function-declaration schema does not support JSON-schema combinators
+    like oneOf/anyOf/allOf/not. A single offending declaration makes
+    ``types.Tool(...)`` raise inside ``CBOAgent.__init__``, which previously took
+    down every ``/api/chat`` request with a 500. This guards that regression.
+    """
+    from google.genai import types
+
+    unsupported = {"oneOf", "anyOf", "allOf", "not"}
+
+    def find_unsupported(node, path=""):
+        hits = []
+        if isinstance(node, dict):
+            for key, value in node.items():
+                if key in unsupported:
+                    hits.append(f"{path}/{key}")
+                hits.extend(find_unsupported(value, f"{path}/{key}"))
+        elif isinstance(node, list):
+            for index, value in enumerate(node):
+                hits.extend(find_unsupported(value, f"{path}/{index}"))
+        return hits
+
+    declarations = get_gemini_tool_declarations()
+    assert find_unsupported(declarations) == []
+    tool = types.Tool(function_declarations=declarations)
+    assert len(tool.function_declarations) == len(declarations)
+

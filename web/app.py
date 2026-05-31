@@ -33,6 +33,9 @@ def handle_404(exc):
 
 MAX_QUESTION_LENGTH = 4000  # characters; reject oversized payloads early
 
+# Tools whose results carry a renderable Chart.js ``chart_data`` payload.
+_CHART_TOOLS = {"chart_projection", "chart_official_series"}
+
 # ---------------------------------------------------------------------------
 # Session management
 # ---------------------------------------------------------------------------
@@ -112,7 +115,7 @@ def _select_response_charts(
     for tc in trace:
         result = tc.get("result")
         if (
-            tc.get("tool") != "chart_projection"
+            tc.get("tool") not in _CHART_TOOLS
             or not isinstance(result, dict)
             or not isinstance(result.get("chart_data"), dict)
         ):
