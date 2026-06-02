@@ -102,3 +102,35 @@ def test_collect_response_sources_dedupes_chart_sources():
     ]
 
     assert _collect_response_sources(trace) == [source]
+
+
+def test_collect_response_sources_prefers_retrieval_over_discovery_sources():
+    old_source = {
+        "source_file": "51308-2020-01-socialsecurity.xlsx",
+        "source_sheet": "Public",
+        "vintage": "2020-01",
+    }
+    answer_source = {
+        "source_file": "51308-2025-01-socialsecurity.xlsx",
+        "source_sheet": "OASI_01-2025",
+        "vintage": "2025-01",
+    }
+    trace = [
+        {"tool": "summarize_file_type", "result": {"sources": [old_source, answer_source]}},
+        {"tool": "get_projection", "result": {"sources": [answer_source]}},
+    ]
+
+    assert _collect_response_sources(trace) == [answer_source]
+
+
+def test_collect_response_sources_keeps_discovery_sources_for_discovery_answer():
+    source = {
+        "dataset": "economic_projections",
+        "source_file": "data/economic/economic_projections/calendar_2026-02.csv",
+        "vintage": "2026-02",
+    }
+    trace = [
+        {"tool": "summarize_official_dataset", "result": {"sources": [source]}},
+    ]
+
+    assert _collect_response_sources(trace) == [source]

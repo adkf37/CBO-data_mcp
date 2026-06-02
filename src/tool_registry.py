@@ -499,7 +499,12 @@ _TOOL_DECLARATIONS: list[dict[str, Any]] = [
         "description": (
             "Compute absolute change, percent change, and CAGR for an official "
             "long-format variable between two years (e.g. real GDP growth "
-            "2025->2035). Uses an annual view by default."
+            "2025->2035). Uses an annual view by default. Use this on level "
+            "variables such as real_gdp, not on variables that are already "
+            "annual rates or percent changes (for example real_gdp_pct_change "
+            "or gdp_pct_change). For a single-year or year-by-year projected "
+            "growth rate, call get_official_series or chart_official_series "
+            "with the *_pct_change variable instead."
         ),
         "parameters": {
             "type": "object",

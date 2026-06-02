@@ -36,6 +36,19 @@ MAX_QUESTION_LENGTH = 4000  # characters; reject oversized payloads early
 # Tools whose results carry a renderable Chart.js ``chart_data`` payload.
 _CHART_TOOLS = {"chart_projection", "chart_official_series"}
 
+# Discovery tools often return broad source lists for an entire dataset. Those
+# are useful context for the model but noisy in the final UI when a later
+# retrieval/chart tool produced the actual answer.
+_DISCOVERY_TOOLS = {
+    "list_file_types",
+    "list_vintages",
+    "summarize_file_type",
+    "list_official_datasets",
+    "summarize_official_dataset",
+    "search_official_variables",
+    "search_programs",
+}
+
 # ---------------------------------------------------------------------------
 # Session management
 # ---------------------------------------------------------------------------
@@ -132,20 +145,43 @@ def _select_response_charts(
     return charts[:1]
 
 
+def _source_key(citation: dict[str, Any]) -> tuple[str, str, str, str, str]:
+    return (
+        str(citation.get("dataset") or ""),
+        str(citation.get("source_file") or ""),
+        str(citation.get("source_sheet") or ""),
+        str(citation.get("vintage") or ""),
+        str(citation.get("raw_url") or ""),
+    )
+
+
 def _collect_response_sources(trace: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Collect deduped citations across every tool result."""
+    """Collect deduped citations, preferring answer-bearing tool results.
+
+    If retrieval/chart tools produced sources, omit broad discovery-tool
+    citations so the UI does not show every vintage just because the model
+    called ``summarize_file_type`` first. For pure discovery answers, fall back
+    to the discovery sources.
+    """
     sources: list[dict[str, Any]] = []
-    seen: set[tuple[str, str, str]] = set()
-    for tc in trace:
+    seen: set[tuple[str, str, str, str, str]] = set()
+
+    source_traces = [
+        tc for tc in trace
+        if tc.get("tool") not in _DISCOVERY_TOOLS
+        and isinstance(tc.get("result"), dict)
+        and tc["result"].get("sources")
+    ]
+    if not source_traces:
+        source_traces = [
+            tc for tc in trace
+            if isinstance(tc.get("result"), dict) and tc["result"].get("sources")
+        ]
+
+    for tc in source_traces:
         result = tc.get("result")
-        if not isinstance(result, dict):
-            continue
         for citation in result.get("sources", []) or []:
-            key = (
-                str(citation.get("source_file") or ""),
-                str(citation.get("source_sheet") or ""),
-                str(citation.get("vintage") or ""),
-            )
+            key = _source_key(citation)
             if key in seen:
                 continue
             seen.add(key)

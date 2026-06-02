@@ -112,6 +112,27 @@ def _var_meta(loader: OfficialDataLoader, dataset: str, variable: str) -> dict[s
     }
 
 
+def _is_percent_change_variable(variable: str, var_meta: dict[str, Any]) -> bool:
+    """Return True for variables that are already period percent-change series."""
+    name = variable.lower()
+    description = str(var_meta.get("description") or "").lower()
+    return "pct_change" in name or "percentage change" in description
+
+
+def _level_variable_candidate(
+    loader: OfficialDataLoader, dataset: str, variable: str
+) -> Optional[str]:
+    """Suggest the corresponding level variable for a *_pct_change series."""
+    if not variable.endswith("_pct_change"):
+        return None
+    candidate = variable.removesuffix("_pct_change")
+    try:
+        variables = set(loader.list_variables(dataset)["variable"].astype(str))
+    except Exception:  # noqa: BLE001
+        return candidate
+    return candidate if candidate in variables else None
+
+
 # ---------------------------------------------------------------------------
 # Discovery tools
 # ---------------------------------------------------------------------------
@@ -311,6 +332,27 @@ def series_growth_rate(
     if file_type is None:
         file_type = _default_file_type(loader, dataset)
     vintage = vintage or (meta.get("vintages") or [None])[0]
+    var_info = _var_meta(loader, dataset, variable)
+    if _is_percent_change_variable(variable, var_info):
+        level_variable = _level_variable_candidate(loader, dataset, variable)
+        message = (
+            f"'{variable}' is already a period percent-change series; computing "
+            "a CAGR or percent change of that rate is not analytically valid. "
+            "Use get_official_series or chart_official_series with this variable "
+            "to report the annual projected growth rates."
+        )
+        if level_variable:
+            message += (
+                f" To compute average annual growth of the underlying level, "
+                f"call official_growth_rate with variable='{level_variable}'."
+            )
+        return {
+            "error": message,
+            "dataset": dataset,
+            "variable": variable,
+            "suggested_level_variable": level_variable,
+            "suggested_tools": ["get_official_series", "chart_official_series"],
+        }
 
     df = loader.query_series(
         dataset, [variable], date_start=date_start, date_end=date_end,
@@ -340,7 +382,7 @@ def series_growth_rate(
         "variable": variable,
         "vintage": vintage,
         "file_type": file_type,
-        "unit": _var_meta(loader, dataset, variable).get("unit"),
+        "unit": var_info.get("unit"),
         "year_start": date_start,
         "year_end": date_end,
         "value_start": start_val,
@@ -348,6 +390,7 @@ def series_growth_rate(
         "absolute_change": abs_change,
         "percent_change": pct_change,
         "cagr_percent": cagr,
+        "calculation_method": "CAGR of the underlying level series, not an average of annual rate observations.",
         "sources": _official_sources(loader, dataset, vintage, file_type),
     }
 

@@ -83,7 +83,10 @@ def _write_official_tree(root: _Path) -> tuple[_Path, _Path]:
         "2025,unemployment_rate,4.2,projected\n"
         "2023,real_gdp,23000,actual\n"
         "2024,real_gdp,23500,projected\n"
-        "2025,real_gdp,24000,projected\n",
+        "2025,real_gdp,24000,projected\n"
+        "2023,real_gdp_pct_change,2.1,actual\n"
+        "2024,real_gdp_pct_change,2.0,projected\n"
+        "2025,real_gdp_pct_change,1.9,projected\n",
     )
     # also an older vintage for compare
     _csv(
@@ -153,6 +156,11 @@ def _write_official_tree(root: _Path) -> tuple[_Path, _Path]:
                     "real_gdp": {
                         "description": "Real GDP",
                         "unit": "Billions of chained dollars",
+                        "category": "output",
+                    },
+                    "real_gdp_pct_change": {
+                        "description": "Real GDP, percentage change",
+                        "unit": "Percent",
                         "category": "output",
                     },
                 },

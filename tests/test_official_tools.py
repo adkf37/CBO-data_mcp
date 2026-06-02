@@ -27,7 +27,7 @@ def test_list_official_datasets(official_tools):
 def test_summarize_official_dataset(official_tools):
     out = official_tools.summarize_official_dataset("economic_projections")
     assert out["format"] == "long"
-    assert out["variable_count"] == 2
+    assert out["variable_count"] == 3
     assert out["sources"][0]["source_repo"] == "https://github.com/US-CBO/cbo-data"
 
 
@@ -66,6 +66,27 @@ def test_series_growth_rate(official_tools):
     assert out["value_end"] == 24000
     assert out["absolute_change"] == 1000
     assert out["cagr_percent"] is not None
+
+
+def test_series_growth_rate_rejects_percent_change_series(official_tools):
+    out = official_tools.series_growth_rate(
+        "economic_projections", "real_gdp_pct_change", 2023, 2025,
+    )
+
+    assert "error" in out
+    assert "already a period percent-change series" in out["error"]
+    assert out["suggested_level_variable"] == "real_gdp"
+    assert "get_official_series" in out["suggested_tools"]
+
+
+def test_get_series_allows_percent_change_series_for_annual_rates(official_tools):
+    out = official_tools.get_series(
+        "economic_projections", "real_gdp_pct_change", date_start=2024, date_end=2025,
+    )
+
+    assert out["row_count"] == 2
+    assert out["variable_metadata"]["real_gdp_pct_change"]["unit"] == "Percent"
+    assert [row["value"] for row in out["rows"]] == [2.0, 1.9]
 
 
 def test_chart_series_single_vintage(official_tools):
