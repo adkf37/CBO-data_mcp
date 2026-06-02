@@ -14,10 +14,11 @@ as concise, citation-ready answers.
 2. [Installation](#installation)
 3. [Prepare CBO Data](#prepare-cbo-data)
 4. [Run the CLI](#run-the-cli)
-5. [Example Questions](#example-questions)
-6. [Run the Tests](#run-the-tests)
-7. [Project Structure](#project-structure)
-8. [Known Limitations](#known-limitations)
+5. [Run as an MCP Server](#run-as-an-mcp-server)
+6. [Example Questions](#example-questions)
+7. [Run the Tests](#run-the-tests)
+8. [Project Structure](#project-structure)
+9. [Known Limitations](#known-limitations)
 
 ---
 
@@ -118,6 +119,45 @@ cbo>
 | `/reset` | Clear the agent's conversation memory |
 | `/trace` | Show the MCP tools called for the last question |
 | `/quit` or `/exit` | Exit the CLI |
+
+---
+
+## Run as an MCP Server
+
+The same CBO tool registry used by the Gemini CLI/web app can also be exposed as
+a local stdio MCP server:
+
+```bash
+python -m src.mcp_server
+```
+
+This does not replace the Gemini web app. It is a thin adapter over the existing
+functions in `src/mcp_tools.py`, `src/official_tools.py`, and
+`src/tool_registry.py`, so MCP clients and the website share one implementation.
+
+Example local MCP client configuration:
+
+```json
+{
+  "mcpServers": {
+    "cbo-data": {
+      "command": "python",
+      "args": ["-m", "src.mcp_server"],
+      "cwd": "/absolute/path/to/CBO-data_mcp"
+    }
+  }
+}
+```
+
+For remote experiments, the same entry point can run the SDK's HTTP transport:
+
+```bash
+python -m src.mcp_server --transport streamable-http
+```
+
+Local stdio is the recommended first target for Claude Desktop, Cursor, Codex,
+and other MCP-capable desktop clients. Hosted HTTP should add authentication
+before being exposed publicly.
 
 ---
 
