@@ -2,7 +2,7 @@
 
 An LLM-powered CLI that lets you ask natural-language questions about U.S.
 Congressional Budget Office (CBO) baseline budget projection data.  
-It pairs **Google Gemini 2.5 Flash** with **Model Context Protocol (MCP)** tools
+It pairs **Google Gemini 3.8 Flash** with **Model Context Protocol (MCP)** tools
 so that queries are automatically routed to the right data functions and returned
 as concise, citation-ready answers.
 
@@ -245,7 +245,7 @@ CBO-data_mcp/
 │   ├── data_loader.py       # Cross-vintage CSV consolidation (DataLoader)
 │   ├── mcp_tools.py         # MCP tool implementations
 │   ├── tool_registry.py     # Tool name-to-function registry
-│   └── llm_agent.py         # Gemini 2.5 Flash agent (CBOAgent)
+│   └── llm_agent.py         # Gemini 3.8 Flash agent (CBOAgent)
 ├── tests/                   # Pytest unit and integration tests
 ├── main.py                  # CLI entry point (CBOCLI)
 ├── requirements.txt

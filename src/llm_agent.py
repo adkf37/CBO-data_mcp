@@ -1,7 +1,7 @@
 """
-llm_agent.py — Gemini 2.5 Flash Integration (google-genai SDK).
+llm_agent.py — Gemini Integration (google-genai SDK).
 
-CBOAgent wires the Google Gemini 2.5 Flash model to the MCP tool registry so
+CBOAgent wires the configured Google Gemini model to the MCP tool registry so
 that natural-language user queries are automatically resolved by calling the
 appropriate tools and returning a coherent, cited answer.
 """
@@ -247,7 +247,7 @@ _SYSTEM_PROMPT = (
 
 
 class CBOAgent:
-    """Gemini 2.5 Flash agent wired to the CBO MCP tool registry.
+    """Gemini agent wired to the CBO MCP tool registry.
 
     Parameters
     ----------
@@ -267,6 +267,7 @@ class CBOAgent:
             )
 
         self._client = genai.Client(api_key=resolved_key)
+        self.model = os.environ.get("GEMINI_MODEL", "gemini-3.8-flash")
         self._tool = types.Tool(function_declarations=get_gemini_tool_declarations())
         self._chat: Any = None
         self.last_trace: list[dict[str, Any]] = []
@@ -282,7 +283,7 @@ class CBOAgent:
     def _ensure_chat(self) -> Any:
         if self._chat is None:
             self._chat = self._client.chats.create(
-                model="gemini-2.5-flash",
+                model=self.model,
                 config=types.GenerateContentConfig(
                     system_instruction=_SYSTEM_PROMPT,
                     tools=[self._tool],
@@ -301,7 +302,7 @@ class CBOAgent:
         """
         try:
             response = self._client.models.generate_content(
-                model="gemini-2.5-flash",
+                model=self.model,
                 contents=question,
                 config=types.GenerateContentConfig(
                     system_instruction=_PLANNER_SYSTEM_PROMPT,

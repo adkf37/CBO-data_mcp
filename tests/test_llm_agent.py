@@ -119,7 +119,17 @@ class TestCBOAgentInit:
         _chat_mock(patched_genai).send_message.return_value = _make_text_response("hi")
         a.ask("hello")
         create_kwargs = patched_genai.Client.return_value.chats.create.call_args
-        assert create_kwargs.kwargs.get("model") == "gemini-2.5-flash"
+        assert create_kwargs.kwargs.get("model") == "gemini-3.8-flash"
+
+    def test_model_override_applies_to_executor_and_planner(self, monkeypatch, patched_genai):
+        monkeypatch.setattr("src.llm_agent.load_dotenv", lambda: None)
+        monkeypatch.setenv("GEMINI_MODEL", "model-override")
+        a = CBOAgent(api_key="test-key")
+        a._ensure_chat()
+        patched_genai.Client.return_value.models.generate_content.return_value = _make_text_response('{"steps": []}')
+        a.plan("Plan a lookup")
+        assert patched_genai.Client.return_value.chats.create.call_args.kwargs["model"] == "model-override"
+        assert patched_genai.Client.return_value.models.generate_content.call_args.kwargs["model"] == "model-override"
 
 
 # ── unit tests — ask() single turn ───────────────────────────────────────────

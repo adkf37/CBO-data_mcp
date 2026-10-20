@@ -60,5 +60,5 @@ jobs:
             --max-instances=5
             --timeout=120
             --allow-unauthenticated
-            --set-env-vars=GEMINI_MODEL=gemini-2.5-flash
+            --set-env-vars=GEMINI_MODEL=gemini-3.8-flash
             --set-secrets=GEMINI_API_KEY=gemini-api-key:latest
