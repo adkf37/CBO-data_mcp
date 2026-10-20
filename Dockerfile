@@ -1,4 +1,7 @@
 # ─── Stage 1: build ──────────────────────────────────────────────────────────
+ARG CBO_DATA_IMAGE=us-central1-docker.pkg.dev/cbo-data-mcp/cloud-run-source-deploy/cbo-data-mcp@sha256:f8f10d649685ba503d333113bea887518d5e909d08bbacefd17ff689f7a94f9e
+FROM ${CBO_DATA_IMAGE} AS baseline_data
+
 FROM python:3.12-slim AS builder
 
 WORKDIR /app
@@ -26,17 +29,11 @@ COPY web/       ./web/
 COPY scripts/   ./scripts/
 COPY main.py    .
 
-# Download CBO data at image-build time.
-RUN python scripts/catalog_data.py
-
-# Build the official US-CBO/cbo-data datasets (economic, budget, demographic)
-# into a baked DuckDB store so the official_* tools work in production. The
-# vendored raw clone is removed afterwards to keep the final image small; only
-# data/cbo_official.duckdb and data/official_catalog.json are needed at runtime.
-RUN python scripts/fetch_cbo_official.py \
-    && python scripts/catalog_official.py \
-    && python scripts/build_official_db.py \
-    && rm -rf data/cbo_official
+# Preserve the currently deployed, known-good dataset for application releases.
+# The upstream program-detail repository no longer contains data/processed CSVs,
+# so rebuilding that catalog during every deploy currently produces no data.
+# Refresh data deliberately, then advance CBO_DATA_IMAGE to the validated image.
+COPY --from=baseline_data /app/data /app/data
 
 # Cloud Run injects PORT; gunicorn binds to it.
 ENV PORT=8080
