@@ -4,7 +4,7 @@
 google-genai>=1.0.0
 
 # MCP (Model Context Protocol)
-mcp>=1.0.0
+mcp>=1.0.0,<2  # This application uses the v1 FastMCP API.
 
 # Data processing
 pandas>=2.0.0
